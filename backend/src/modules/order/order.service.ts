@@ -3,13 +3,14 @@ import { prisma } from '../../lib/prisma'
 import { CreateOrderInput, UpdateOrderStatusInput, ListOrdersQuery } from './order.schema'
 import { NotFoundError, InsufficientStockError, ConflictError } from '../../utils/errors'
 import { generateOrderNumber } from '../../utils/orderNumber'
+import { sendOrderConfirmationToCustomer, sendOrderNotificationToStore } from '../../lib/email'
 
 const MAX_LOCK_RETRIES = 3
 
 export const orderService = {
 
   async createOrder(input: CreateOrderInput) {
-    return prisma.$transaction(async (tx) => {
+    const createdOrder = await prisma.$transaction(async (tx) => {
 
       // ── 0. Resolve locationId — use provided or fall back to first active location
       let locationId = input.locationId
@@ -75,7 +76,12 @@ export const orderService = {
         include: {
           items: {
             include: {
-              variant: { select: { sku: true, size: true, color: true } },
+              variant: {
+                select: {
+                  sku: true, size: true, color: true,
+                  product: { select: { name: true } },
+                },
+              },
             },
           },
         },
@@ -119,6 +125,29 @@ export const orderService = {
 
       return order
     })
+
+    // ── 6. Send emails (fire-and-forget — never block the response) ──────────
+    const emailItems = createdOrder.items.map((item) => ({
+      name:  item.variant?.product?.name ?? 'Item',
+      sku:   item.variant?.sku ?? '',
+      size:  item.variant?.size ?? null,
+      color: item.variant?.color ?? null,
+      qty:   item.quantity,
+      price: Number(item.unitPrice),
+    }))
+    const emailData = {
+      orderNumber:   createdOrder.orderNumber,
+      customerName:  createdOrder.customerName,
+      customerEmail: createdOrder.customerEmail,
+      items:         emailItems,
+      total:         Number(createdOrder.total),
+    }
+    Promise.all([
+      sendOrderConfirmationToCustomer(emailData),
+      sendOrderNotificationToStore(emailData),
+    ]).catch((err) => console.error('[email] Failed to send order emails:', err))
+
+    return createdOrder
   },
 
   // ─────────────────────────────────────────────────────────────────────────
