@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Search, Save, History, RefreshCw, ChevronUp, ChevronDown, Upload } from 'lucide-react'
+import { Search, Save, History, RefreshCw, ChevronUp, ChevronDown, Upload, Wrench } from 'lucide-react'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { RBACGuard } from '@/components/admin/RBACGuard'
 import { Badge } from '@/components/ui/badge'
@@ -230,6 +230,7 @@ export default function InventoryPage() {
   const [loading,      setLoading]      = useState(true)
   const [defaultLocId, setDefaultLocId] = useState('')
   const [syncing,      setSyncing]      = useState(false)
+  const [backfilling,  setBackfilling]  = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -240,6 +241,26 @@ export default function InventoryPage() {
       setDefaultLocId(locs[0]?.id ?? '')
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])
+
+  async function handleBackfill() {
+    setBackfilling(true)
+    try {
+      const r = await inventoryApi.backfill()
+      if (r.created === 0) {
+        toast.success('All variants already have inventory records')
+      } else {
+        toast.success(`Created ${r.created} missing inventory record${r.created !== 1 ? 's' : ''} at "${r.locationName}"`)
+        // Reload inventory table
+        const [inv, locs] = await Promise.all([inventoryApi.list(), inventoryApi.listLocations()])
+        setRows(inv.data)
+        setDefaultLocId(locs[0]?.id ?? '')
+      }
+    } catch (err: any) {
+      toast.error(err.message ?? 'Backfill failed')
+    } finally {
+      setBackfilling(false)
+    }
+  }
 
   async function handleSyncAll() {
     setSyncing(true)
@@ -263,16 +284,29 @@ export default function InventoryPage() {
           <h1 className="font-display text-lg font-semibold text-on-background">Inventory</h1>
           <p className="text-xs text-muted">{rows.length} SKUs · {outOfStock} out of stock · {lowStock} low stock</p>
         </div>
-        <button
-          onClick={handleSyncAll}
-          disabled={syncing}
-          className="flex items-center gap-2 rounded border border-border px-3 py-2 text-xs font-medium text-muted hover:text-on-background hover:border-on-background transition-colors disabled:opacity-50"
-        >
-          {syncing
-            ? <><RefreshCw className="h-3.5 w-3.5 animate-spin" />Syncing…</>
-            : <><Upload className="h-3.5 w-3.5" />Update All to POS</>
-          }
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleBackfill}
+            disabled={backfilling}
+            className="flex items-center gap-2 rounded border border-amber-600/50 px-3 py-2 text-xs font-medium text-amber-400 hover:border-amber-500 hover:text-amber-300 transition-colors disabled:opacity-50"
+            title="Create inventory records for variants that are missing one"
+          >
+            {backfilling
+              ? <><RefreshCw className="h-3.5 w-3.5 animate-spin" />Fixing…</>
+              : <><Wrench className="h-3.5 w-3.5" />Fix Missing Inventory</>
+            }
+          </button>
+          <button
+            onClick={handleSyncAll}
+            disabled={syncing}
+            className="flex items-center gap-2 rounded border border-border px-3 py-2 text-xs font-medium text-muted hover:text-on-background hover:border-on-background transition-colors disabled:opacity-50"
+          >
+            {syncing
+              ? <><RefreshCw className="h-3.5 w-3.5 animate-spin" />Syncing…</>
+              : <><Upload className="h-3.5 w-3.5" />Update All to POS</>
+            }
+          </button>
+        </div>
       </div>
       <div className="p-6 space-y-4">
 

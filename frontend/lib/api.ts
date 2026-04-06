@@ -168,6 +168,9 @@ export const inventoryApi = {
   syncAll: () =>
     request<{ synced: number; syncedAt: string }>('/inventory/sync-all', { method: 'POST' }),
 
+  backfill: () =>
+    request<{ created: number; locationName: string }>('/inventory/backfill', { method: 'POST' }),
+
   listHistory: (variantId?: string, page = 1, limit = 50) => {
     const qs = new URLSearchParams({ page: String(page), limit: String(limit), ...(variantId ? { variantId } : {}) }).toString()
     return request<{
