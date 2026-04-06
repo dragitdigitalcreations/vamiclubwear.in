@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { ShoppingBag, Menu, X, Search } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -15,8 +16,12 @@ const NAV_LINKS = [
 ]
 
 export function Navbar() {
-  const [scrolled,    setScrolled]    = useState(false)
-  const [mobileOpen,  setMobileOpen]  = useState(false)
+  const [scrolled,     setScrolled]     = useState(false)
+  const [mobileOpen,   setMobileOpen]   = useState(false)
+  const [searchOpen,   setSearchOpen]   = useState(false)
+  const [searchQuery,  setSearchQuery]  = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
   const { toggleCart } = useCartStore()
   const totalItems = useCartStore(selectTotalItems)
 
@@ -25,6 +30,18 @@ export function Navbar() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  useEffect(() => {
+    if (searchOpen) setTimeout(() => searchInputRef.current?.focus(), 50)
+  }, [searchOpen])
+
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!searchQuery.trim()) return
+    setSearchOpen(false)
+    router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+    setSearchQuery('')
+  }
 
   return (
     <>
@@ -68,6 +85,7 @@ export function Navbar() {
           {/* Right icons */}
           <div className="flex items-center gap-3">
             <button
+              onClick={() => setSearchOpen(true)}
               className="p-2 text-muted transition-colors hover:text-on-background"
               aria-label="Search"
             >
@@ -89,6 +107,49 @@ export function Navbar() {
           </div>
         </div>
       </header>
+
+      {/* Search overlay */}
+      <AnimatePresence>
+        {searchOpen && (
+          <>
+            <motion.div
+              key="search-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/60"
+              onClick={() => setSearchOpen(false)}
+            />
+            <motion.div
+              key="search-bar"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-border shadow-lg"
+            >
+              <form onSubmit={handleSearchSubmit} className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-4 md:px-8">
+                <Search className="h-4 w-4 flex-shrink-0 text-muted" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search products, fabrics, styles…"
+                  className="flex-1 bg-transparent text-sm text-on-background placeholder:text-muted outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(false)}
+                  className="p-1 text-muted hover:text-on-background transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </form>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Mobile menu drawer */}
       <AnimatePresence>

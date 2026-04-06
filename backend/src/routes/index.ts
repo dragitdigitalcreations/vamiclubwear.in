@@ -9,6 +9,7 @@ import webhookRoutes     from '../modules/webhook/webhook.routes'
 import uploadRoutes      from '../modules/upload/upload.routes'
 import statsRoutes       from '../modules/stats/stats.routes'
 import adminRoutes       from '../modules/admin/admin.routes'
+import paymentRoutes     from '../modules/payment/payment.routes'
 
 const router = Router()
 
@@ -18,6 +19,7 @@ router.use('/products',     productRoutes)
 router.use('/inventory',    inventoryRoutes)
 router.use('/orders',       orderRoutes)
 router.use('/public',       publicOrderRoutes)   // unauthenticated customer checkout
+router.use('/payment',      paymentRoutes)       // Razorpay + COD checkout
 router.use('/webhooks',     webhookRoutes)
 router.use('/uploads',      uploadRoutes)
 router.use('/stats',        statsRoutes)
