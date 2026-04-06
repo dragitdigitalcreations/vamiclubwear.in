@@ -66,8 +66,13 @@ export const productService = {
     }
 
     return prisma.$transaction(async (tx) => {
-      // Get default location for inventory entries
-      const location = await tx.location.findFirst({ orderBy: { createdAt: 'asc' } })
+      // Get or create default location so inventory can always be seeded
+      let location = await tx.location.findFirst({ orderBy: { createdAt: 'asc' } })
+      if (!location) {
+        location = await tx.location.create({
+          data: { name: 'Main Store', address: 'Manjeri, Kerala' },
+        })
+      }
 
       const product = await tx.product.create({
         data: {
@@ -102,21 +107,20 @@ export const productService = {
         include: productFullInclude,
       })
 
+      // Build a SKU → stock map from input so order doesn't matter
+      const stockBySku = new Map(data.variants.map((v) => [v.sku, v.stock ?? 0]))
+
       // Auto-create inventory entries for each variant
-      if (location) {
-        for (let i = 0; i < product.variants.length; i++) {
-          const variant = product.variants[i]
-          const stock = data.variants[i]?.stock ?? 0
-          await tx.inventory.create({
-            data: {
-              variantId:  variant.id,
-              locationId: location.id,
-              quantity:   stock,
-              reserved:   0,
-              version:    0,
-            },
-          })
-        }
+      for (const variant of product.variants) {
+        await tx.inventory.create({
+          data: {
+            variantId:  variant.id,
+            locationId: location.id,
+            quantity:   stockBySku.get(variant.sku) ?? 0,
+            reserved:   0,
+            version:    0,
+          },
+        })
       }
 
       // Re-fetch with inventory included
