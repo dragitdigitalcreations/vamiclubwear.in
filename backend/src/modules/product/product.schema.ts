@@ -10,6 +10,7 @@ export const createVariantSchema = z.object({
   fabric:   z.string().max(50).optional(),
   style:    z.string().max(50).optional(),
   price:    z.number({ invalid_type_error: 'price must be a number' }).positive('price must be > 0'),
+  stock:    z.number().int().min(0).default(0),
 })
 
 export type CreateVariantInput = z.infer<typeof createVariantSchema>

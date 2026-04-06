@@ -54,6 +54,12 @@ router.patch(
   productController.updateProduct
 )
 
+router.delete(
+  '/:id',
+  requireAuth,
+  productController.deleteProduct
+)
+
 // ── Variants ──────────────────────────────────────────────────────────────────
 // POST /api/products/:productId/variants  [admin] — add variant to existing product
 // GET  /api/products/variants/sku/:sku    — fetch variant by SKU

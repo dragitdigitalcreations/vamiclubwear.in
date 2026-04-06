@@ -2,33 +2,24 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { RBACGuard } from '@/components/admin/RBACGuard'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { productsApi } from '@/lib/api'
+import { toast } from '@/stores/toastStore'
 import type { ProductListItem } from '@/types/admin'
-
-// Mock fallback for dev
-function mockProducts(): ProductListItem[] {
-  return [
-    { id: '1', name: 'Zari Fusion Suit',       slug: 'zari-fusion-suit',       basePrice: 3499, category: 'Indo-Western Fusion', variantCount: 6,  isActive: true,  isFeatured: true,  createdAt: new Date().toISOString() },
-    { id: '2', name: 'Mirror Work Lehenga',     slug: 'mirror-work-lehenga',    basePrice: 8999, category: 'Bridal Collection',   variantCount: 4,  isActive: true,  isFeatured: false, createdAt: new Date().toISOString() },
-    { id: '3', name: 'Sheer Chiffon Dupatta',   slug: 'sheer-chiffon-dupatta',  basePrice: 899,  category: 'Modest Fashion',      variantCount: 8,  isActive: true,  isFeatured: false, createdAt: new Date().toISOString() },
-    { id: '4', name: 'Aari Embroidery Salwar',  slug: 'aari-embroidery-salwar', basePrice: 2199, category: 'Festive & Occasion',  variantCount: 3,  isActive: false, isFeatured: false, createdAt: new Date().toISOString() },
-  ]
-}
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<ProductListItem[]>([])
   const [loading,  setLoading]  = useState(true)
 
-  useEffect(() => {
+  function load() {
+    setLoading(true)
     productsApi.list()
       .then((r) => {
-        // Map backend shape → ProductListItem (backend returns nested category + variants array)
         const mapped = (r.data as any[]).map((p: any): ProductListItem => ({
           id:           p.id,
           name:         p.name,
@@ -42,9 +33,22 @@ export default function ProductsPage() {
         }))
         setProducts(mapped)
       })
-      .catch(() => setProducts(mockProducts()))
+      .catch(() => toast.error('Failed to load products'))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(() => { load() }, [])
+
+  async function handleDelete(p: ProductListItem) {
+    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return
+    try {
+      await productsApi.delete(p.id)
+      setProducts((prev) => prev.filter((x) => x.id !== p.id))
+      toast.success(`"${p.name}" deleted`)
+    } catch {
+      toast.error('Failed to delete product')
+    }
+  }
 
   return (
     <RBACGuard section="products">
@@ -102,11 +106,22 @@ export default function ProductsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link href={`/admin/products/${p.id}/edit`} title="Edit product">
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/admin/products/${p.id}/edit`} title="Edit product">
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Delete product"
+                          onClick={() => handleDelete(p)}
+                          className="text-muted hover:text-red-400"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

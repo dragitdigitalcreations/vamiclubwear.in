@@ -66,7 +66,10 @@ export const productService = {
     }
 
     return prisma.$transaction(async (tx) => {
-      return tx.product.create({
+      // Get default location for inventory entries
+      const location = await tx.location.findFirst({ orderBy: { createdAt: 'asc' } })
+
+      const product = await tx.product.create({
         data: {
           name:        data.name,
           slug:        data.slug,
@@ -96,6 +99,29 @@ export const productService = {
             })),
           } : undefined,
         },
+        include: productFullInclude,
+      })
+
+      // Auto-create inventory entries for each variant
+      if (location) {
+        for (let i = 0; i < product.variants.length; i++) {
+          const variant = product.variants[i]
+          const stock = data.variants[i]?.stock ?? 0
+          await tx.inventory.create({
+            data: {
+              variantId:  variant.id,
+              locationId: location.id,
+              quantity:   stock,
+              reserved:   0,
+              version:    0,
+            },
+          })
+        }
+      }
+
+      // Re-fetch with inventory included
+      return tx.product.findUniqueOrThrow({
+        where: { id: product.id },
         include: productFullInclude,
       })
     })
@@ -215,6 +241,22 @@ export const productService = {
         price:    new Prisma.Decimal(variant.price),
       },
     })
+  },
+
+  async deleteProduct(id: string) {
+    await prisma.product.findUniqueOrThrow({ where: { id } }).catch(() => {
+      throw new NotFoundError(`Product ${id}`)
+    })
+    // Cascade: delete inventory → orderItems ref variants (keep orders, just delete product+variants+media)
+    await prisma.$transaction(async (tx) => {
+      const variants = await tx.productVariant.findMany({ where: { productId: id }, select: { id: true } })
+      const variantIds = variants.map((v) => v.id)
+      await tx.inventory.deleteMany({ where: { variantId: { in: variantIds } } })
+      await tx.productMedia.deleteMany({ where: { productId: id } })
+      await tx.productVariant.deleteMany({ where: { productId: id } })
+      await tx.product.delete({ where: { id } })
+    })
+    return { ok: true }
   },
 
   async getVariantBySku(sku: string) {

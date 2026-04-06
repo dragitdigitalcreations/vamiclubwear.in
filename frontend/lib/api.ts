@@ -29,7 +29,7 @@ function getToken(): string | null {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken()
 
   const res = await fetch(`${BASE_URL}/api${path}`, {
@@ -115,6 +115,9 @@ export const productsApi = {
 
   update: (id: string, payload: Partial<import('@/types/admin').ProductFormData>) =>
     request(`/products/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+
+  delete: (id: string) =>
+    request(`/products/${id}`, { method: 'DELETE' }),
 
   addVariant: (productId: string, variant: import('@/types/admin').VariantFormData) =>
     request(`/products/${productId}/variants`, {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useFieldArray, useFormContext, useWatch } from 'react-hook-form'
+import { useFieldArray, useFormContext, useWatch, Controller } from 'react-hook-form'
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -47,6 +47,7 @@ interface VariantFormRow {
   fabric?:  string
   style?:   string
   price:    number
+  stock?:   number
 }
 
 interface FormValues {
@@ -69,9 +70,10 @@ function VariantRow({
   const [expanded, setExpanded] = useState(true)
   const { register, setValue, control, formState: { errors } } = useFormContext<FormValues>()
 
-  const size   = useWatch({ control, name: `variants.${index}.size` })
-  const color  = useWatch({ control, name: `variants.${index}.color` })
-  const fabric = useWatch({ control, name: `variants.${index}.fabric` })
+  const size     = useWatch({ control, name: `variants.${index}.size` })
+  const color    = useWatch({ control, name: `variants.${index}.color` })
+  const fabric   = useWatch({ control, name: `variants.${index}.fabric` })
+  const colorHex = useWatch({ control, name: `variants.${index}.colorHex` }) ?? '#888888'
 
   // Auto-generate SKU from slug + dimensions
   useEffect(() => {
@@ -144,14 +146,26 @@ function VariantRow({
                   placeholder="e.g. Emerald Green"
                   {...register(`variants.${index}.color`)}
                 />
-                <input
-                  type="color"
-                  defaultValue="#5C4033"
-                  className="h-9 w-10 cursor-pointer rounded border border-border bg-input p-0.5"
-                  title="Pick swatch colour"
-                  onChange={(e) => setValue(`variants.${index}.colorHex`, e.target.value)}
+                <Controller
+                  control={control}
+                  name={`variants.${index}.colorHex`}
+                  render={({ field }) => (
+                    <input
+                      type="color"
+                      value={field.value ?? '#888888'}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="h-9 w-10 cursor-pointer rounded border border-border bg-input p-0.5"
+                      title="Pick swatch colour"
+                    />
+                  )}
                 />
               </div>
+              {colorHex && colorHex !== '#888888' && (
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: colorHex }} />
+                  <span className="text-xs text-muted font-mono">{colorHex}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -188,8 +202,8 @@ function VariantRow({
 
           <Separator />
 
-          {/* Price + SKU */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Price + Stock + SKU */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label>
                 Price (₹) <span className="text-destructive">*</span>
@@ -208,6 +222,17 @@ function VariantRow({
               {variantErrors?.price && (
                 <p className="text-xs text-destructive">{variantErrors.price.message as string}</p>
               )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Stock Qty</Label>
+              <Input
+                type="number"
+                min={0}
+                step={1}
+                placeholder="0"
+                {...register(`variants.${index}.stock`, { valueAsNumber: true })}
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -231,7 +256,7 @@ function VariantRow({
 // ─── VariantBuilder ────────────────────────────────────────────────────────────
 
 const BLANK_VARIANT: VariantFormRow = {
-  sku: '', size: '', color: '', colorHex: '#5C4033', fabric: '', style: '', price: 0,
+  sku: '', size: '', color: '', colorHex: '#888888', fabric: '', style: '', price: 0, stock: 0,
 }
 
 export function VariantBuilder({ productSlug, basePrice: _basePrice }: { productSlug: string; basePrice: number }) {

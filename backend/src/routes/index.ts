@@ -8,10 +8,12 @@ import publicOrderRoutes from '../modules/order/public-order.routes'
 import webhookRoutes     from '../modules/webhook/webhook.routes'
 import uploadRoutes      from '../modules/upload/upload.routes'
 import statsRoutes       from '../modules/stats/stats.routes'
+import adminRoutes       from '../modules/admin/admin.routes'
 
 const router = Router()
 
 router.use('/auth',         authRoutes)
+router.use('/admin',        adminRoutes)
 router.use('/products',     productRoutes)
 router.use('/inventory',    inventoryRoutes)
 router.use('/orders',       orderRoutes)

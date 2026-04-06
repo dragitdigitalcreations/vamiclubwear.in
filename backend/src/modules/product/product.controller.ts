@@ -101,6 +101,19 @@ export const productController = {
     }
   },
 
+  deleteProduct: async (
+    req: Request<{ id: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      await productService.deleteProduct(req.params.id)
+      res.json({ ok: true })
+    } catch (err) {
+      next(err)
+    }
+  },
+
   // ── Variants ───────────────────────────────────────────────────────────────
 
   addVariant: async (
