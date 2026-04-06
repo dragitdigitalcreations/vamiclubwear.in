@@ -1,0 +1,297 @@
+// Vami Clubwear — Production Database Schema
+// Modular, location-aware inventory with optimistic locking.
+// No external POS coupling at this stage.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Neon: use pooled URL for runtime, direct for migrations
+}
+
+// ─────────────────────────────────────────────
+// LOCATIONS
+// Physical or logical stock locations (store, warehouse, etc.)
+// ─────────────────────────────────────────────
+
+model Location {
+  id        String      @id @default(cuid())
+  name      String      @unique  // "Main Store", "Warehouse"
+  address   String?
+  isActive  Boolean     @default(true)
+  inventory Inventory[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// CATEGORIES
+// Self-referential tree (e.g. "Fusion Wear > Bridal Sets")
+// ─────────────────────────────────────────────
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  parentId    String?
+  parent      Category?  @relation("SubCategory", fields: [parentId], references: [id])
+  children    Category[] @relation("SubCategory")
+  products    Product[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([slug])
+}
+
+// ─────────────────────────────────────────────
+// PRODUCTS
+// Presentation record — purchasable units live in ProductVariant
+// ─────────────────────────────────────────────
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+// Product media — images and MP4 videos
+model ProductMedia {
+  id        String    @id @default(cuid())
+  productId String
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  type      MediaType @default(IMAGE)
+  altText   String?
+  isPrimary Boolean   @default(false)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  @@index([productId])
+}
+
+model Product {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String?          @db.Text
+  basePrice   Decimal          @db.Decimal(10, 2)
+  categoryId  String
+  category    Category         @relation(fields: [categoryId], references: [id])
+  variants    ProductVariant[]
+  media       ProductMedia[]
+  isActive    Boolean          @default(true)
+  isFeatured  Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([categoryId])
+  @@index([slug])
+}
+
+// ─────────────────────────────────────────────
+// PRODUCT VARIANTS — Multi-dimensional SKU
+// Each row = one unique purchasable configuration.
+//
+// Four fashion dimensions:
+//   size      — XS | S | M | L | XL | XXL | Free Size | Custom
+//   color     — "Emerald Green" + optional colorHex for UI swatches
+//   fabric    — Pure Silk | Georgette | Chiffon | Velvet | ...
+//   style     — Anarkali | Straight Cut | A-Line | Lehenga | Palazzo Set | ...
+// ─────────────────────────────────────────────
+
+model ProductVariant {
+  id         String      @id @default(cuid())
+  productId  String
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sku        String      @unique // e.g. VCW-ZFUS-GRN-M-SILK-ANKA
+
+  size       String?
+  color      String?
+  colorHex   String?     // hex for UI swatches, e.g. "#50C878"
+  fabric     String?
+  style      String?     // garment silhouette / cut style
+
+  price      Decimal     @db.Decimal(10, 2) // final selling price (not a modifier)
+
+  inventory        Inventory[]
+  orderItems       OrderItem[]
+  inventoryHistory InventoryHistory[]
+
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([productId])
+  @@index([sku])
+  @@index([fabric])
+  @@index([style])
+}
+
+// ─────────────────────────────────────────────
+// INVENTORY
+// Tracked per variant per location.
+// Optimistic locking via `version` prevents overselling.
+// ─────────────────────────────────────────────
+
+enum SyncStatus {
+  SYNCED    // matches POS
+  PENDING   // local change not yet pushed to POS
+  CONFLICT  // mismatch detected; needs manual resolution
+}
+
+model Inventory {
+  id         String         @id @default(cuid())
+  variantId  String
+  variant    ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  locationId String
+  location   Location       @relation(fields: [locationId], references: [id])
+
+  quantity   Int            @default(0)
+  reserved   Int            @default(0) // held by in-progress orders
+  version    Int            @default(0) // increment on every write; checked before update
+
+  syncStatus SyncStatus     @default(SYNCED)
+  lastSyncAt DateTime?      // timestamp of last successful POS sync
+  posItemCode String?        // POS system item code for this SKU
+
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([variantId, locationId])
+  @@index([locationId])
+  @@index([syncStatus])
+}
+
+// ─────────────────────────────────────────────
+// ORDERS
+// ─────────────────────────────────────────────
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  PARTIALLY_PAID
+  REFUNDED
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  orderNumber   String        @unique // VCW-250405-0001
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+  locationId    String?       // where stock was deducted from
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(UNPAID)
+  items         OrderItem[]
+  subtotal      Decimal       @db.Decimal(10, 2)
+  discount      Decimal       @default(0) @db.Decimal(10, 2)
+  total         Decimal       @db.Decimal(10, 2)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status])
+  @@index([orderNumber])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String         @id @default(cuid())
+  orderId   String
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int
+  unitPrice Decimal        @db.Decimal(10, 2) // price snapshot at time of sale
+
+  @@index([orderId])
+  @@index([variantId])
+}
+
+// ─────────────────────────────────────────────
+// WEBHOOK LOG
+// Generic audit trail for external POS events.
+// Not coupled to any specific POS system.
+// ─────────────────────────────────────────────
+
+model WebhookLog {
+  id           String    @id @default(cuid())
+  source       String    // "POS" | "MANUAL" | future system name
+  payload      Json      // raw incoming payload
+  status       String    // "PENDING" | "SUCCESS" | "FAILED"
+  errorMessage String?
+  processedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([source])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
+// ADMIN USERS
+// Staff who log in to the admin panel.
+// ─────────────────────────────────────────────
+
+enum AdminRole {
+  ADMIN
+  MANAGER
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         AdminRole @default(MANAGER)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([email])
+}
+
+// ─────────────────────────────────────────────
+// INVENTORY HISTORY
+// Audit trail for every stock change.
+// ─────────────────────────────────────────────
+
+enum InventoryAction {
+  MANUAL    // staff typed a new quantity
+  ORDER     // deducted on order placement
+  IMPORT    // CSV import
+  RESTOCK   // delta increase by staff
+  ADJUSTMENT // delta decrease by staff
+}
+
+model InventoryHistory {
+  id          String           @id @default(cuid())
+  variantId   String
+  variant     ProductVariant   @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  locationId  String?
+  oldQuantity Int
+  newQuantity Int
+  delta       Int              // newQuantity - oldQuantity
+  action      InventoryAction
+  note        String?
+  performedBy String?          // admin email or "system"
+  createdAt   DateTime         @default(now())
+
+  @@index([variantId])
+  @@index([action])
+  @@index([createdAt])
+}

@@ -1,0 +1,87 @@
+// Load .env.local first, then fall back to .env
+import dotenv from 'dotenv'
+dotenv.config({ path: '.env.local' })
+dotenv.config()
+
+// ── Environment validation ────────────────────────────────────────────────────
+const REQUIRED_ENV = ['DATABASE_URL', 'JWT_SECRET']
+const missing = REQUIRED_ENV.filter((k) => !process.env[k])
+if (missing.length) {
+  console.error(`[startup] Missing required environment variables: ${missing.join(', ')}`)
+  console.error('[startup] Copy .env.example to .env.local and fill in the values.')
+  process.exit(1)
+}
+if (process.env.JWT_SECRET === 'vami-dev-secret-change-in-production' && process.env.NODE_ENV === 'production') {
+  console.error('[startup] JWT_SECRET is still the default value — set a strong secret before deploying.')
+  process.exit(1)
+}
+
+import express, { Request, Response, NextFunction } from 'express'
+import cors from 'cors'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
+import apiRoutes from './routes/index'
+import { errorHandler } from './middleware/errorHandler'
+
+const app = express()
+const PORT = process.env.PORT ?? 3001
+
+// ── Security headers ──────────────────────────────────────────────────────────
+app.use(helmet())
+
+// ── CORS ──────────────────────────────────────────────────────────────────────
+app.use(
+  cors({
+    origin:  process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Api-Key'],
+  })
+)
+
+// ── Rate limiting ─────────────────────────────────────────────────────────────
+app.use(
+  '/api',
+  rateLimit({
+    windowMs:       60 * 1000,    // 1 minute
+    max:            120,
+    standardHeaders: true,
+    legacyHeaders:  false,
+    message:        { error: 'Too many requests — please slow down' },
+  })
+)
+
+// ── Body parser ───────────────────────────────────────────────────────────────
+app.use(express.json({ limit: '1mb' }))
+
+// ── Health check ──────────────────────────────────────────────────────────────
+app.get('/health', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    service: 'vami-clubwear-backend',
+    ts: new Date().toISOString(),
+  })
+})
+
+// ── API routes ────────────────────────────────────────────────────────────────
+app.use('/api', apiRoutes)
+
+// ── 404 ───────────────────────────────────────────────────────────────────────
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({ error: 'Not found' })
+})
+
+// ── Global error handler (must be last) ──────────────────────────────────────
+app.use(errorHandler as (err: Error, req: Request, res: Response, next: NextFunction) => void)
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`\n[server] Vami Clubwear backend → http://localhost:${PORT}`)
+  console.log('[server] Endpoints:')
+  console.log(`  GET  http://localhost:${PORT}/health`)
+  console.log(`  *    http://localhost:${PORT}/api/products`)
+  console.log(`  *    http://localhost:${PORT}/api/inventory`)
+  console.log(`  *    http://localhost:${PORT}/api/orders`)
+  console.log(`  POST http://localhost:${PORT}/api/webhooks/pos\n`)
+})
+
+export default app
