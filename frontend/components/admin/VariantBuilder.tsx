@@ -256,7 +256,7 @@ function VariantRow({
 // ─── VariantBuilder ────────────────────────────────────────────────────────────
 
 const BLANK_VARIANT: VariantFormRow = {
-  sku: '', size: '', color: '', colorHex: '#888888', fabric: '', style: '', price: 0, stock: 0,
+  sku: '', size: '', color: '', colorHex: '#000000', fabric: '', style: '', price: 0, stock: 0,
 }
 
 export function VariantBuilder({ productSlug, basePrice: _basePrice }: { productSlug: string; basePrice: number }) {

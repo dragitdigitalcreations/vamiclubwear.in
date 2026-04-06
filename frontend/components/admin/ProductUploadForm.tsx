@@ -26,10 +26,11 @@ const variantSchema = z.object({
   sku:      z.string().min(1, 'SKU is required'),
   size:     z.string().optional(),
   color:    z.string().optional(),
-  colorHex: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().or(z.literal('')),
+  colorHex: z.string().optional(),
   fabric:   z.string().optional(),
   style:    z.string().optional(),
   price:    z.number({ invalid_type_error: 'Price must be a number' }).positive('Price must be > 0'),
+  stock:    z.number().int().min(0).default(0),
 })
 
 const productSchema = z.object({
