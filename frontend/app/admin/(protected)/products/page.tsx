@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye } from 'lucide-react'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { RBACGuard } from '@/components/admin/RBACGuard'
 import { Button } from '@/components/ui/button'
@@ -107,6 +107,11 @@ export default function ProductsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/products/${p.slug}`} target="_blank" title="View on storefront">
+                            <Eye className="h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
                         <Button variant="ghost" size="icon" asChild>
                           <Link href={`/admin/products/${p.id}/edit`} title="Edit product">
                             <Pencil className="h-3.5 w-3.5" />

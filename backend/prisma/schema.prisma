@@ -186,26 +186,55 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum ShippingStatus {
+  NOT_CREATED
+  CREATED
+  SHIPPED
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+}
+
+enum InvoiceStatus {
+  PENDING
+  CREATED
+}
+
 model Order {
-  id            String        @id @default(cuid())
-  orderNumber   String        @unique // VCW-250405-0001
-  customerName  String?
-  customerEmail String?
-  customerPhone String?
-  locationId    String?       // where stock was deducted from
-  status        OrderStatus   @default(PENDING)
-  paymentStatus PaymentStatus @default(UNPAID)
-  items         OrderItem[]
-  subtotal      Decimal       @db.Decimal(10, 2)
-  discount      Decimal       @default(0) @db.Decimal(10, 2)
-  total         Decimal       @db.Decimal(10, 2)
-  notes         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                   String         @id @default(cuid())
+  orderNumber          String         @unique // VCW-250405-0001
+  customerName         String?
+  customerEmail        String?
+  customerPhone        String?
+  locationId           String?        // where stock was deducted from
+  shippingAddress      String?
+  shippingCity         String?
+  shippingState        String?
+  shippingPincode      String?
+  status               OrderStatus    @default(PENDING)
+  paymentStatus        PaymentStatus  @default(UNPAID)
+  // Delhivery shipping fields
+  shippingStatus       ShippingStatus @default(NOT_CREATED)
+  awbNumber            String?
+  trackingUrl          String?
+  delhiveryShipmentId  String?
+  // Acrotex invoice fields
+  invoiceStatus        InvoiceStatus  @default(PENDING)
+  invoiceNumber        String?
+  invoicePdfUrl        String?
+  items                OrderItem[]
+  subtotal             Decimal        @db.Decimal(10, 2)
+  discount             Decimal        @default(0) @db.Decimal(10, 2)
+  total                Decimal        @db.Decimal(10, 2)
+  notes                String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
 
   @@index([status])
   @@index([orderNumber])
   @@index([createdAt])
+  @@index([awbNumber])
 }
 
 model OrderItem {

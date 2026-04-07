@@ -368,18 +368,27 @@ function OrderConfirmation({ orderNumber, onClose }: { orderNumber: string; onCl
       <p className="text-muted max-w-sm text-sm">
         Thank you for shopping with Vami Clubwear. We'll contact you shortly to confirm delivery.
       </p>
-      <div className="bg-surface border border-border px-6 py-3">
+      <div className="bg-surface border border-border px-6 py-3 w-full max-w-xs">
         <p className="text-xs text-muted uppercase tracking-widest">Order Number</p>
         <p className="mt-1 font-display text-xl font-bold text-on-background">{orderNumber}</p>
       </div>
       <p className="text-xs text-muted">A confirmation has been sent to your email (if provided).</p>
-      <Link
-        href="/products"
-        className="mt-2 inline-flex items-center gap-2 bg-primary px-8 py-3.5 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
-      >
-        Continue Shopping
-        <ArrowRight className="h-3.5 w-3.5" />
-      </Link>
+      <div className="flex flex-col items-center gap-3 w-full max-w-xs">
+        <Link
+          href={`/track?order=${encodeURIComponent(orderNumber)}`}
+          className="flex w-full items-center justify-center gap-2 border border-border px-8 py-3.5 text-xs font-semibold uppercase tracking-widest text-on-background transition-colors hover:border-on-background"
+        >
+          Track Order
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+        <Link
+          href="/products"
+          className="flex w-full items-center justify-center gap-2 bg-primary px-8 py-3.5 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
+        >
+          Continue Shopping
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
     </motion.div>
   )
 }

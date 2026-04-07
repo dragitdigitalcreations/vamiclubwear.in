@@ -2,8 +2,11 @@
 
 import Link from 'next/link'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { useRef } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
+import { productsApi } from '@/lib/api'
+import { ProductCard } from '@/components/shop/ProductCard'
+import type { Product } from '@/types/product'
 
 // ─── Fade-up animation variant ────────────────────────────────────────────────
 const fadeUp = {
@@ -282,8 +285,28 @@ function BrandStatement() {
   )
 }
 
-// ─── Featured placeholder ─────────────────────────────────────────────────────
+// ─── Featured products ────────────────────────────────────────────────────────
 function FeaturedProducts() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading,  setLoading]  = useState(true)
+
+  useEffect(() => {
+    productsApi
+      .list({ isFeatured: 'true', isActive: 'true', limit: 4 })
+      .then((res) => {
+        // If no featured products exist fall back to newest 4
+        if (res.data.length > 0) {
+          setProducts(res.data as unknown as Product[])
+        } else {
+          return productsApi
+            .list({ isActive: 'true', limit: 4 })
+            .then((r) => setProducts(r.data as unknown as Product[]))
+        }
+      })
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-24 md:px-8">
       <motion.div
@@ -308,22 +331,35 @@ function FeaturedProducts() {
       </motion.div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <motion.div
-            key={i}
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-40px' }}
-            custom={i * 0.5}
-          >
-            <div className="skeleton aspect-[3/4] w-full rounded" />
-            <div className="mt-3 space-y-2">
-              <div className="skeleton h-4 w-3/4 rounded" />
-              <div className="skeleton h-3 w-1/2 rounded" />
-            </div>
-          </motion.div>
-        ))}
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <motion.div
+                key={i}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: '-40px' }}
+                custom={i * 0.5}
+              >
+                <div className="skeleton aspect-[3/4] w-full rounded" />
+                <div className="mt-3 space-y-2">
+                  <div className="skeleton h-4 w-3/4 rounded" />
+                  <div className="skeleton h-3 w-1/2 rounded" />
+                </div>
+              </motion.div>
+            ))
+          : products.map((product, i) => (
+              <motion.div
+                key={product.id}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: '-40px' }}
+                custom={i * 0.5}
+              >
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
       </div>
     </section>
   )

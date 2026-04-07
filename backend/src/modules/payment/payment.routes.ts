@@ -128,12 +128,15 @@ router.post('/verify', async (req: Request, res: Response, next: NextFunction) =
 
     // Create DB order + deduct inventory
     const order = await orderService.createOrder({
-      ...customer,
+      customerName:    customer.customerName,
+      customerEmail:   customer.customerEmail,
+      customerPhone:   customer.customerPhone,
+      shippingAddress: customer.address,
+      shippingCity:    customer.city,
+      shippingState:   customer.state,
+      shippingPincode: customer.pincode,
+      notes:           customer.notes,
       items,
-      notes: [
-        customer.notes,
-        customer.address ? `Address: ${customer.address}, ${customer.city ?? ''}, ${customer.state ?? ''} - ${customer.pincode ?? ''}` : '',
-      ].filter(Boolean).join('\n'),
     })
 
     // Update payment status
@@ -164,12 +167,15 @@ router.post('/cod', async (req: Request, res: Response, next: NextFunction) => {
     const { items, address, city, state, pincode, notes, ...customer } = parsed.data
 
     const order = await orderService.createOrder({
-      ...customer,
+      customerName:    customer.customerName,
+      customerEmail:   customer.customerEmail,
+      customerPhone:   customer.customerPhone,
+      shippingAddress: address,
+      shippingCity:    city,
+      shippingState:   state,
+      shippingPincode: pincode,
+      notes,
       items,
-      notes: [
-        notes,
-        address ? `Address: ${address}, ${city ?? ''}, ${state ?? ''} - ${pincode ?? ''}` : '',
-      ].filter(Boolean).join('\n'),
     })
 
     res.status(201).json({

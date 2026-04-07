@@ -91,6 +91,7 @@ export const productsApi = {
     categoryId?: string
     category?: string   // slug shorthand
     isActive?: 'true' | 'false'
+    isFeatured?: 'true' | 'false'
     search?: string
   } = {}) => {
     const qs = new URLSearchParams(
@@ -244,6 +245,97 @@ export const ordersApi = {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     }),
+
+  // Public order tracking — no auth required
+  track: (orderNumber: string) =>
+    request<{
+      orderNumber:    string
+      status:         string
+      shippingStatus: string
+      awbNumber:      string | null
+      trackingUrl:    string | null
+      customerName:   string | null
+      total:          number
+      createdAt:      string
+      items: Array<{ quantity: number; variant: { sku: string; product: { name: string } } }>
+    }>(`/shipping/order-track/${encodeURIComponent(orderNumber)}`),
+
+  // Customer My Orders — lookup by phone or email (no auth)
+  lookup: async (by: { phone?: string; email?: string }): Promise<{
+    orders: Array<{
+      orderNumber:    string
+      status:         string
+      shippingStatus: string
+      awbNumber:      string | null
+      trackingUrl:    string | null
+      total:          number
+      createdAt:      string
+      customerName:   string | null
+      items: Array<{
+        quantity:  number
+        unitPrice: number
+        variant: { sku: string; size: string | null; color: string | null; product: { name: string; slug: string } }
+      }>
+    }>
+    count: number
+  }> => {
+    const qs = new URLSearchParams()
+    if (by.phone) qs.set('phone', by.phone)
+    if (by.email) qs.set('email', by.email)
+    const url = typeof window !== 'undefined'
+      ? `/api/public/orders/lookup?${qs}`
+      : `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/public/orders/lookup?${qs}`
+    const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } })
+    const data = await res.json()
+    if (!res.ok) throw new ApiError(res.status, data.error ?? 'Lookup failed')
+    return data
+  },
+
+  // Full order detail by order number — no auth
+  getPublic: async (orderNumber: string) => {
+    const url = typeof window !== 'undefined'
+      ? `/api/public/orders/${encodeURIComponent(orderNumber)}`
+      : `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/public/orders/${encodeURIComponent(orderNumber)}`
+    const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } })
+    const data = await res.json()
+    if (!res.ok) throw new ApiError(res.status, data.error ?? 'Order not found')
+    return data as {
+      orderNumber: string; status: string; paymentStatus: string
+      shippingStatus: string; awbNumber: string | null; trackingUrl: string | null
+      total: number; createdAt: string
+      customerName: string | null; customerEmail: string | null; customerPhone: string | null
+      shippingAddress: string | null; shippingCity: string | null
+      shippingState: string | null; shippingPincode: string | null; notes: string | null
+      items: Array<{
+        quantity: number; unitPrice: number
+        variant: { sku: string; size: string | null; color: string | null; product: { name: string; slug: string } }
+      }>
+    }
+  },
+}
+
+// ── Shipping ──────────────────────────────────────────────────────────────────
+
+export const shippingApi = {
+  createShipment: (orderId: string) =>
+    request<{ awbNumber: string; trackingUrl: string; status: string }>(
+      `/shipping/${orderId}/create`, { method: 'POST' }
+    ),
+
+  trackShipment: (orderId: string) =>
+    request<{ awbNumber: string; trackingUrl: string; liveData: any }>(
+      `/shipping/${orderId}/track`
+    ),
+
+  updateInvoice: (orderId: string, data: {
+    invoiceNumber?: string
+    invoicePdfUrl?: string
+    invoiceStatus?: 'PENDING' | 'CREATED'
+  }) =>
+    request<{ invoiceStatus: string; invoiceNumber: string | null; invoicePdfUrl: string | null }>(
+      `/shipping/${orderId}/invoice`,
+      { method: 'PATCH', body: JSON.stringify(data) }
+    ),
 }
 
 // ── Uploads ───────────────────────────────────────────────────────────────────

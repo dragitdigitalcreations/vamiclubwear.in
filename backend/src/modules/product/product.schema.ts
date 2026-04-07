@@ -65,13 +65,14 @@ export type CreateCategoryInput = z.infer<typeof createCategorySchema>
 // ── List query ───────────────────────────────────────────────────────────────
 
 export const listProductsSchema = z.object({
-  page:       z.coerce.number().int().min(1).default(1),
-  limit:      z.coerce.number().int().min(1).max(100).default(20),
+  page:        z.coerce.number().int().min(1).default(1),
+  limit:       z.coerce.number().int().min(1).max(100).default(20),
   // Accept either a DB ID or a category slug — resolved in service
-  categoryId: z.string().optional(),
-  category:   z.string().optional(),   // category slug shorthand
-  isActive:   z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
-  search:     z.string().max(100).optional(),
+  categoryId:  z.string().optional(),
+  category:    z.string().optional(),   // category slug shorthand
+  isActive:    z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
+  isFeatured:  z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
+  search:      z.string().max(100).optional(),
 })
 
 export type ListProductsQuery = z.infer<typeof listProductsSchema>

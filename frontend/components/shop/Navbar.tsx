@@ -13,6 +13,8 @@ const NAV_LINKS = [
   { href: '/products?category=fusion', label: 'Fusion Wear' },
   { href: '/products?category=bridal', label: 'Bridal' },
   { href: '/products?category=modest', label: 'Modest Fashion' },
+  { href: '/my-orders',                label: 'My Orders' },
+  { href: '/track',                    label: 'Track Order' },
 ]
 
 export function Navbar() {

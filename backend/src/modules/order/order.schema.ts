@@ -1,12 +1,16 @@
 import { z } from 'zod'
 
 export const createOrderSchema = z.object({
-  customerName:  z.string().max(150).optional(),
-  customerEmail: z.string().email('Invalid email').max(200).optional(),
-  customerPhone: z.string().max(20).optional(),
-  locationId:    z.string().cuid('Invalid locationId').optional(),
-  notes:         z.string().max(1000).optional(),
-  items:         z
+  customerName:    z.string().max(150).optional(),
+  customerEmail:   z.string().email('Invalid email').max(200).optional(),
+  customerPhone:   z.string().max(20).optional(),
+  locationId:      z.string().cuid('Invalid locationId').optional(),
+  shippingAddress: z.string().max(500).optional(),
+  shippingCity:    z.string().max(100).optional(),
+  shippingState:   z.string().max(100).optional(),
+  shippingPincode: z.string().max(10).optional(),
+  notes:           z.string().max(1000).optional(),
+  items:           z
     .array(
       z.object({
         variantId: z.string().cuid('Invalid variantId'),

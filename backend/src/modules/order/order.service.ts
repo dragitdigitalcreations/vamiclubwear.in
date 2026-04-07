@@ -4,6 +4,8 @@ import { CreateOrderInput, UpdateOrderStatusInput, ListOrdersQuery } from './ord
 import { NotFoundError, InsufficientStockError, ConflictError } from '../../utils/errors'
 import { generateOrderNumber } from '../../utils/orderNumber'
 import { sendOrderConfirmationToCustomer, sendOrderNotificationToStore } from '../../lib/email'
+import { createDelhiveryShipment, mapDelhiveryStatus } from '../shipping/delhivery.service'
+import { sendShipmentCreatedEmail } from '../../lib/email'
 
 const MAX_LOCK_RETRIES = 3
 
@@ -54,12 +56,16 @@ export const orderService = {
       // ── 4. Create the order record ─────────────────────────────────────────
       const order = await tx.order.create({
         data: {
-          orderNumber:   generateOrderNumber(),
-          customerName:  input.customerName,
-          customerEmail: input.customerEmail,
-          customerPhone: input.customerPhone,
+          orderNumber:     generateOrderNumber(),
+          customerName:    input.customerName,
+          customerEmail:   input.customerEmail,
+          customerPhone:   input.customerPhone,
           locationId,
-          notes:         input.notes,
+          shippingAddress: input.shippingAddress,
+          shippingCity:    input.shippingCity,
+          shippingState:   input.shippingState,
+          shippingPincode: input.shippingPincode,
+          notes:           input.notes,
           subtotal:      new Prisma.Decimal(subtotal),
           total:         new Prisma.Decimal(subtotal),
           items: {
@@ -192,12 +198,80 @@ export const orderService = {
   },
 
   async updateStatus(id: string, input: UpdateOrderStatusInput) {
-    const order = await prisma.order.findUnique({ where: { id } })
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: { include: { variant: { select: { sku: true, product: { select: { name: true } } } } } },
+      },
+    })
     if (!order) throw new NotFoundError(`Order ${id}`)
 
-    return prisma.order.update({
+    const updated = await prisma.order.update({
       where: { id },
       data: { status: input.status },
     })
+
+    // Auto-create Delhivery shipment when admin confirms the order
+    if (
+      input.status === 'CONFIRMED' &&
+      order.shippingStatus === 'NOT_CREATED' &&
+      order.customerPhone &&
+      order.shippingAddress &&
+      order.shippingPincode &&
+      process.env.DELHIVERY_TOKEN
+    ) {
+      // fire-and-forget — don't block the status update response
+      ;(async () => {
+        try {
+          const productDesc = order.items
+            .map((i) => `${i.variant.product.name} (${i.variant.sku}) ×${i.quantity}`)
+            .join(', ')
+
+          const result = await createDelhiveryShipment({
+            orderNumber:  order.orderNumber,
+            customerName: order.customerName ?? 'Customer',
+            phone:        order.customerPhone!,
+            address:      order.shippingAddress!,
+            city:         order.shippingCity ?? '',
+            state:        order.shippingState ?? '',
+            pincode:      order.shippingPincode!,
+            totalAmount:  Number(order.total),
+            paymentMode:  order.paymentStatus === 'PAID' ? 'Prepaid' : 'COD',
+            productDesc,
+          })
+
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              shippingStatus:      'CREATED',
+              awbNumber:           result.awbNumber,
+              trackingUrl:         result.trackingUrl,
+              delhiveryShipmentId: result.shipmentId,
+            },
+          })
+
+          const emailItems = order.items.map((i) => ({
+            name:  i.variant.product.name,
+            sku:   i.variant.sku,
+            qty:   i.quantity,
+            price: Number(i.unitPrice),
+          }))
+          sendShipmentCreatedEmail({
+            orderNumber:   order.orderNumber,
+            customerName:  order.customerName,
+            customerEmail: order.customerEmail,
+            awbNumber:     result.awbNumber,
+            trackingUrl:   result.trackingUrl,
+            items:         emailItems,
+            total:         Number(order.total),
+          }).catch(() => {})
+
+        } catch (err) {
+          console.error('[shipping] Auto-create Delhivery shipment failed:', err)
+        }
+      })()
+    }
+
+    return updated
   },
 }

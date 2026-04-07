@@ -132,7 +132,7 @@ export const productService = {
   },
 
   async listProducts(query: ListProductsQuery) {
-    const { page, limit, categoryId, category, isActive, search } = query
+    const { page, limit, categoryId, category, isActive, isFeatured, search } = query
     const skip = (page - 1) * limit
 
     // Resolve category slug → ID if provided
@@ -148,6 +148,7 @@ export const productService = {
     const where: Prisma.ProductWhereInput = {
       ...(resolvedCategoryId !== undefined && { categoryId: resolvedCategoryId }),
       ...(isActive           !== undefined && { isActive }),
+      ...(isFeatured         !== undefined && { isFeatured }),
       ...(search             !== undefined && {
         OR: [
           { name:        { contains: search, mode: 'insensitive' } },

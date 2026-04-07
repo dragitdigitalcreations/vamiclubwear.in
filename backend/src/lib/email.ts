@@ -188,6 +188,101 @@ export async function sendOrderNotificationToStore(data: OrderEmailData): Promis
   })
 }
 
+// ─── Shipment created (to customer) ──────────────────────────────────────────
+
+interface ShipmentEmailData extends OrderEmailData {
+  awbNumber:  string
+  trackingUrl: string
+}
+
+export async function sendShipmentCreatedEmail(data: ShipmentEmailData): Promise<void> {
+  const t = getTransporter()
+  if (!t || !data.customerEmail) return
+
+  const html = wrapHtml(`
+    <div class="body">
+      <h2>Your order is on its way${data.customerName ? `, ${data.customerName.split(' ')[0]}` : ''}!</h2>
+      <p>Great news — your Vami Clubwear order has been shipped and is heading to you.</p>
+      <div class="order-num">${data.orderNumber}</div>
+      <table style="width:100%;margin:20px 0;border-collapse:collapse;">
+        <tr>
+          <td style="padding:10px 14px;background:#f7f3ef;font-size:12px;color:#888;width:140px;">AWB / Tracking No.</td>
+          <td style="padding:10px 14px;font-weight:700;font-family:monospace;">${data.awbNumber}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 14px;background:#f7f3ef;font-size:12px;color:#888;">Carrier</td>
+          <td style="padding:10px 14px;">Delhivery</td>
+        </tr>
+      </table>
+      <p>
+        <a href="${data.trackingUrl}" style="display:inline-block;background:#5c4033;color:#fff;padding:12px 28px;text-decoration:none;font-size:13px;font-weight:600;letter-spacing:.05em;border-radius:2px;">
+          Track Your Order
+        </a>
+      </p>
+      <table class="items" style="margin-top:24px;">
+        <thead><tr>
+          <th>Item</th>
+          <th class="right">Qty</th>
+          <th class="right">Amount</th>
+        </tr></thead>
+        <tbody>${buildOrderRows(data.items)}</tbody>
+        <tfoot><tr class="total-row">
+          <td colspan="2">Total</td>
+          <td class="right">₹${data.total.toLocaleString('en-IN')}</td>
+        </tr></tfoot>
+      </table>
+      <p style="font-size:12px;color:#999;margin-top:20px;">
+        Expected delivery: 3–7 business days. For any issues, reply to this email.
+      </p>
+    </div>
+  `)
+
+  await t.sendMail({
+    from: from(),
+    to:   data.customerEmail,
+    subject: `Your order ${data.orderNumber} has been shipped! 🚚`,
+    html,
+    text: `Your order ${data.orderNumber} has been shipped. AWB: ${data.awbNumber}. Track at: ${data.trackingUrl}`,
+  })
+}
+
+// ─── Delivery confirmation (to customer) ─────────────────────────────────────
+
+interface DeliveryEmailData {
+  orderNumber:   string
+  customerName?: string | null
+  customerEmail?: string | null
+  total:         number
+}
+
+export async function sendDeliveryConfirmationEmail(data: DeliveryEmailData): Promise<void> {
+  const t = getTransporter()
+  if (!t || !data.customerEmail) return
+
+  const html = wrapHtml(`
+    <div class="body">
+      <h2>Order Delivered${data.customerName ? ` — Thank you, ${data.customerName.split(' ')[0]}` : ''}!</h2>
+      <p>Your Vami Clubwear order has been successfully delivered. We hope you love your new pieces!</p>
+      <div class="order-num">${data.orderNumber}</div>
+      <p style="margin-top:20px;">
+        <span class="badge" style="background:#2e7d32;">✓ Delivered</span>
+      </p>
+      <p style="margin-top:20px;font-size:13px;color:#777;">
+        If you have any questions or concerns about your order, please reply to this email
+        or reach us on WhatsApp. We'd love to hear your feedback!
+      </p>
+    </div>
+  `)
+
+  await t.sendMail({
+    from: from(),
+    to:   data.customerEmail,
+    subject: `Delivered: Order ${data.orderNumber} | Vami Clubwear`,
+    html,
+    text: `Your order ${data.orderNumber} has been delivered. Thank you for shopping with Vami Clubwear!`,
+  })
+}
+
 // ─── Admin invite email ───────────────────────────────────────────────────────
 
 export async function sendAdminInvite(opts: {

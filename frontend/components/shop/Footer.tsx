@@ -9,10 +9,12 @@ const SHOP_LINKS = [
 ]
 
 const INFO_LINKS = [
-  { href: '/about',    label: 'About Us' },
-  { href: '/contact',  label: 'Contact' },
-  { href: '/shipping', label: 'Shipping & Returns' },
-  { href: '/sizing',   label: 'Size Guide' },
+  { href: '/about',      label: 'About Us' },
+  { href: '/contact',    label: 'Contact' },
+  { href: '/my-orders',  label: 'My Orders' },
+  { href: '/track',      label: 'Track Order' },
+  { href: '/shipping',   label: 'Shipping & Returns' },
+  { href: '/sizing',     label: 'Size Guide' },
 ]
 
 export function Footer() {
