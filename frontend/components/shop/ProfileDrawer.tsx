@@ -6,9 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Package, Search, Phone, Mail, ChevronRight,
   ExternalLink, Truck, Clock, CheckCircle, XCircle,
-  MessageCircle, ArrowRight,
+  MessageCircle, ArrowRight, MapPin, Pencil, Trash2, Save,
 } from 'lucide-react'
 import { ordersApi } from '@/lib/api'
+import { useSavedAddress, type SavedAddress } from '@/hooks/useSavedAddress'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,145 @@ function statusIcon(s: string) {
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '919XXXXXXXXX'
 const WHATSAPP_MSG    = 'Hi Vami Clubwear! I need help with my order.'
+
+// ─── Saved Address Section ────────────────────────────────────────────────────
+
+function AddressSection() {
+  const { saved, loaded, save, clear } = useSavedAddress()
+  const [editing, setEditing] = useState(false)
+  const [form, setForm] = useState<SavedAddress>({
+    customerName: '', customerPhone: '', address: '', city: '', state: '', pincode: '',
+  })
+  const [errors, setErrors] = useState<Partial<SavedAddress>>({})
+
+  // Open edit form pre-filled with current saved data
+  function startEdit() {
+    setForm(saved ?? { customerName: '', customerPhone: '', address: '', city: '', state: '', pincode: '' })
+    setErrors({})
+    setEditing(true)
+  }
+
+  function validate() {
+    const e: Partial<SavedAddress> = {}
+    if (!form.customerName.trim())  e.customerName  = 'Required'
+    if (!form.customerPhone.trim()) e.customerPhone = 'Required'
+    if (!form.address.trim())       e.address       = 'Required'
+    if (!form.city.trim())          e.city          = 'Required'
+    if (!form.pincode.trim())       e.pincode       = 'Required'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
+  function handleSave() {
+    if (!validate()) return
+    save(form)
+    setEditing(false)
+  }
+
+  const inp = (key: keyof SavedAddress) => ({
+    value: form[key],
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm(p => ({ ...p, [key]: e.target.value })),
+  })
+
+  const inputCls = (err?: string) =>
+    `w-full border ${err ? 'border-red-500' : 'border-border'} bg-transparent px-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors rounded`
+
+  if (!loaded) return null
+
+  return (
+    <div className="border-b border-border px-5 py-5">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-primary-light" />
+          <h3 className="text-sm font-semibold text-on-background">Saved Address</h3>
+        </div>
+        {saved && !editing && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={startEdit}
+              className="flex items-center gap-1 rounded px-2 py-1 text-xs text-muted hover:text-on-background hover:bg-surface-elevated transition-colors"
+            >
+              <Pencil className="h-3 w-3" /> Edit
+            </button>
+            <button
+              onClick={clear}
+              className="flex items-center gap-1 rounded px-2 py-1 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Show saved address */}
+      {saved && !editing && (
+        <div className="rounded border border-border bg-surface-elevated p-3 space-y-1 text-sm">
+          <p className="font-medium text-on-background">{saved.customerName}</p>
+          <p className="text-muted text-xs">{saved.customerPhone}</p>
+          <p className="text-muted text-xs pt-1 border-t border-border">
+            {[saved.address, saved.city, saved.state, saved.pincode].filter(Boolean).join(', ')}
+          </p>
+        </div>
+      )}
+
+      {/* Edit / Add form */}
+      {(!saved || editing) && (
+        <div className="space-y-2.5">
+          {!saved && (
+            <p className="text-xs text-muted">
+              Save your address here for one-tap checkout every time.
+            </p>
+          )}
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="col-span-2">
+              <input {...inp('customerName')} placeholder="Full Name *" className={inputCls(errors.customerName)} />
+              {errors.customerName && <p className="mt-0.5 text-[10px] text-red-400">{errors.customerName}</p>}
+            </div>
+            <div className="col-span-2">
+              <input {...inp('customerPhone')} type="tel" placeholder="Phone Number *" className={inputCls(errors.customerPhone)} />
+              {errors.customerPhone && <p className="mt-0.5 text-[10px] text-red-400">{errors.customerPhone}</p>}
+            </div>
+            <div className="col-span-2">
+              <input {...inp('address')} placeholder="House / Street / Area *" className={inputCls(errors.address)} />
+              {errors.address && <p className="mt-0.5 text-[10px] text-red-400">{errors.address}</p>}
+            </div>
+            <div>
+              <input {...inp('city')} placeholder="City *" className={inputCls(errors.city)} />
+              {errors.city && <p className="mt-0.5 text-[10px] text-red-400">{errors.city}</p>}
+            </div>
+            <div>
+              <input {...inp('pincode')} placeholder="Pincode *" className={inputCls(errors.pincode)} />
+              {errors.pincode && <p className="mt-0.5 text-[10px] text-red-400">{errors.pincode}</p>}
+            </div>
+            <div className="col-span-2">
+              <input {...inp('state')} placeholder="State (e.g. Kerala)" className={inputCls()} />
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleSave}
+              className="flex flex-1 items-center justify-center gap-1.5 bg-primary py-2 text-xs font-semibold uppercase tracking-widest text-white hover:opacity-90 transition-opacity rounded"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {saved ? 'Update Address' : 'Save Address'}
+            </button>
+            {editing && (
+              <button
+                onClick={() => setEditing(false)}
+                className="px-4 py-2 text-xs text-muted border border-border hover:text-on-background transition-colors rounded"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ─── Single order row ─────────────────────────────────────────────────────────
 
@@ -309,6 +449,9 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   </p>
                 )}
               </div>
+
+              {/* ── Saved Address ──────────────────────────────── */}
+              <AddressSection />
 
               {/* ── Track by order number ──────────────────────── */}
               <TrackSection onClose={onClose} />

@@ -8,6 +8,7 @@ import { Minus, Plus, X, ShoppingBag, ArrowLeft, ArrowRight, Loader2, CheckCircl
 import { useCartStore, selectTotalItems, selectSubtotal } from '@/stores/cartStore'
 import { ApiError } from '@/lib/api'
 import { toast } from '@/stores/toastStore'
+import { useSavedAddress } from '@/hooks/useSavedAddress'
 
 const RAZORPAY_KEY = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? ''
 
@@ -56,10 +57,29 @@ function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutModalProps) {
   const subtotal = useCartStore(selectSubtotal)
   const [form,    setForm]   = useState<CheckoutForm>(EMPTY_FORM)
   const [method,  setMethod] = useState<PaymentMethod>('cod')
-  const [submitting, setSubmitting] = useState(false)
+  const [submitting,  setSubmitting]  = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Partial<CheckoutForm>>({})
+  const [saveAddr,    setSaveAddr]    = useState(false)
+
+  const { saved: savedAddress, save: persistAddress } = useSavedAddress()
 
   const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001')
+
+  // Pre-fill from saved address when modal opens
+  useEffect(() => {
+    if (!isOpen) return
+    if (savedAddress) {
+      setForm(prev => ({
+        ...prev,
+        customerName:  prev.customerName  || savedAddress.customerName,
+        customerPhone: prev.customerPhone || savedAddress.customerPhone,
+        address:       prev.address       || savedAddress.address,
+        city:          prev.city          || savedAddress.city,
+        state:         prev.state         || savedAddress.state,
+        pincode:       prev.pincode       || savedAddress.pincode,
+      }))
+    }
+  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Lazy-load Razorpay script when modal opens
   useEffect(() => {
@@ -70,6 +90,33 @@ function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutModalProps) {
     s.async = true
     document.head.appendChild(s)
   }, [isOpen])
+
+  function applyUseSaved() {
+    if (!savedAddress) return
+    setForm(prev => ({
+      ...prev,
+      customerName:  savedAddress.customerName,
+      customerPhone: savedAddress.customerPhone,
+      address:       savedAddress.address,
+      city:          savedAddress.city,
+      state:         savedAddress.state,
+      pincode:       savedAddress.pincode,
+    }))
+    setFieldErrors({})
+  }
+
+  function maybePersistAddress() {
+    if (saveAddr) {
+      persistAddress({
+        customerName:  form.customerName,
+        customerPhone: form.customerPhone,
+        address:       form.address,
+        city:          form.city,
+        state:         form.state,
+        pincode:       form.pincode,
+      })
+    }
+  }
 
   function validate(): boolean {
     const e: Partial<CheckoutForm> = {}
@@ -97,6 +144,7 @@ function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutModalProps) {
       })
       const data = await res.json()
       if (!res.ok) throw new ApiError(res.status, data.error ?? 'Order failed')
+      maybePersistAddress()
       clearCart()
       onSuccess(data.orderNumber)
     } catch (err: any) {
@@ -158,6 +206,7 @@ function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutModalProps) {
             })
             const vData = await vRes.json()
             if (!vRes.ok) throw new ApiError(vRes.status, vData.error ?? 'Payment verification failed')
+            maybePersistAddress()
             clearCart()
             onSuccess(vData.orderNumber)
           } catch (err: any) {
@@ -259,7 +308,18 @@ function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutModalProps) {
 
                 {/* Shipping address */}
                 <div className="space-y-3">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-on-background">Delivery Address</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-on-background">Delivery Address</p>
+                    {savedAddress && (
+                      <button
+                        type="button"
+                        onClick={applyUseSaved}
+                        className="flex items-center gap-1.5 rounded bg-primary/10 border border-primary/30 px-2.5 py-1 text-[11px] font-semibold text-primary-light hover:bg-primary/20 transition-colors"
+                      >
+                        ↙ Use Saved Address
+                      </button>
+                    )}
+                  </div>
                   <div>
                     <input {...f('address')} placeholder="House / Flat, Street, Area *" className={inputCls(fieldErrors.address)} />
                     {fieldErrors.address && <p className="mt-1 text-xs text-red-400">{fieldErrors.address}</p>}
@@ -281,6 +341,25 @@ function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutModalProps) {
                     placeholder="Special instructions (optional)"
                     className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors resize-none"
                   />
+
+                  {/* Save address checkbox */}
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <div
+                      onClick={() => setSaveAddr(v => !v)}
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center border transition-colors ${
+                        saveAddr ? 'border-primary bg-primary' : 'border-border bg-transparent'
+                      }`}
+                    >
+                      {saveAddr && (
+                        <svg viewBox="0 0 10 8" fill="none" className="h-2.5 w-2.5">
+                          <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted">
+                      {savedAddress ? 'Update my saved address with this one' : 'Save this address for next time'}
+                    </span>
+                  </label>
                 </div>
 
                 {/* Payment method */}
