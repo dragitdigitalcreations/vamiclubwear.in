@@ -228,6 +228,33 @@ export const productService = {
     })
   },
 
+  // ── Showcase Videos ────────────────────────────────────────────────────────
+  // Returns active products that have at least one VIDEO media entry.
+  // Used by the homepage video-showcase strip.
+
+  async getShowcaseVideos(limit = 12) {
+    return prisma.product.findMany({
+      where: {
+        isActive: true,
+        media: { some: { type: 'VIDEO' } },
+      },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id:        true,
+        name:      true,
+        slug:      true,
+        basePrice: true,
+        media: {
+          where:   { type: 'VIDEO' },
+          take:    1,
+          orderBy: { sortOrder: 'asc' },
+          select:  { url: true },
+        },
+      },
+    })
+  },
+
   // ── Variants ───────────────────────────────────────────────────────────────
 
   async addVariant(productId: string, variant: import('./product.schema').CreateVariantInput) {

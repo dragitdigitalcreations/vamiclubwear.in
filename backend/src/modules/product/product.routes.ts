@@ -44,8 +44,9 @@ router.post(
   productController.createProduct
 )
 
-router.get('/slug/:slug', productController.getProductBySlug)
-router.get('/:id',       productController.getProduct)
+router.get('/showcase-videos', productController.getShowcaseVideos)
+router.get('/slug/:slug',      productController.getProductBySlug)
+router.get('/:id',             productController.getProduct)
 
 router.patch(
   '/:id',

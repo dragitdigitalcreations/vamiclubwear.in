@@ -114,6 +114,17 @@ export const productController = {
     }
   },
 
+  // ── Showcase Videos ────────────────────────────────────────────────────────
+
+  getShowcaseVideos: async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const videos = await productService.getShowcaseVideos()
+      res.json(videos)
+    } catch (err) {
+      next(err)
+    }
+  },
+
   // ── Variants ───────────────────────────────────────────────────────────────
 
   addVariant: async (

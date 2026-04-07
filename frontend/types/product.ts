@@ -43,6 +43,7 @@ export interface Product {
   media: ProductMedia[]
   isFeatured: boolean
   isActive: boolean
+  createdAt?: string
 }
 
 // Computed helpers

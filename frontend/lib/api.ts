@@ -127,6 +127,15 @@ export const productsApi = {
     }),
 
   getVariantBySku: (sku: string) => request(`/products/variants/sku/${sku}`),
+
+  getShowcaseVideos: () =>
+    request<Array<{
+      id: string
+      name: string
+      slug: string
+      basePrice: number
+      media: Array<{ url: string }>
+    }>>('/products/showcase-videos'),
 }
 
 // ── Inventory ─────────────────────────────────────────────────────────────────
