@@ -39,13 +39,44 @@
   body {
     @apply text-on-background antialiased;
     font-feature-settings: 'rlig' 1, 'calt' 1;
-    /* Texture background — tiled at natural resolution, never scaled */
+    /* Texture background — tiled at natural resolution, never scaled or stretched */
     background-color: #121212;
     background-image: url('/vami-bg.png');
     background-repeat: repeat;
-    background-size: auto;       /* NEVER stretch — tile at natural pixel size */
-    background-attachment: local; /* scrolls with content, no fixed-bg jank on mobile */
+    background-size: auto;        /* NEVER stretch — tile at natural pixel size */
+    background-attachment: local; /* scrolls with content — no mobile GPU jank */
   }
+
+  /* ── Typography hierarchy on textured background ─────────────────────────
+   * The texture adds visual noise, so headings need a crisp shadow to lift
+   * them above the pattern. Only applied to display/content headings, not
+   * to headings inside solid-bg surfaces (the shadow is subtle enough it
+   * adds depth there too without harm).
+   * ─────────────────────────────────────────────────────────────────────── */
+  h1, h2, h3 {
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+  }
+  h4, h5, h6 {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  }
+
+  /* ── Navbar top-gradient scrim ────────────────────────────────────────────
+   * When the navbar is transparent (at page top) the logo and links sit
+   * directly on the texture. A narrow gradient behind the nav ensures
+   * legibility without changing the navbar component.
+   * ─────────────────────────────────────────────────────────────────────── */
+  header.vami-nav-transparent {
+    background: linear-gradient(
+      to bottom,
+      rgba(10, 8, 6, 0.65) 0%,
+      rgba(10, 8, 6, 0.0) 100%
+    );
+  }
+
+  /* ── Surfaces must always be opaque (override any accidental transparency) */
+  .bg-surface          { background-color: #1E1E1E !important; }
+  .bg-surface-elevated { background-color: #2A2A2A !important; }
+  .bg-background       { background-color: #121212 !important; }
 
   /* Custom scrollbar to match dark theme */
   ::-webkit-scrollbar {

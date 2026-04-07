@@ -15,50 +15,57 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Core surfaces
+        // Core surfaces — all solid, hide texture beneath them
         background: '#121212',
         surface: {
-          DEFAULT: '#1E1E1E',
+          DEFAULT:  '#1E1E1E',
           elevated: '#2A2A2A',
-          overlay: '#303030',
+          overlay:  '#303030',
         },
         border: '#333333',
-        input: '#2A2A2A',
-        ring: '#5C4033',
+        input:  '#2A2A2A',
+        ring:   '#5C4033',
 
         // Primary — Mocha Mousse
         primary: {
-          DEFAULT: '#5C4033',
-          light: '#7A5C4E',
-          dark: '#3E2B20',
+          DEFAULT:    '#5C4033',
+          // Boosted from #7A5C4E → warm amber so eyebrow/accent text
+          // is clearly legible on both the dark texture and surface backgrounds
+          light:      '#C49060',
+          dark:       '#3E2B20',
           foreground: '#F5EDE8',
         },
 
-        // Text hierarchy
-        'on-background': '#E8E0DB',  // high emphasis
-        'on-surface': '#C4B5AE',     // medium emphasis
+        // Text hierarchy — slightly boosted for legibility on textured bg
+        // on-background: was #E8E0DB → #F0EAE5 (more white-directed, crisper on texture)
+        'on-background': '#F0EAE5',
+        // on-surface: was #C4B5AE → #D0C2BA (readable on solid dark surfaces)
+        'on-surface':    '#D0C2BA',
+
         muted: {
-          DEFAULT: '#8A7B74',
-          foreground: '#6B5E58',
+          // was #8A7B74 → #A09088 (boosted so muted text still reads as
+          // secondary but doesn't disappear into brownish texture tiles)
+          DEFAULT:    '#A09088',
+          foreground: '#7A6E68',
         },
 
         // Semantic
         accent: {
-          DEFAULT: '#5C4033',
+          DEFAULT:    '#5C4033',
           foreground: '#F5EDE8',
         },
         destructive: {
-          DEFAULT: '#C0392B',
+          DEFAULT:    '#C0392B',
           foreground: '#FDECEA',
         },
         success: {
-          DEFAULT: '#27AE60',
+          DEFAULT:    '#27AE60',
           foreground: '#E8F8EF',
         },
       },
 
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans:    ['var(--font-inter)', 'system-ui', 'sans-serif'],
         display: ['var(--font-playfair)', 'Georgia', 'serif'],
       },
 
@@ -71,19 +78,18 @@ const config: Config = {
       keyframes: {
         'fade-in': {
           from: { opacity: '0', transform: 'translateY(6px)' },
-          to: { opacity: '1', transform: 'translateY(0)' },
+          to:   { opacity: '1', transform: 'translateY(0)' },
         },
         shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
+          '0%':   { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition:  '200% 0' },
         },
       },
       animation: {
         'fade-in': 'fade-in 0.3s ease-out',
-        shimmer: 'shimmer 1.5s infinite linear',
+        shimmer:   'shimmer 1.5s infinite linear',
       },
 
-      // Masonry grid support (mobile-first asymmetric layout per CLAUDE.md)
       gridTemplateColumns: {
         'masonry-sm': 'repeat(2, 1fr)',
         'masonry-md': 'repeat(3, 1fr)',
