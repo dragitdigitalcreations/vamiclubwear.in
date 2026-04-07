@@ -1,28 +1,28 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useRef, useEffect, useState, useCallback } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight, Play } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { productsApi } from '@/lib/api'
 import { ProductCard } from '@/components/shop/ProductCard'
 import type { Product } from '@/types/product'
 
-// ─── Animation variant ────────────────────────────────────────────────────────
+// ─── Shared animation ─────────────────────────────────────────────────────────
 const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
+  hidden:  { opacity: 0, y: 40 },
   visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: i * 0.12 },
+    opacity: 1, y: 0,
+    transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: i * 0.1 },
   }),
 }
 
 // ─── Collections ──────────────────────────────────────────────────────────────
 const COLLECTIONS = [
-  { slug: 'fusion',  label: 'Fusion Wear',    sub: 'East meets West',       gradient: 'from-[#3D2B1F] to-[#1a1008]', accent: '#C4956A' },
-  { slug: 'bridal',  label: 'Bridal',         sub: 'Your finest moment',    gradient: 'from-[#2B1B2E] to-[#0d0710]', accent: '#D4A5C9' },
-  { slug: 'modest',  label: 'Modest Fashion', sub: 'Elegance redefined',    gradient: 'from-[#1A2B2B] to-[#081515]', accent: '#7EC8C8' },
+  { slug: 'fusion',  label: 'Fusion Wear',    sub: 'East meets West',    gradient: 'from-[#3D2B1F] to-[#1a1008]', accent: '#C4956A' },
+  { slug: 'bridal',  label: 'Bridal',         sub: 'Your finest moment', gradient: 'from-[#2B1B2E] to-[#0d0710]', accent: '#D4A5C9' },
+  { slug: 'modest',  label: 'Modest Fashion', sub: 'Elegance redefined', gradient: 'from-[#1A2B2B] to-[#081515]', accent: '#7EC8C8' },
 ]
 
 const MARQUEE_WORDS = ['Fusion', 'Bridal', 'Modest', 'Couture', 'Heritage', 'Craft', 'Elegance', 'Kerala']
@@ -31,81 +31,120 @@ const MARQUEE_WORDS = ['Fusion', 'Bridal', 'Modest', 'Couture', 'Heritage', 'Cra
 function Hero() {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
-  const y       = useTransform(scrollYProgress, [0, 1], ['0%', '25%'])
-  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0])
+  const bgY    = useTransform(scrollYProgress, [0, 1], ['0%', '22%'])
+  const fgOp   = useTransform(scrollYProgress, [0, 0.65], [1, 0])
+  const fgY    = useTransform(scrollYProgress, [0, 1], ['0%', '-8%'])
 
   return (
-    <section ref={ref} className="relative flex h-screen min-h-[640px] items-end overflow-hidden">
+    <section
+      ref={ref}
+      className="relative flex min-h-[85vh] items-center overflow-hidden bg-[#100a06]"
+    >
+      {/* Parallax background layer */}
       <motion.div
-        style={{ y }}
-        className="absolute inset-0 bg-gradient-to-br from-[#1a0e08] via-[#121212] to-[#0d0d0d]"
-      />
-
-      {/* Subtle grid */}
-      <div
-        className="absolute inset-0 opacity-[0.04]"
-        style={{
-          backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-          backgroundSize: '80px 80px',
-        }}
-      />
-
-      {/* Watermark */}
-      <motion.div
-        style={{ opacity }}
-        className="absolute inset-0 flex items-center justify-center select-none pointer-events-none overflow-hidden"
+        style={{ y: bgY }}
+        className="absolute inset-0"
       >
-        <span className="font-display text-[22vw] font-bold uppercase leading-none text-white/[0.03] tracking-tighter">
-          Vami
-        </span>
+        {/* Rich gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1f0e06] via-[#120c09] to-[#0a0a0a]" />
+        {/* Subtle diagonal fabric texture */}
+        <div
+          className="absolute inset-0 opacity-[0.035]"
+          style={{
+            backgroundImage: `repeating-linear-gradient(
+              45deg,
+              transparent,
+              transparent 2px,
+              rgba(255,255,255,0.8) 2px,
+              rgba(255,255,255,0.8) 3px
+            )`,
+            backgroundSize: '28px 28px',
+          }}
+        />
+        {/* Radial glow — warm amber from bottom-right */}
+        <div className="absolute bottom-0 right-0 h-[60%] w-[55%] rounded-full bg-[#5C4033]/20 blur-[120px]" />
+        <div className="absolute top-0 left-0 h-[40%] w-[40%] rounded-full bg-[#3D2B1F]/15 blur-[90px]" />
       </motion.div>
 
-      {/* Content */}
+      {/* Foreground content */}
       <motion.div
-        style={{ opacity }}
-        className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-16 md:px-10 md:pb-24"
+        style={{ opacity: fgOp, y: fgY }}
+        className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-8 pt-28 md:px-12 md:pt-32"
       >
-        <motion.p variants={fadeUp} initial="hidden" animate="visible" custom={0}
-          className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-primary-light">
-          New Season — Spring 2025
-        </motion.p>
+        <div className="max-w-3xl">
+          <motion.p
+            variants={fadeUp} initial="hidden" animate="visible" custom={0}
+            className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.35em] text-primary-light"
+          >
+            <span className="h-px w-8 bg-primary-light/60" />
+            New Season — Spring 2025
+          </motion.p>
 
-        <motion.h1 variants={fadeUp} initial="hidden" animate="visible" custom={1}
-          className="font-display text-5xl font-bold leading-[1.05] text-on-background md:text-7xl lg:text-8xl">
-          Where Heritage
-          <br />
-          <span className="italic text-primary-light">Meets Modernity</span>
-        </motion.h1>
+          <motion.h1
+            variants={fadeUp} initial="hidden" animate="visible" custom={1}
+            className="font-display text-[clamp(3rem,8vw,6rem)] font-bold leading-[1.02] tracking-tight text-on-background"
+          >
+            Where Heritage
+            <br />
+            <em className="not-italic text-primary-light">Meets Modernity</em>
+          </motion.h1>
 
-        <motion.p variants={fadeUp} initial="hidden" animate="visible" custom={2}
-          className="mt-6 max-w-md text-base text-muted md:text-lg">
-          Premium Indo-Western couture, thoughtfully crafted in Manjeri, Kerala.
-        </motion.p>
+          <motion.p
+            variants={fadeUp} initial="hidden" animate="visible" custom={2}
+            className="mt-6 max-w-md text-base leading-relaxed text-muted md:text-lg"
+          >
+            Premium Indo-Western couture, thoughtfully crafted in Manjeri, Kerala.
+          </motion.p>
 
-        <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3}
-          className="mt-10 flex flex-wrap gap-4">
-          <Link href="/products"
-            className="inline-flex items-center gap-2 bg-primary px-8 py-3.5 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90">
-            Shop Now
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-          <Link href="/products?category=bridal"
-            className="inline-flex items-center gap-2 border border-border px-8 py-3.5 text-xs font-semibold uppercase tracking-widest text-on-background transition-colors hover:border-on-background">
-            Bridal Edit
-          </Link>
-        </motion.div>
+          <motion.div
+            variants={fadeUp} initial="hidden" animate="visible" custom={3}
+            className="mt-10 flex flex-wrap items-center gap-4"
+          >
+            <Link
+              href="/products"
+              className="group inline-flex items-center gap-2.5 bg-primary px-9 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-all duration-300 hover:bg-primary-light hover:gap-3.5"
+            >
+              Shop Now
+              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+            <Link
+              href="/products?category=bridal"
+              className="inline-flex items-center gap-2 border border-border/60 px-9 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-on-background/80 transition-all duration-300 hover:border-on-background hover:text-on-background"
+            >
+              Bridal Edit
+            </Link>
+          </motion.div>
+
+          {/* Trust signals */}
+          <motion.div
+            variants={fadeUp} initial="hidden" animate="visible" custom={4}
+            className="mt-12 flex flex-wrap items-center gap-6 border-t border-border/30 pt-8"
+          >
+            {[
+              { label: 'Free shipping', sub: 'on orders ₹2500+' },
+              { label: 'Handcrafted', sub: 'Manjeri, Kerala' },
+              { label: 'Easy returns', sub: '7-day policy' },
+            ].map((item) => (
+              <div key={item.label}>
+                <p className="text-xs font-semibold uppercase tracking-wider text-on-background">{item.label}</p>
+                <p className="mt-0.5 text-[11px] text-muted">{item.sub}</p>
+              </div>
+            ))}
+          </motion.div>
+        </div>
       </motion.div>
 
       {/* Scroll indicator */}
       <motion.div
-        style={{ opacity }}
-        className="absolute bottom-8 right-8 hidden md:flex flex-col items-center gap-2">
-        <span className="text-[10px] uppercase tracking-widest text-muted rotate-90 origin-center translate-y-6">Scroll</span>
+        style={{ opacity: fgOp }}
+        className="absolute bottom-8 right-8 hidden md:flex flex-col items-end gap-2"
+      >
         <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-          className="h-8 w-[1px] bg-gradient-to-b from-muted to-transparent"
+          animate={{ y: [0, 7, 0] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+          className="h-10 w-[1px] bg-gradient-to-b from-muted/60 to-transparent"
         />
+        <span className="text-[9px] uppercase tracking-[0.25em] text-muted/60">Scroll</span>
       </motion.div>
     </section>
   )
@@ -113,17 +152,18 @@ function Hero() {
 
 // ─── Marquee ──────────────────────────────────────────────────────────────────
 function MarqueeStrip() {
-  const repeated = [...MARQUEE_WORDS, ...MARQUEE_WORDS]
+  const repeated = [...MARQUEE_WORDS, ...MARQUEE_WORDS, ...MARQUEE_WORDS]
   return (
-    <div className="overflow-hidden border-y border-border bg-surface py-4">
+    <div className="overflow-hidden border-y border-border/60 bg-surface py-3.5">
       <motion.div
-        animate={{ x: ['0%', '-50%'] }}
-        transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
-        className="flex gap-12 whitespace-nowrap"
+        animate={{ x: ['0%', '-33.33%'] }}
+        transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
+        className="flex gap-10 whitespace-nowrap"
       >
         {repeated.map((word, i) => (
-          <span key={i} className="text-xs font-semibold uppercase tracking-[0.35em] text-muted">
-            {word}<span className="ml-12 text-primary">·</span>
+          <span key={i} className="flex items-center gap-10 text-[11px] font-semibold uppercase tracking-[0.3em] text-muted/70">
+            {word}
+            <span className="h-1 w-1 rounded-full bg-primary/60" />
           </span>
         ))}
       </motion.div>
@@ -131,15 +171,17 @@ function MarqueeStrip() {
   )
 }
 
-// ─── Collections grid (imfashionstore-style explore blocks) ──────────────────
+// ─── Collections grid ─────────────────────────────────────────────────────────
 function CollectionsGrid() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 md:px-8">
       <motion.div
-        variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }}
-        className="mb-10 flex items-end justify-between">
+        variants={fadeUp} initial="hidden" whileInView="visible"
+        viewport={{ once: true, margin: '-60px' }}
+        className="mb-10 flex items-end justify-between"
+      >
         <div>
-          <p className="mb-1 text-xs uppercase tracking-[0.3em] text-primary-light">Explore</p>
+          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Explore</p>
           <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Our Collections</h2>
         </div>
         <Link href="/products"
@@ -148,40 +190,43 @@ function CollectionsGrid() {
         </Link>
       </motion.div>
 
-      {/* 3-column cards — same vibe as imfashionstore's Explore blocks */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {COLLECTIONS.map((col, i) => (
           <motion.div key={col.slug}
             variants={fadeUp} initial="hidden" whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }} custom={i}>
+            viewport={{ once: true, margin: '-50px' }} custom={i * 0.3}>
             <Link href={`/products?category=${col.slug}`}
-              className="group relative flex h-[400px] flex-col justify-end overflow-hidden">
-              <div className={`absolute inset-0 bg-gradient-to-br ${col.gradient} transition-transform duration-700 group-hover:scale-105`} />
+              className="group relative flex h-[420px] flex-col justify-end overflow-hidden rounded-[18px]">
+              <div className={`absolute inset-0 bg-gradient-to-br ${col.gradient} transition-transform duration-500 ease-out group-hover:scale-[1.04]`} />
 
-              {/* Decorative rings */}
+              {/* Inner glow rings */}
               <motion.div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border opacity-10"
-                style={{ borderColor: col.accent, width: 180, height: 180 }}
-                animate={{ scale: [1, 1.08, 1], rotate: [0, 10, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border opacity-[0.12]"
+                style={{ borderColor: col.accent, width: 200, height: 200 }}
+                animate={{ scale: [1, 1.07, 1], rotate: [0, 8, 0] }}
+                transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
               />
               <motion.div
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border opacity-[0.05]"
-                style={{ borderColor: col.accent, width: 300, height: 300 }}
-                animate={{ scale: [1, 1.05, 1], rotate: [0, -6, 0] }}
-                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: i * 0.3 }}
+                style={{ borderColor: col.accent, width: 330, height: 330 }}
+                animate={{ scale: [1, 1.04, 1], rotate: [0, -5, 0] }}
+                transition={{ duration: 7.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.25 }}
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent rounded-[18px]" />
 
               <div className="relative z-10 p-7">
-                <p className="mb-1 text-xs uppercase tracking-widest" style={{ color: col.accent }}>{col.sub}</p>
-                <h3 className="font-display text-3xl font-bold text-white">{col.label}</h3>
-                <p className="mt-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest"
-                  style={{ color: col.accent }}>
-                  Explore
-                  <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
+                <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.3em]" style={{ color: col.accent }}>
+                  {col.sub}
                 </p>
+                <h3 className="font-display text-3xl font-bold text-white">{col.label}</h3>
+                <span
+                  className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition-gap duration-300"
+                  style={{ color: col.accent }}
+                >
+                  Explore
+                  <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1.5" />
+                </span>
               </div>
             </Link>
           </motion.div>
@@ -191,35 +236,39 @@ function CollectionsGrid() {
   )
 }
 
-// ─── Promo banner (What's New) ────────────────────────────────────────────────
+// ─── Promo banner — "What's New" ──────────────────────────────────────────────
 function PromoBanner() {
   return (
     <motion.section
-      variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
-      className="mx-4 md:mx-8 my-4 overflow-hidden">
-      <Link href="/products?sort=newest"
-        className="group relative flex h-[220px] md:h-[280px] items-center justify-center overflow-hidden bg-gradient-to-r from-[#1C0D08] via-[#2A1510] to-[#1C0D08]">
-        {/* Animated grain texture */}
-        <div className="absolute inset-0 opacity-[0.06]"
+      variants={fadeUp} initial="hidden" whileInView="visible"
+      viewport={{ once: true, margin: '-40px' }}
+      className="mx-4 md:mx-8 overflow-hidden rounded-[18px]"
+    >
+      <Link href="/products"
+        className="group relative flex h-[200px] md:h-[260px] items-center justify-center overflow-hidden rounded-[18px] bg-gradient-to-r from-[#1C0D08] via-[#2A1510] to-[#1C0D08]">
+        {/* Dot grid */}
+        <div
+          className="absolute inset-0 opacity-[0.05]"
           style={{
             backgroundImage: 'radial-gradient(circle, #C4956A 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
+            backgroundSize: '24px 24px',
           }}
         />
-
-        {/* Horizontal light beam */}
+        {/* Animated glow line */}
         <motion.div
-          className="absolute h-px w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent"
-          animate={{ scaleX: [0.4, 1, 0.4], opacity: [0.3, 0.8, 0.3] }}
-          transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute h-[1px] w-3/4 rounded-full bg-gradient-to-r from-transparent via-primary/50 to-transparent"
+          animate={{ scaleX: [0.5, 1, 0.5], opacity: [0.4, 0.9, 0.4] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
         />
 
         <div className="relative z-10 text-center px-6">
-          <p className="text-xs uppercase tracking-[0.4em] text-primary-light mb-3">Just Arrived</p>
-          <h2 className="font-display text-4xl md:text-6xl font-bold text-white">What&rsquo;s New</h2>
-          <p className="mt-3 text-sm text-muted/80">Fresh drops from the Vami studio</p>
-          <span className="mt-6 inline-flex items-center gap-2 border border-primary/40 px-6 py-2.5 text-[11px] font-semibold uppercase tracking-widest text-primary-light transition-all group-hover:bg-primary group-hover:border-primary group-hover:text-white">
-            Shop New Arrivals <ArrowRight className="h-3 w-3" />
+          <p className="text-[10px] uppercase tracking-[0.45em] text-primary-light mb-3">Just Arrived</p>
+          <h2 className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white">
+            What&rsquo;s New
+          </h2>
+          <p className="mt-2.5 text-sm text-muted/80">Fresh drops from the Vami studio</p>
+          <span className="mt-7 inline-flex items-center gap-2 border border-primary/40 px-7 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-light/90 transition-all duration-300 group-hover:bg-primary group-hover:border-primary group-hover:text-white group-hover:gap-3">
+            Shop New Arrivals <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
           </span>
         </div>
       </Link>
@@ -230,16 +279,19 @@ function PromoBanner() {
 // ─── Brand statement ──────────────────────────────────────────────────────────
 function BrandStatement() {
   return (
-    <section className="border-y border-border bg-surface py-20">
-      <div className="mx-auto max-w-4xl px-6 text-center">
+    <section className="border-y border-border/50 bg-surface py-20">
+      <div className="mx-auto max-w-3xl px-6 text-center">
         <motion.blockquote
-          variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}>
-          <p className="font-display text-3xl font-bold leading-snug text-on-background md:text-4xl lg:text-5xl">
+          variants={fadeUp} initial="hidden" whileInView="visible"
+          viewport={{ once: true, margin: '-50px' }}>
+          <p className="font-display text-2xl font-bold leading-relaxed text-on-background md:text-3xl lg:text-4xl">
             &ldquo;Every piece tells a story of{' '}
-            <em className="text-primary-light not-italic">two worlds</em>&nbsp;—
+            <em className="not-italic text-primary-light">two worlds</em>&nbsp;—
             the timeless grace of the East and the clean lines of the West.&rdquo;
           </p>
-          <footer className="mt-8 text-xs uppercase tracking-[0.3em] text-muted">— The Vami Studio, Manjeri</footer>
+          <footer className="mt-8 text-[10px] uppercase tracking-[0.35em] text-muted">
+            — The Vami Studio, Manjeri
+          </footer>
         </motion.blockquote>
       </div>
     </section>
@@ -255,10 +307,11 @@ function FeaturedProducts() {
     productsApi
       .list({ isFeatured: 'true', isActive: 'true', limit: 4 })
       .then((res) => {
-        if (res.data.length > 0) {
-          setProducts(res.data as unknown as Product[])
+        if ((res as any).data?.length > 0) {
+          setProducts((res as any).data)
         } else {
-          return productsApi.list({ isActive: 'true', limit: 4 }).then((r) => setProducts(r.data as unknown as Product[]))
+          return productsApi.list({ isActive: 'true', limit: 4 })
+            .then((r) => setProducts((r as any).data ?? []))
         }
       })
       .catch(() => setProducts([]))
@@ -268,10 +321,12 @@ function FeaturedProducts() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 md:px-8">
       <motion.div
-        variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }}
-        className="mb-10 flex items-end justify-between">
+        variants={fadeUp} initial="hidden" whileInView="visible"
+        viewport={{ once: true, margin: '-60px' }}
+        className="mb-10 flex items-end justify-between"
+      >
         <div>
-          <p className="mb-1 text-xs uppercase tracking-[0.3em] text-primary-light">Curated</p>
+          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Curated</p>
           <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Featured Pieces</h2>
         </div>
         <Link href="/products"
@@ -280,22 +335,24 @@ function FeaturedProducts() {
         </Link>
       </motion.div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
+      {/* 2 cols mobile → 4 cols desktop */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-5">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <motion.div key={i} variants={fadeUp} initial="hidden" whileInView="visible"
-                viewport={{ once: true, margin: '-40px' }} custom={i * 0.5}>
-                <div className="skeleton aspect-[3/4] w-full rounded" />
-                <div className="mt-3 space-y-2">
+              <div key={i}>
+                <div className="skeleton aspect-[3/4] w-full rounded-[14px]" />
+                <div className="mt-3 space-y-2 px-1">
                   <div className="skeleton h-4 w-3/4 rounded" />
                   <div className="skeleton h-3 w-1/2 rounded" />
+                  <div className="skeleton h-3 w-1/4 rounded" />
                 </div>
-              </motion.div>
+              </div>
             ))
           : products.map((product, i) => (
-              <motion.div key={product.id} variants={fadeUp} initial="hidden" whileInView="visible"
-                viewport={{ once: true, margin: '-40px' }} custom={i * 0.5}>
-                <ProductCard product={product} />
+              <motion.div key={product.id}
+                variants={fadeUp} initial="hidden" whileInView="visible"
+                viewport={{ once: true, margin: '-30px' }} custom={i * 0.4}>
+                <ProductCard product={product} priority={i < 2} />
               </motion.div>
             ))}
       </div>
@@ -313,31 +370,52 @@ interface ShowcaseItem {
   media:     Array<{ url: string }>
 }
 
+// VideoCard — IntersectionObserver-driven autoplay (like top fashion stores)
 function VideoCard({ item }: { item: ShowcaseItem }) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [playing, setPlaying] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const videoRef     = useRef<HTMLVideoElement>(null)
+  const [visible,  setVisible]  = useState(false)
+  const [loaded,   setLoaded]   = useState(false)
 
-  const startPlay = useCallback(() => {
-    videoRef.current?.play().catch(() => {})
-    setPlaying(true)
-  }, [])
+  // IntersectionObserver: play when ≥50% visible, pause when below threshold
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
 
-  const stopPlay = useCallback(() => {
-    if (videoRef.current) {
-      videoRef.current.pause()
-      videoRef.current.currentTime = 0
-    }
-    setPlaying(false)
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        setVisible(entry.isIntersecting)
+        if (entry.isIntersecting) {
+          videoRef.current?.play().catch(() => {})
+        } else {
+          if (videoRef.current) {
+            videoRef.current.pause()
+            // Only reset position when fully hidden for seamless re-entry
+            if (entry.intersectionRatio === 0) {
+              videoRef.current.currentTime = 0
+            }
+          }
+        }
+      },
+      { threshold: [0, 0.5] }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [])
 
   return (
     <div
-      className="group relative flex-shrink-0 w-[260px] md:w-[300px] overflow-hidden bg-surface-elevated"
-      onMouseEnter={startPlay}
-      onMouseLeave={stopPlay}
+      ref={containerRef}
+      className="group relative flex-shrink-0 w-[240px] sm:w-[270px] md:w-[300px] overflow-hidden rounded-[16px] bg-surface-elevated shadow-card transition-shadow duration-300 hover:shadow-card-hover snap-start"
     >
-      {/* Video */}
-      <div className="aspect-[3/4] overflow-hidden">
+      {/* Video — 3:4 portrait */}
+      <div className="relative aspect-[3/4] overflow-hidden rounded-[16px]">
+        {/* Poster shimmer while loading */}
+        {!loaded && (
+          <div className="absolute inset-0 skeleton" />
+        )}
+
         <video
           ref={videoRef}
           src={item.media[0].url}
@@ -345,36 +423,28 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
           loop
           playsInline
           preload="metadata"
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          onCanPlay={() => setLoaded(true)}
+          className={`h-full w-full object-cover transition-all duration-500 ${
+            loaded ? 'opacity-100' : 'opacity-0'
+          } ${visible ? 'scale-[1.02]' : 'scale-100'}`}
+          style={{ transition: 'opacity 0.5s ease, transform 0.6s ease' }}
         />
-      </div>
 
-      {/* Play icon when not playing */}
-      <AnimatePresence>
-        {!playing && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 border border-white/20 backdrop-blur-sm">
-              <Play className="h-5 w-5 text-white fill-white ml-0.5" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Bottom gradient + info */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent p-4 pt-16 rounded-b-[16px]">
+          <p className="text-[9px] font-medium uppercase tracking-[0.3em] text-white/55 mb-1">Vami Clubwear</p>
+          <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2">{item.name}</h3>
+          <p className="mt-1 text-xs font-medium text-primary-light">
+            ₹{Number(item.basePrice).toLocaleString('en-IN')}
+          </p>
 
-      {/* Bottom overlay */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 pt-12">
-        <p className="text-xs uppercase tracking-widest text-white/70 mb-0.5">Vami Clubwear</p>
-        <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2">{item.name}</h3>
-        <p className="mt-1 text-xs font-medium text-primary-light">₹{Number(item.basePrice).toLocaleString('en-IN')}</p>
-
-        <Link
-          href={`/products/${item.slug}`}
-          className="mt-3 flex w-full items-center justify-center gap-1.5 border border-white/30 py-2 text-[10px] font-semibold uppercase tracking-widest text-white transition-all hover:bg-primary hover:border-primary"
-          onClick={(e: React.MouseEvent) => e.stopPropagation()}
-        >
-          View Product <ArrowRight className="h-3 w-3" />
-        </Link>
+          <Link
+            href={`/products/${item.slug}`}
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-white/25 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:border-primary"
+          >
+            View Product <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
       </div>
     </div>
   )
@@ -392,60 +462,59 @@ function VideoShowcase() {
       .finally(() => setLoading(false))
   }, [])
 
-  const scroll = (dir: 'left' | 'right') => {
-    if (!scrollRef.current) return
-    scrollRef.current.scrollBy({ left: dir === 'right' ? 320 : -320, behavior: 'smooth' })
-  }
+  const scroll = useCallback((dir: 'left' | 'right') => {
+    scrollRef.current?.scrollBy({ left: dir === 'right' ? 340 : -340, behavior: 'smooth' })
+  }, [])
 
-  // Don't render section if no videos
   if (!loading && items.length === 0) return null
 
   return (
     <section className="py-20 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <motion.div
-          variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}
-          className="mb-10 flex items-end justify-between">
+          variants={fadeUp} initial="hidden" whileInView="visible"
+          viewport={{ once: true, margin: '-50px' }}
+          className="mb-10 flex items-end justify-between"
+        >
           <div>
-            <p className="mb-1 text-xs uppercase tracking-[0.3em] text-primary-light">In Motion</p>
+            <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">In Motion</p>
             <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Shop the Look</h2>
-            <p className="mt-2 text-sm text-muted">Hover to preview each piece in motion</p>
+            <p className="mt-2 text-sm text-muted">Scroll past each piece to preview it in motion</p>
           </div>
-          <div className="hidden md:flex items-center gap-2">
-            <button
-              onClick={() => scroll('left')}
-              className="flex h-9 w-9 items-center justify-center border border-border text-muted transition-colors hover:border-on-background hover:text-on-background"
-              aria-label="Scroll left"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => scroll('right')}
-              className="flex h-9 w-9 items-center justify-center border border-border text-muted transition-colors hover:border-on-background hover:text-on-background"
-              aria-label="Scroll right"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+          {items.length > 3 && (
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                onClick={() => scroll('left')}
+                className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border text-muted transition-all duration-200 hover:border-on-background hover:text-on-background hover:bg-surface-elevated"
+                aria-label="Scroll left"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => scroll('right')}
+                className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border text-muted transition-all duration-200 hover:border-on-background hover:text-on-background hover:bg-surface-elevated"
+                aria-label="Scroll right"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </motion.div>
       </div>
 
-      {/* Scrollable strip — bleeds edge-to-edge */}
+      {/* Full-bleed horizontal scroll strip */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto px-4 md:px-8 pb-4 scrollbar-hide snap-x snap-mandatory"
-        style={{ scrollbarWidth: 'none' }}
+        className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 pb-3 md:px-8"
       >
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-[260px] md:w-[300px]">
-                <div className="skeleton aspect-[3/4] w-full" />
+              <div key={i} className="flex-shrink-0 w-[240px] sm:w-[270px] md:w-[300px] snap-start">
+                <div className="skeleton aspect-[3/4] w-full rounded-[16px]" />
               </div>
             ))
           : items.map((item) => (
-              <div key={item.id} className="snap-start">
-                <VideoCard item={item} />
-              </div>
+              <VideoCard key={item.id} item={item} />
             ))
         }
       </div>
