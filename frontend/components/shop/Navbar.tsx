@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useCartStore, selectTotalItems } from '@/stores/cartStore'
 import { ProfileDrawer } from '@/components/shop/ProfileDrawer'
+import { VamiLogo } from '@/components/shop/VamiLogo'
 
 const NAV_LINKS = [
   { href: '/products',                 label: 'All Collections' },
@@ -67,8 +68,8 @@ export function Navbar() {
           </button>
 
           {/* Logo */}
-          <Link href="/" className="font-display text-xl font-bold tracking-[0.2em] text-on-background uppercase">
-            Vami
+          <Link href="/" aria-label="Vami Clubwear — Home">
+            <VamiLogo height={30} />
           </Link>
 
           {/* Desktop nav */}

@@ -37,8 +37,14 @@
   }
 
   body {
-    @apply bg-background text-on-background antialiased;
+    @apply text-on-background antialiased;
     font-feature-settings: 'rlig' 1, 'calt' 1;
+    /* Texture background — tiled at natural resolution, never scaled */
+    background-color: #121212;
+    background-image: url('/vami-bg.png');
+    background-repeat: repeat;
+    background-size: auto;       /* NEVER stretch — tile at natural pixel size */
+    background-attachment: local; /* scrolls with content, no fixed-bg jank on mobile */
   }
 
   /* Custom scrollbar to match dark theme */

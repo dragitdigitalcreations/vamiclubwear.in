@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Instagram, Facebook, Youtube } from 'lucide-react'
+import { VamiLogo } from '@/components/shop/VamiLogo'
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '919XXXXXXXXX'
 const WHATSAPP_MSG    = 'Hi Vami Clubwear! I have a query.'
@@ -29,11 +30,8 @@ export function Footer() {
 
           {/* Brand */}
           <div className="md:col-span-1">
-            <Link
-              href="/"
-              className="font-display text-2xl font-bold tracking-[0.2em] text-on-background uppercase"
-            >
-              Vami
+            <Link href="/" aria-label="Vami Clubwear — Home">
+              <VamiLogo height={36} />
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted max-w-xs">
               Premium Indo-Western fashion for the modern woman. Crafted with intention, worn with grace.
