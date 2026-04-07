@@ -3,29 +3,29 @@
 import Link from 'next/link'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ShoppingBag, Menu, X, Search } from 'lucide-react'
+import { ShoppingBag, Menu, X, Search, User } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useCartStore, selectTotalItems } from '@/stores/cartStore'
+import { ProfileDrawer } from '@/components/shop/ProfileDrawer'
 
 const NAV_LINKS = [
   { href: '/products',                 label: 'All Collections' },
   { href: '/products?category=fusion', label: 'Fusion Wear' },
   { href: '/products?category=bridal', label: 'Bridal' },
   { href: '/products?category=modest', label: 'Modest Fashion' },
-  { href: '/my-orders',                label: 'My Orders' },
-  { href: '/track',                    label: 'Track Order' },
 ]
 
 export function Navbar() {
-  const [scrolled,     setScrolled]     = useState(false)
-  const [mobileOpen,   setMobileOpen]   = useState(false)
-  const [searchOpen,   setSearchOpen]   = useState(false)
-  const [searchQuery,  setSearchQuery]  = useState('')
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const router = useRouter()
-  const { toggleCart } = useCartStore()
-  const totalItems = useCartStore(selectTotalItems)
+  const [scrolled,      setScrolled]      = useState(false)
+  const [mobileOpen,    setMobileOpen]    = useState(false)
+  const [searchOpen,    setSearchOpen]    = useState(false)
+  const [profileOpen,   setProfileOpen]   = useState(false)
+  const [searchQuery,   setSearchQuery]   = useState('')
+  const searchInputRef  = useRef<HTMLInputElement>(null)
+  const router          = useRouter()
+  const { toggleCart }  = useCartStore()
+  const totalItems      = useCartStore(selectTotalItems)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -85,7 +85,8 @@ export function Navbar() {
           </nav>
 
           {/* Right icons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            {/* Search */}
             <button
               onClick={() => setSearchOpen(true)}
               className="p-2 text-muted transition-colors hover:text-on-background"
@@ -94,6 +95,16 @@ export function Navbar() {
               <Search className="h-4 w-4" />
             </button>
 
+            {/* Profile — My Orders, Track, WhatsApp */}
+            <button
+              onClick={() => setProfileOpen(true)}
+              className="p-2 text-muted transition-colors hover:text-on-background"
+              aria-label="My Profile"
+            >
+              <User className="h-4 w-4" />
+            </button>
+
+            {/* Cart */}
             <button
               onClick={toggleCart}
               className="relative p-2 text-muted transition-colors hover:text-on-background"
@@ -101,7 +112,7 @@ export function Navbar() {
             >
               <ShoppingBag className="h-4 w-4" />
               {totalItems > 0 && (
-                <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
                   {totalItems > 9 ? '9+' : totalItems}
                 </span>
               )}
@@ -116,17 +127,13 @@ export function Navbar() {
           <>
             <motion.div
               key="search-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 z-40 bg-black/60"
               onClick={() => setSearchOpen(false)}
             />
             <motion.div
               key="search-bar"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
               className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-border shadow-lg"
             >
@@ -140,11 +147,7 @@ export function Navbar() {
                   placeholder="Search products, fabrics, styles…"
                   className="flex-1 bg-transparent text-sm text-on-background placeholder:text-muted outline-none"
                 />
-                <button
-                  type="button"
-                  onClick={() => setSearchOpen(false)}
-                  className="p-1 text-muted hover:text-on-background transition-colors"
-                >
+                <button type="button" onClick={() => setSearchOpen(false)} className="p-1 text-muted hover:text-on-background transition-colors">
                   <X className="h-4 w-4" />
                 </button>
               </form>
@@ -157,20 +160,13 @@ export function Navbar() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, x: '-100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '-100%' }}
+            initial={{ opacity: 0, x: '-100%' }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: '-100%' }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="fixed inset-y-0 left-0 z-40 w-72 bg-surface pt-20 shadow-2xl"
           >
             <nav className="flex flex-col px-6 pt-4">
               {NAV_LINKS.map((link, i) => (
-                <motion.div
-                  key={link.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.07 }}
-                >
+                <motion.div key={link.href} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.07 }}>
                   <Link
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
@@ -180,6 +176,16 @@ export function Navbar() {
                   </Link>
                 </motion.div>
               ))}
+              {/* Profile link in mobile menu */}
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: NAV_LINKS.length * 0.07 }}>
+                <button
+                  onClick={() => { setMobileOpen(false); setProfileOpen(true) }}
+                  className="flex w-full items-center gap-2 border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface transition-colors hover:text-on-background"
+                >
+                  <User className="h-4 w-4" />
+                  My Orders / Profile
+                </button>
+              </motion.div>
             </nav>
           </motion.div>
         )}
@@ -189,14 +195,15 @@ export function Navbar() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-30 bg-black/60 md:hidden"
             onClick={() => setMobileOpen(false)}
           />
         )}
       </AnimatePresence>
+
+      {/* Profile drawer */}
+      <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />
     </>
   )
 }
