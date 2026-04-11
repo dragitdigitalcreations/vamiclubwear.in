@@ -31,7 +31,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link href="/" aria-label="Vami Clubwear — Home">
-              <VamiLogo height={36} />
+              <VamiLogo height={60} />
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted max-w-xs">
               Premium Indo-Western fashion for the modern woman. Crafted with intention, worn with grace.
@@ -115,7 +115,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
           <p className="text-xs text-muted">&copy; {new Date().getFullYear()} Vami Clubwear. All rights reserved.</p>
-          <p className="text-xs text-muted">Crafted in Kerala</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted">Crafted by Dragit</p>
         </div>
       </div>
     </footer>

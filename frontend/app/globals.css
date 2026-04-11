@@ -48,16 +48,34 @@
   }
 
   /* ── Typography hierarchy on textured background ─────────────────────────
-   * The texture adds visual noise, so headings need a crisp shadow to lift
-   * them above the pattern. Only applied to display/content headings, not
-   * to headings inside solid-bg surfaces (the shadow is subtle enough it
-   * adds depth there too without harm).
+   * No text-shadow — instead we use weight, color, and spacing contrast:
+   *   h1/h2 → heavy weight + slightly warm cream (#F5EDE8) vs body (#F0EAE5)
+   *   h3/h4 → medium weight + standard on-background
+   *   h5/h6 → book weight + muted (#A09088) for tertiary labels
+   * This creates clear depth without shadow artifacts on the texture.
    * ─────────────────────────────────────────────────────────────────────── */
-  h1, h2, h3 {
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+  h1 {
+    font-weight: 700;
+    color: #F5EDE8;
+    letter-spacing: -0.02em;
   }
-  h4, h5, h6 {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  h2 {
+    font-weight: 600;
+    color: #F0EAE5;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-weight: 600;
+    color: #E8DFDA;
+  }
+  h4 {
+    font-weight: 500;
+    color: #D0C2BA;
+  }
+  h5, h6 {
+    font-weight: 500;
+    color: #A09088;
+    letter-spacing: 0.04em;
   }
 
   /* ── Navbar top-gradient scrim ────────────────────────────────────────────
