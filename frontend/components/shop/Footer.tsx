@@ -87,8 +87,8 @@ export function Footer() {
               <p>Vami Clubwear</p>
               <p>Manjeri, Kerala</p>
               <p>India — 676121</p>
-              <a href="mailto:hello@vami.in" className="block mt-1 transition-colors hover:text-on-background">
-                hello@vami.in
+              <a href="mailto:vamiclubwear@gmail.com" className="block mt-1 transition-colors hover:text-on-background">
+                vamiclubwear@gmail.com
               </a>
             </address>
 
