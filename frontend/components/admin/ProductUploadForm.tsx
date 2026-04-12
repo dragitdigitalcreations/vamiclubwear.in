@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils'
 
 const variantSchema = z.object({
   sku:      z.string().min(1, 'SKU is required'),
+  barcode:  z.string().optional(),
   size:     z.string().optional(),
   color:    z.string().optional(),
   colorHex: z.string().optional(),

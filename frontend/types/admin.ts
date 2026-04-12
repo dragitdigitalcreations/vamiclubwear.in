@@ -16,15 +16,17 @@ export type AdminSection =
   | 'inventory'
   | 'orders'
   | 'pos-sync'
+  | 'pos-scanner'
   | 'users'
 
 export const SECTION_ROLES: Record<AdminSection, UserRole[]> = {
-  dashboard: ['ADMIN', 'MANAGER', 'STAFF'],
-  products:  ['ADMIN', 'MANAGER'],
-  inventory: ['ADMIN', 'MANAGER'],
-  orders:    ['ADMIN', 'MANAGER', 'STAFF'],
-  'pos-sync': ['ADMIN'],
-  users:     ['ADMIN'],
+  dashboard:     ['ADMIN', 'MANAGER', 'STAFF'],
+  products:      ['ADMIN', 'MANAGER'],
+  inventory:     ['ADMIN', 'MANAGER'],
+  orders:        ['ADMIN', 'MANAGER', 'STAFF'],
+  'pos-sync':    ['ADMIN'],
+  'pos-scanner': ['ADMIN', 'MANAGER'],
+  users:         ['ADMIN'],
 }
 
 // ─── Product & Variant form types ───────────────────────────────────────────
@@ -72,6 +74,9 @@ export interface CustomMeasurements {
 }
 
 export interface VariantFormData {
+  // Barcode for physical POS scanning
+  barcode?: string
+
   // Dim 1 — Size
   size: SizeOption | string
   customMeasurements?: CustomMeasurements

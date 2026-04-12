@@ -2,7 +2,7 @@
 
 import { useFieldArray, useFormContext, useWatch, Controller } from 'react-hook-form'
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Barcode } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -41,6 +41,7 @@ function generateSku(slug: string, color: string, size: string, fabric: string):
 
 interface VariantFormRow {
   sku:      string
+  barcode?: string
   size?:    string
   color?:   string
   colorHex?: string
@@ -247,6 +248,32 @@ function VariantRow({
               )}
             </div>
           </div>
+
+          {/* Barcode */}
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5">
+              <Barcode className="h-3.5 w-3.5 text-muted" />
+              Barcode
+              <span className="text-xs font-normal text-muted">(scan or type — must be unique)</span>
+            </Label>
+            <Input
+              placeholder="Scan with barcode scanner or enter manually…"
+              className="font-mono"
+              {...register(`variants.${index}.barcode`)}
+              onKeyDown={(e) => {
+                // Scanner sends Enter after each barcode — move focus to next variant's barcode field
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  const inputs = document.querySelectorAll<HTMLInputElement>('input[placeholder*="barcode scanner"]')
+                  const idx = Array.from(inputs).indexOf(e.currentTarget)
+                  inputs[idx + 1]?.focus()
+                }
+              }}
+            />
+            {(variantErrors as any)?.barcode && (
+              <p className="text-xs text-destructive">{(variantErrors as any).barcode.message}</p>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -256,7 +283,7 @@ function VariantRow({
 // ─── VariantBuilder ────────────────────────────────────────────────────────────
 
 const BLANK_VARIANT: VariantFormRow = {
-  sku: '', size: '', color: '', colorHex: '#000000', fabric: '', style: '', price: 0, stock: 0,
+  sku: '', barcode: '', size: '', color: '', colorHex: '#000000', fabric: '', style: '', price: 0, stock: 0,
 }
 
 export function VariantBuilder({ productSlug, basePrice: _basePrice }: { productSlug: string; basePrice: number }) {

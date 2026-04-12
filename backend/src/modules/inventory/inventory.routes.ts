@@ -63,6 +63,74 @@ router.post('/backfill', requireAuth, async (_req: Request, res: Response, next:
     res.json({ created: orphans.length, locationName: location.name })
   } catch (err) { next(err) }
 })
+// PATCH /api/inventory/reduce — scan a barcode and reduce stock by qty (default 1)
+// Used by POS scanner page. Requires auth. Prevents negative stock.
+router.patch('/reduce', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { barcode, quantity = 1 } = req.body as { barcode: string; quantity?: number }
+    if (!barcode || typeof barcode !== 'string') {
+      return res.status(400).json({ error: 'barcode is required' })
+    }
+    const qty = Math.max(1, Math.floor(Number(quantity) || 1))
+
+    // Resolve variant by barcode
+    const variant = await prisma.productVariant.findUnique({
+      where: { barcode },
+      include: {
+        product:   { select: { id: true, name: true, slug: true } },
+        inventory: { include: { location: { select: { id: true, name: true } } } },
+      },
+    })
+    if (!variant) return res.status(404).json({ error: `No variant found for barcode "${barcode}"` })
+
+    // Use first inventory location (Main Store)
+    const inv = variant.inventory[0]
+    if (!inv) return res.status(404).json({ error: 'No inventory record for this variant' })
+
+    const available = inv.quantity - inv.reserved
+    if (available < qty) {
+      return res.status(409).json({
+        error:     `Insufficient stock. Available: ${available}, requested: ${qty}`,
+        available,
+      })
+    }
+
+    // Optimistic-lock update
+    const updated = await prisma.inventory.updateMany({
+      where:  { id: inv.id, version: inv.version },
+      data:   { quantity: inv.quantity - qty, version: { increment: 1 } },
+    })
+    if (updated.count === 0) {
+      return res.status(409).json({ error: 'Concurrent update conflict — please retry' })
+    }
+
+    // Audit trail
+    await prisma.inventoryHistory.create({
+      data: {
+        variantId:   variant.id,
+        locationId:  inv.locationId,
+        oldQuantity: inv.quantity,
+        newQuantity: inv.quantity - qty,
+        delta:       -qty,
+        action:      'ADJUSTMENT',
+        note:        `POS scan deduction (barcode: ${barcode})`,
+        performedBy: (req as any).adminUser?.email ?? 'pos-scanner',
+      },
+    })
+
+    res.json({
+      ok:          true,
+      barcode,
+      sku:         variant.sku,
+      productName: variant.product.name,
+      size:        variant.size,
+      color:       variant.color,
+      deducted:    qty,
+      newQuantity: inv.quantity - qty,
+    })
+  } catch (err) { next(err) }
+})
+
 router.get('/:variantId', inventoryController.getByVariant)
 
 router.put(

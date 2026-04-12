@@ -12,6 +12,7 @@ import {
   LogOut,
   ChevronRight,
   Settings,
+  ScanBarcode,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
@@ -30,8 +31,9 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Products',   href: '/admin/products',   icon: ShoppingBag,     section: 'products' },
   { label: 'Inventory',  href: '/admin/inventory',  icon: Package,         section: 'inventory' },
   { label: 'Orders',     href: '/admin/orders',     icon: ShoppingCart,    section: 'orders' },
-  { label: 'POS Sync',   href: '/admin/pos-sync',   icon: RefreshCw,       section: 'pos-sync' },
-  { label: 'Users',      href: '/admin/users',      icon: Users,           section: 'users' },
+  { label: 'POS Sync',    href: '/admin/pos-sync',    icon: RefreshCw,     section: 'pos-sync' },
+  { label: 'POS Scanner', href: '/admin/pos-scanner', icon: ScanBarcode,   section: 'pos-scanner' },
+  { label: 'Users',       href: '/admin/users',       icon: Users,         section: 'users' },
   { label: 'Settings',   href: '/admin/settings',   icon: Settings,        section: 'dashboard' },
 ]
 

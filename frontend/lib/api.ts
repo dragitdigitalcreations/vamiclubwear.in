@@ -132,7 +132,14 @@ export const productsApi = {
       body: JSON.stringify(variant),
     }),
 
-  getVariantBySku: (sku: string) => request(`/products/variants/sku/${sku}`),
+  getVariantBySku:      (sku: string)     => request(`/products/variants/sku/${sku}`),
+  getVariantByBarcode:  (barcode: string) => request<{
+    id: string; sku: string; barcode: string | null
+    size: string | null; color: string | null; fabric: string | null; style: string | null
+    price: number
+    product: { id: string; name: string; slug: string }
+    inventory: Array<{ id: string; quantity: number; reserved: number; location: { id: string; name: string } }>
+  }>(`/products/barcode/${encodeURIComponent(barcode)}`),
 
   getShowcaseVideos: () =>
     request<Array<{
@@ -186,6 +193,16 @@ export const inventoryApi = {
 
   backfill: () =>
     request<{ created: number; locationName: string }>('/inventory/backfill', { method: 'POST' }),
+
+  reduce: (barcode: string, quantity = 1) =>
+    request<{
+      ok: boolean; barcode: string; sku: string
+      productName: string; size: string | null; color: string | null
+      deducted: number; newQuantity: number
+    }>('/inventory/reduce', {
+      method: 'PATCH',
+      body: JSON.stringify({ barcode, quantity }),
+    }),
 
   listHistory: (variantId?: string, page = 1, limit = 50) => {
     const qs = new URLSearchParams({ page: String(page), limit: String(limit), ...(variantId ? { variantId } : {}) }).toString()

@@ -85,6 +85,7 @@ export const productService = {
           variants: {
             create: data.variants.map((v) => ({
               sku:      v.sku,
+              barcode:  v.barcode || null,
               size:     v.size,
               color:    v.color,
               colorHex: v.colorHex,
@@ -265,6 +266,7 @@ export const productService = {
       data: {
         productId,
         sku:      variant.sku,
+        barcode:  variant.barcode || null,
         size:     variant.size,
         color:    variant.color,
         colorHex: variant.colorHex,
@@ -273,6 +275,20 @@ export const productService = {
         price:    new Prisma.Decimal(variant.price),
       },
     })
+  },
+
+  async getVariantByBarcode(barcode: string) {
+    const variant = await prisma.productVariant.findUnique({
+      where: { barcode },
+      include: {
+        product:   { select: { id: true, name: true, slug: true } },
+        inventory: {
+          include: { location: { select: { id: true, name: true } } },
+        },
+      },
+    })
+    if (!variant) throw new NotFoundError(`No variant found for barcode "${barcode}"`)
+    return variant
   },
 
   async deleteProduct(id: string) {

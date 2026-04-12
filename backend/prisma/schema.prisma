@@ -108,6 +108,7 @@ model ProductVariant {
   product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   sku        String      @unique // e.g. VCW-ZFUS-GRN-M-SILK-ANKA
+  barcode    String?     @unique // physical barcode / QR — scanned at POS
 
   size       String?
   color      String?

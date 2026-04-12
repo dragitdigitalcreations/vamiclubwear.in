@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 export const createVariantSchema = z.object({
   sku:      z.string().min(1, 'SKU is required').max(64),
+  barcode:  z.string().min(1).max(128).optional(),
   size:     z.string().max(20).optional(),
   color:    z.string().max(50).optional(),
   colorHex: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex colour').optional(),

@@ -72,6 +72,7 @@ router.post(
   productController.addVariant
 )
 
-router.get('/variants/sku/:sku', productController.getVariantBySku)
+router.get('/variants/sku/:sku',         productController.getVariantBySku)
+router.get('/barcode/:barcode',          productController.getVariantByBarcode)
 
 export default router
