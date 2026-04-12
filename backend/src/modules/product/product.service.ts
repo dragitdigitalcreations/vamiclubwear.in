@@ -16,7 +16,6 @@ const productFullInclude = {
     select: {
       id:       true,
       sku:      true,
-      barcode:  true,
       size:     true,
       color:    true,
       colorHex: true,
@@ -93,6 +92,7 @@ export const productService = {
         data: {
           name:        data.name,
           slug:        data.slug,
+          barcode:     (data as any).barcode || null,
           description: data.description,
           basePrice:   new Prisma.Decimal(data.basePrice),
           categoryId:  data.categoryId,
@@ -100,7 +100,6 @@ export const productService = {
           variants: {
             create: data.variants.map((v) => ({
               sku:      v.sku,
-              barcode:  v.barcode || null,
               size:     v.size,
               color:    v.color,
               colorHex: v.colorHex,
@@ -223,6 +222,7 @@ export const productService = {
         data: {
           ...(data.name        !== undefined && { name: data.name }),
           ...(data.slug        !== undefined && { slug: data.slug }),
+          ...((data as any).barcode !== undefined && { barcode: (data as any).barcode || null }),
           ...(data.description !== undefined && { description: data.description }),
           ...(data.basePrice   !== undefined && { basePrice: new Prisma.Decimal(data.basePrice) }),
           ...(data.categoryId  !== undefined && { categoryId: data.categoryId }),
@@ -257,7 +257,6 @@ export const productService = {
             await tx.productVariant.update({
               where: { sku: v.sku },
               data: {
-                barcode:  v.barcode || null,
                 size:     v.size,
                 color:    v.color,
                 colorHex: v.colorHex,
@@ -279,7 +278,6 @@ export const productService = {
               data: {
                 productId: id,
                 sku:      v.sku,
-                barcode:  v.barcode || null,
                 size:     v.size,
                 color:    v.color,
                 colorHex: v.colorHex,
@@ -348,7 +346,6 @@ export const productService = {
       data: {
         productId,
         sku:      variant.sku,
-        barcode:  variant.barcode || null,
         size:     variant.size,
         color:    variant.color,
         colorHex: variant.colorHex,
@@ -359,18 +356,27 @@ export const productService = {
     })
   },
 
-  async getVariantByBarcode(barcode: string) {
-    const variant = await prisma.productVariant.findUnique({
+  async getProductByBarcode(barcode: string) {
+    const product = await prisma.product.findUnique({
       where: { barcode },
-      include: {
-        product:   { select: { id: true, name: true, slug: true } },
-        inventory: {
-          include: { location: { select: { id: true, name: true } } },
+      select: {
+        id: true, name: true, slug: true,
+        variants: {
+          where: { isActive: true },
+          select: {
+            id: true, sku: true, size: true, color: true,
+            colorHex: true, fabric: true, style: true, price: true,
+            inventory: {
+              select: { quantity: true, reserved: true },
+              take: 1, orderBy: { createdAt: 'asc' },
+            },
+          },
+          orderBy: { sku: 'asc' },
         },
       },
     })
-    if (!variant) throw new NotFoundError(`No variant found for barcode "${barcode}"`)
-    return variant
+    if (!product) throw new NotFoundError(`No product found for barcode "${barcode}"`)
+    return product
   },
 
   async deleteProduct(id: string) {

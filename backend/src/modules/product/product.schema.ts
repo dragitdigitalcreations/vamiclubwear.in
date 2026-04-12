@@ -4,7 +4,6 @@ import { z } from 'zod'
 
 export const createVariantSchema = z.object({
   sku:      z.string().min(1, 'SKU is required').max(64),
-  barcode:  z.string().max(128).optional().transform(v => v === '' ? undefined : v),
   size:     z.string().max(20).optional(),
   color:    z.string().max(50).optional(),
   colorHex: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex colour').optional(),
@@ -36,6 +35,7 @@ export const createProductSchema = z.object({
                  .min(2)
                  .max(200)
                  .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+  barcode:     z.string().max(128).optional().transform(v => v === '' ? undefined : v),
   description: z.string().max(5000).optional(),
   basePrice:   z.number().positive('basePrice must be > 0'),
   categoryId:  z.string().cuid('Invalid categoryId'),

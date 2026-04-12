@@ -69,16 +69,9 @@ router.get('/by-barcode/:barcode', requireAuth, async (req: Request, res: Respon
   try {
     const barcode = decodeURIComponent(req.params.barcode)
 
-    // Find the variant that carries this barcode
-    const scanned = await prisma.productVariant.findUnique({
-      where:   { barcode },
-      select:  { id: true, productId: true },
-    })
-    if (!scanned) return res.status(404).json({ error: `No variant found for barcode "${barcode}"` })
-
-    // Return ALL active variants of the same product with their stock
+    // Find the product by its barcode
     const product = await prisma.product.findUnique({
-      where:  { id: scanned.productId },
+      where:  { barcode },
       select: {
         id:   true,
         name: true,
@@ -103,7 +96,7 @@ router.get('/by-barcode/:barcode', requireAuth, async (req: Request, res: Respon
         },
       },
     })
-    if (!product) return res.status(404).json({ error: 'Product not found' })
+    if (!product) return res.status(404).json({ error: `No product found for barcode "${barcode}"` })
 
     const variants = product.variants.map((v) => ({
       id:           v.id,
@@ -117,9 +110,8 @@ router.get('/by-barcode/:barcode', requireAuth, async (req: Request, res: Respon
     }))
 
     res.json({
-      scannedVariantId: scanned.id,
-      productId:        product.id,
-      productName:      product.name,
+      productId:   product.id,
+      productName: product.name,
       variants,
     })
   } catch (err) { next(err) }

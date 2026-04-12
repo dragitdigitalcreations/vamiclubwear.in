@@ -24,7 +24,6 @@ import { cn } from '@/lib/utils'
 
 const variantSchema = z.object({
   sku:      z.string().min(1, 'SKU is required'),
-  barcode:  z.string().optional(),
   size:     z.string().optional(),
   color:    z.string().optional(),
   colorHex: z.string().optional(),
@@ -39,6 +38,7 @@ const productSchema = z.object({
   slug:        z.string()
                  .min(2, 'Slug is required')
                  .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+  barcode:     z.string().max(128).optional().transform((v) => v === '' ? undefined : v),
   description: z.string().optional(),
   basePrice:   z.number({ invalid_type_error: 'Price must be a number' })
                 .positive('Price must be greater than ₹0'),
@@ -117,6 +117,7 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
     defaultValues: {
       name:        initialData?.name        ?? '',
       slug:        initialData?.slug        ?? '',
+      barcode:     (initialData as any)?.barcode ?? '',
       description: initialData?.description ?? '',
       basePrice:   initialData?.basePrice   ?? 0,
       categoryId:  initialData?.categoryId  ?? '',
@@ -262,6 +263,20 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
                 rows={4}
                 placeholder="Describe the style, occasion suitability, and notable design details…"
                 {...register('description')}
+              />
+            </div>
+
+            {/* Barcode — one per product, shared by all variants */}
+            <div className="space-y-1.5">
+              <Label htmlFor="barcode">
+                Product Barcode / QR Code
+                <span className="ml-1.5 text-xs font-normal text-muted">(one per product — used by POS scanner)</span>
+              </Label>
+              <Input
+                id="barcode"
+                placeholder="Scan with barcode scanner or type manually…"
+                className="font-mono"
+                {...register('barcode')}
               />
             </div>
 

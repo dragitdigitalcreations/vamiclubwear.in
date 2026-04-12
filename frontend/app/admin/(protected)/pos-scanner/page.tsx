@@ -19,10 +19,9 @@ interface VariantOption {
 }
 
 interface ProductLookup {
-  scannedVariantId: string
-  productId:        string
-  productName:      string
-  variants:         VariantOption[]
+  productId:   string
+  productName: string
+  variants:    VariantOption[]
 }
 
 interface ScanRecord {

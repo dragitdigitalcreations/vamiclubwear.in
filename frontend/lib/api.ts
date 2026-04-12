@@ -132,13 +132,14 @@ export const productsApi = {
       body: JSON.stringify(variant),
     }),
 
-  getVariantBySku:      (sku: string)     => request(`/products/variants/sku/${sku}`),
-  getVariantByBarcode:  (barcode: string) => request<{
-    id: string; sku: string; barcode: string | null
-    size: string | null; color: string | null; fabric: string | null; style: string | null
-    price: number
-    product: { id: string; name: string; slug: string }
-    inventory: Array<{ id: string; quantity: number; reserved: number; location: { id: string; name: string } }>
+  getVariantBySku:     (sku: string) => request(`/products/variants/sku/${sku}`),
+  getProductByBarcode: (barcode: string) => request<{
+    id: string; name: string; slug: string
+    variants: Array<{
+      id: string; sku: string; size: string | null; color: string | null
+      fabric: string | null; style: string | null; price: number
+      inventory: Array<{ quantity: number; reserved: number }>
+    }>
   }>(`/products/barcode/${encodeURIComponent(barcode)}`),
 
   getShowcaseVideos: () =>
@@ -194,12 +195,11 @@ export const inventoryApi = {
   backfill: () =>
     request<{ created: number; locationName: string }>('/inventory/backfill', { method: 'POST' }),
 
-  // Look up all variants of a product by any one of its barcodes
+  // Look up all variants of a product by its product barcode
   getByBarcode: (barcode: string) =>
     request<{
-      scannedVariantId: string
-      productId:        string
-      productName:      string
+      productId:   string
+      productName: string
       variants: Array<{
         id:           string
         sku:          string

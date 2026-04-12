@@ -36,6 +36,7 @@ export default function EditProductPage() {
         setInitialData({
           name:        p.name,
           slug:        p.slug,
+          barcode:     p.barcode  ?? '',
           description: p.description ?? '',
           basePrice:   Number(p.basePrice),
           categoryId:  p.category?.id ?? p.categoryId ?? '',
@@ -43,7 +44,6 @@ export default function EditProductPage() {
           isActive:    p.isActive,
           variants:    (p.variants ?? []).map((v: any) => ({
             sku:      v.sku,
-            barcode:  v.barcode  ?? '',
             size:     v.size     ?? '',
             color:    v.color    ?? '',
             colorHex: v.colorHex ?? '',

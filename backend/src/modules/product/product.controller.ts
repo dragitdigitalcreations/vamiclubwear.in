@@ -153,16 +153,16 @@ export const productController = {
     }
   },
 
-  getVariantByBarcode: async (
+  getProductByBarcode: async (
     req: Request<{ barcode: string }>,
     res: Response,
     next: NextFunction
   ) => {
     try {
-      const variant = await productService.getVariantByBarcode(
+      const product = await productService.getProductByBarcode(
         decodeURIComponent(req.params.barcode)
       )
-      res.json(variant)
+      res.json(product)
     } catch (err) {
       next(err)
     }
