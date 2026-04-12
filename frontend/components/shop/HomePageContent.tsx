@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useRef, useEffect, useState, useCallback } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, Truck, RotateCcw, Zap, ShieldCheck } from 'lucide-react'
 import { productsApi } from '@/lib/api'
 import { ProductCard } from '@/components/shop/ProductCard'
 import type { Product } from '@/types/product'
@@ -326,8 +326,8 @@ function FeaturedProducts() {
         className="mb-10 flex items-end justify-between"
       >
         <div>
-          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Curated</p>
-          <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Featured Pieces</h2>
+          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Most Popular</p>
+          <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Best Sellers</h2>
         </div>
         <Link href="/products"
           className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted transition-colors hover:text-on-background md:flex">
@@ -522,16 +522,175 @@ function VideoShowcase() {
   )
 }
 
+// ─── Benefits strip ───────────────────────────────────────────────────────────
+function BenefitsStrip() {
+  const benefits = [
+    { Icon: Truck,       label: 'Free Shipping',   sub: 'On orders ₹2500+' },
+    { Icon: RotateCcw,   label: 'Easy Returns',    sub: '7-day hassle-free' },
+    { Icon: Zap,         label: 'Fast Delivery',   sub: 'Pan-India express' },
+    { Icon: ShieldCheck, label: 'Secure Checkout', sub: '100% safe payments' },
+  ]
+  return (
+    <section className="border-y border-border/50 bg-surface">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <div className="grid grid-cols-2 divide-x divide-y divide-border/40 md:grid-cols-4 md:divide-y-0">
+          {benefits.map(({ Icon, label, sub }) => (
+            <div key={label} className="flex items-center gap-3 px-6 py-5">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary-light">
+                <Icon className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-on-background">{label}</p>
+                <p className="text-[11px] text-muted">{sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── New Arrivals ─────────────────────────────────────────────────────────────
+function NewArrivalsSection() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading,  setLoading]  = useState(true)
+
+  useEffect(() => {
+    productsApi.list({ isActive: 'true', limit: 8 })
+      .then((res) => setProducts((res as any).data ?? []))
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (!loading && products.length === 0) return null
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-20 md:px-8">
+      <motion.div
+        variants={fadeUp} initial="hidden" whileInView="visible"
+        viewport={{ once: true, margin: '-60px' }}
+        className="mb-10 flex items-end justify-between"
+      >
+        <div>
+          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Just Dropped</p>
+          <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">New Arrivals</h2>
+        </div>
+        <Link href="/products"
+          className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted transition-colors hover:text-on-background md:flex">
+          View All <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </motion.div>
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-5">
+        {loading
+          ? Array.from({ length: 8 }).map((_, i) => (
+              <div key={i}>
+                <div className="skeleton aspect-[3/4] w-full rounded-[14px]" />
+                <div className="mt-3 space-y-2 px-1">
+                  <div className="skeleton h-4 w-3/4 rounded" />
+                  <div className="skeleton h-3 w-1/2 rounded" />
+                  <div className="skeleton h-3 w-1/4 rounded" />
+                </div>
+              </div>
+            ))
+          : products.map((product, i) => (
+              <motion.div key={product.id}
+                variants={fadeUp} initial="hidden" whileInView="visible"
+                viewport={{ once: true, margin: '-30px' }} custom={i * 0.15}>
+                <ProductCard product={product} priority={i < 2} />
+              </motion.div>
+            ))}
+      </div>
+
+      {/* Mobile "View All" */}
+      <div className="mt-8 flex justify-center md:hidden">
+        <Link href="/products"
+          className="inline-flex items-center gap-2 border border-border px-8 py-3 text-xs font-semibold uppercase tracking-widest text-on-background transition-all hover:bg-surface-elevated">
+          View All <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </section>
+  )
+}
+
+// ─── Trending Products ────────────────────────────────────────────────────────
+function TrendingSection() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading,  setLoading]  = useState(true)
+
+  useEffect(() => {
+    // Fetch page 2 of active products as "trending" (different from new arrivals)
+    productsApi.list({ isActive: 'true', limit: 4, page: 2 })
+      .then((res) => {
+        const data = (res as any).data ?? []
+        if (data.length === 0) {
+          // fallback: just fetch any 4
+          return productsApi.list({ isActive: 'true', limit: 4 })
+            .then((r) => setProducts((r as any).data ?? []))
+        }
+        setProducts(data)
+      })
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (!loading && products.length === 0) return null
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 pb-20 md:px-8">
+      <motion.div
+        variants={fadeUp} initial="hidden" whileInView="visible"
+        viewport={{ once: true, margin: '-60px' }}
+        className="mb-10 flex items-end justify-between"
+      >
+        <div>
+          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Right Now</p>
+          <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Trending</h2>
+        </div>
+        <Link href="/products"
+          className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted transition-colors hover:text-on-background md:flex">
+          View All <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </motion.div>
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-5">
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i}>
+                <div className="skeleton aspect-[3/4] w-full rounded-[14px]" />
+                <div className="mt-3 space-y-2 px-1">
+                  <div className="skeleton h-4 w-3/4 rounded" />
+                  <div className="skeleton h-3 w-1/2 rounded" />
+                  <div className="skeleton h-3 w-1/4 rounded" />
+                </div>
+              </div>
+            ))
+          : products.map((product, i) => (
+              <motion.div key={product.id}
+                variants={fadeUp} initial="hidden" whileInView="visible"
+                viewport={{ once: true, margin: '-30px' }} custom={i * 0.15}>
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
+      </div>
+    </section>
+  )
+}
+
 // ─── Export ───────────────────────────────────────────────────────────────────
 export function HomePageContent() {
   return (
     <>
       <Hero />
       <MarqueeStrip />
+      <BenefitsStrip />
       <CollectionsGrid />
+      <NewArrivalsSection />
       <PromoBanner />
       <BrandStatement />
       <FeaturedProducts />
+      <TrendingSection />
       <VideoShowcase />
     </>
   )

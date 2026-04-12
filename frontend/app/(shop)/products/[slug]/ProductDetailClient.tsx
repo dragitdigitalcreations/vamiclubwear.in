@@ -3,8 +3,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Play, ShoppingBag, ChevronDown } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Play, ShoppingBag, ChevronDown, ArrowRight, Zap, Heart } from 'lucide-react'
 import {
   Product,
   ProductMedia,
@@ -14,8 +15,11 @@ import {
   getAvailableStock,
 } from '@/types/product'
 import { useCartStore } from '@/stores/cartStore'
+import { useWishlistStore } from '@/stores/wishlistStore'
 import { toast } from '@/stores/toastStore'
 import { cloudinaryUrl } from '@/lib/cloudinary'
+import { productsApi } from '@/lib/api'
+import { ProductCard } from '@/components/shop/ProductCard'
 
 // ─── Media Gallery ─────────────────────────────────────────────────────────────
 function MediaGallery({ media }: { media: ProductMedia[] }) {
@@ -283,10 +287,68 @@ function StickyCartBar({
   )
 }
 
+// ─── Related Products ──────────────────────────────────────────────────────────
+function RelatedProducts({ categorySlug, excludeId }: { categorySlug: string; excludeId: string }) {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading,  setLoading]  = useState(true)
+
+  useEffect(() => {
+    productsApi.list({ isActive: 'true', category: categorySlug, limit: 6 })
+      .then((res) => {
+        const all = (res as any).data ?? []
+        setProducts(all.filter((p: Product) => p.id !== excludeId).slice(0, 4))
+      })
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false))
+  }, [categorySlug, excludeId])
+
+  if (!loading && products.length === 0) return null
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
+      <div className="mb-8 flex items-end justify-between">
+        <div>
+          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">You May Also Like</p>
+          <h2 className="font-display text-3xl font-bold text-on-background md:text-4xl">Related Pieces</h2>
+        </div>
+        <Link href={`/products?category=${categorySlug}`}
+          className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted transition-colors hover:text-on-background md:flex">
+          View All <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-5">
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i}>
+                <div className="skeleton aspect-[3/4] w-full rounded-[14px]" />
+                <div className="mt-3 space-y-2 px-1">
+                  <div className="skeleton h-4 w-3/4 rounded" />
+                  <div className="skeleton h-3 w-1/3 rounded" />
+                  <div className="skeleton h-3 w-1/4 rounded" />
+                </div>
+              </div>
+            ))
+          : products.map((p, i) => (
+              <motion.div key={p.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+                <ProductCard product={p} />
+              </motion.div>
+            ))}
+      </div>
+    </section>
+  )
+}
+
 // ─── Main Client Component ─────────────────────────────────────────────────────
 export function ProductDetailClient({ product }: { product: Product }) {
-  const { addItem } = useCartStore()
-  const addToCartRef = useRef<HTMLButtonElement>(null)
+  const { addItem }                    = useCartStore()
+  const { toggleItem, isWishlisted }   = useWishlistStore()
+  const router                         = useRouter()
+  const addToCartRef                   = useRef<HTMLButtonElement>(null)
 
   const [variant, setVariant] = useState<ProductVariant | null>(
     () => product.variants.find((v) => v.isActive) ?? null
@@ -328,6 +390,11 @@ export function ProductDetailClient({ product }: { product: Product }) {
     setTimeout(() => setAdded(false), 2000)
   }
 
+  function handleBuyNow() {
+    handleAddToCart()
+    router.push('/cart')
+  }
+
   return (
     <>
       <motion.div
@@ -363,9 +430,29 @@ export function ProductDetailClient({ product }: { product: Product }) {
               <p className="mb-2 text-xs font-medium uppercase tracking-[0.3em] text-primary-light">
                 {product.category.name}
               </p>
-              <h1 className="font-display text-3xl font-bold leading-tight text-on-background md:text-4xl">
-                {product.name}
-              </h1>
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="font-display text-3xl font-bold leading-tight text-on-background md:text-4xl">
+                  {product.name}
+                </h1>
+                <button
+                  onClick={() => toggleItem({
+                    id:        product.id,
+                    name:      product.name,
+                    slug:      product.slug,
+                    basePrice: Number(product.basePrice),
+                    imageUrl:  product.media.find((m) => m.type === 'IMAGE')?.url ?? null,
+                    category:  product.category.name,
+                  })}
+                  className={`mt-1 flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 hover:scale-110 ${
+                    isWishlisted(product.id)
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-border text-muted hover:border-primary hover:bg-primary hover:text-white'
+                  }`}
+                  aria-label={isWishlisted(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                >
+                  <Heart className={`h-4 w-4 ${isWishlisted(product.id) ? 'fill-white' : ''}`} />
+                </button>
+              </div>
               <p className="mt-4 text-2xl font-semibold text-on-background">
                 ₹{price.toLocaleString('en-IN')}
               </p>
@@ -438,6 +525,16 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 {added ? 'Added to Bag!' : stock === 0 ? 'Out of Stock' : 'Add to Bag'}
               </button>
 
+              {/* Buy Now */}
+              <button
+                onClick={handleBuyNow}
+                disabled={!variant || stock === 0}
+                className="flex w-full items-center justify-center gap-3 border border-border py-4 text-sm font-semibold uppercase tracking-widest transition-all duration-200 hover:border-on-background hover:bg-surface-elevated active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 text-on-background"
+              >
+                <Zap className="h-4 w-4" />
+                Buy Now
+              </button>
+
               {/* Trust badges */}
               <div className="flex items-center justify-center gap-6 border-t border-border pt-4">
                 {['Free shipping ₹2500+', 'Easy 7-day returns', 'Secure checkout'].map((badge) => (
@@ -468,6 +565,11 @@ export function ProductDetailClient({ product }: { product: Product }) {
           />
         )}
       </AnimatePresence>
+
+      {/* You May Also Like */}
+      <div className="border-t border-border/50">
+        <RelatedProducts categorySlug={product.category.slug} excludeId={product.id} />
+      </div>
     </>
   )
 }

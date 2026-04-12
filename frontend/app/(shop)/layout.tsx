@@ -1,10 +1,11 @@
 // Applies Navbar + Footer + CartDrawer to all nested shop routes
 // Lenis smooth scroll is scoped here — does NOT affect admin pages
-import { Navbar }          from '@/components/shop/Navbar'
-import { Footer }          from '@/components/shop/Footer'
-import { CartDrawer }      from '@/components/shop/CartDrawer'
-import { PageTransition }  from '@/components/shop/PageTransition'
-import { LenisProvider }   from '@/components/shop/LenisProvider'
+import { Navbar }           from '@/components/shop/Navbar'
+import { Footer }           from '@/components/shop/Footer'
+import { CartDrawer }       from '@/components/shop/CartDrawer'
+import { WishlistDrawer }   from '@/components/shop/WishlistDrawer'
+import { PageTransition }   from '@/components/shop/PageTransition'
+import { LenisProvider }    from '@/components/shop/LenisProvider'
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       </main>
       <Footer />
       <CartDrawer />
+      <WishlistDrawer />
     </LenisProvider>
   )
 }

@@ -4,9 +4,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShoppingBag, Eye } from 'lucide-react'
+import { ShoppingBag, Eye, Heart } from 'lucide-react'
 import { Product, getPrimaryImage, getVariantsByColor } from '@/types/product'
 import { useCartStore } from '@/stores/cartStore'
+import { useWishlistStore } from '@/stores/wishlistStore'
 import { cloudinaryUrl } from '@/lib/cloudinary'
 
 interface ProductCardProps {
@@ -22,18 +23,19 @@ function isNewProduct(createdAt?: string): boolean {
 export function ProductCard({ product, priority = false }: ProductCardProps) {
   const [hovered,    setHovered]    = useState(false)
   const [addedPulse, setAddedPulse] = useState(false)
-  const { addItem } = useCartStore()
+  const { addItem }     = useCartStore()
+  const { toggleItem, isWishlisted } = useWishlistStore()
 
-  const rawImageUrl  = getPrimaryImage(product)
-  const imageUrl     = rawImageUrl ? cloudinaryUrl(rawImageUrl, { w: 600, q: 80 }) : null
-  // Second image for hover swap (if available)
-  const hoverImages  = product.media?.filter((m) => m.type === 'IMAGE').sort((a, b) => a.sortOrder - b.sortOrder)
+  const rawImageUrl   = getPrimaryImage(product)
+  const imageUrl      = rawImageUrl ? cloudinaryUrl(rawImageUrl, { w: 600, q: 80 }) : null
+  const hoverImages   = product.media?.filter((m) => m.type === 'IMAGE').sort((a, b) => a.sortOrder - b.sortOrder)
   const hoverImageUrl = hoverImages && hoverImages.length > 1
     ? cloudinaryUrl(hoverImages[1].url, { w: 600, q: 80 })
     : null
 
-  const colors   = getVariantsByColor(product.variants)
-  const isNew    = isNewProduct(product.createdAt)
+  const colors         = getVariantsByColor(product.variants)
+  const isNew          = isNewProduct(product.createdAt)
+  const wishlisted     = isWishlisted(product.id)
 
   const defaultVariant = product.variants
     .filter((v) => v.isActive)
@@ -58,6 +60,18 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
     setTimeout(() => setAddedPulse(false), 1200)
   }
 
+  function handleWishlist(e: React.MouseEvent) {
+    e.preventDefault()
+    toggleItem({
+      id:        product.id,
+      name:      product.name,
+      slug:      product.slug,
+      basePrice: Number(product.basePrice),
+      imageUrl:  rawImageUrl ?? null,
+      category:  product.category.name,
+    })
+  }
+
   return (
     <Link
       href={`/products/${product.slug}`}
@@ -66,12 +80,9 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
       onMouseLeave={() => setHovered(false)}
     >
       {/* ── Image container ── */}
-      <div
-        className="relative overflow-hidden rounded-[14px] bg-surface-elevated aspect-[3/4] shadow-card transition-shadow duration-300 group-hover:shadow-card-hover"
-      >
+      <div className="relative overflow-hidden rounded-[14px] bg-surface-elevated aspect-[3/4] shadow-card transition-shadow duration-300 group-hover:shadow-card-hover">
         {imageUrl ? (
           <>
-            {/* Primary image */}
             <Image
               src={imageUrl}
               alt={product.name}
@@ -82,7 +93,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
               }`}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
-            {/* Hover-swap second image */}
             {hoverImageUrl && (
               <Image
                 src={hoverImageUrl}
@@ -115,6 +125,19 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           )}
         </div>
 
+        {/* ── Wishlist heart (top-right) — always visible ── */}
+        <button
+          onClick={handleWishlist}
+          className={`absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-all duration-200 hover:scale-110 ${
+            wishlisted
+              ? 'bg-primary text-white'
+              : 'bg-background/70 text-muted hover:bg-primary hover:text-white'
+          }`}
+          aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          <Heart className={`h-3.5 w-3.5 transition-all duration-200 ${wishlisted ? 'fill-white' : ''}`} />
+        </button>
+
         {/* ── Hover overlay ── */}
         <AnimatePresence>
           {hovered && (
@@ -126,7 +149,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="absolute inset-0 z-10 flex items-end gap-2 rounded-[14px] bg-black/20 p-3"
             >
-              {/* Quick add */}
               {defaultVariant && (
                 <motion.button
                   initial={{ y: 8, opacity: 0 }}
@@ -146,7 +168,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
                 </motion.button>
               )}
 
-              {/* View detail */}
               <motion.div
                 initial={{ y: 8, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -164,7 +185,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 
       {/* ── Info block ── */}
       <div className="mt-3 px-1">
-        {/* Color swatches */}
         {colors.length > 0 && (
           <div className="mb-2 flex items-center gap-1.5">
             {colors.slice(0, 5).map((c) => (
@@ -180,7 +200,6 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             )}
           </div>
         )}
-
         <h3 className="text-sm font-medium leading-snug text-on-background line-clamp-2 transition-colors duration-200 group-hover:text-primary-light">
           {product.name}
         </h3>

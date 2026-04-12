@@ -3,10 +3,11 @@
 import Link from 'next/link'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ShoppingBag, Menu, X, Search, User } from 'lucide-react'
+import { ShoppingBag, Menu, X, Search, User, Heart } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useCartStore, selectTotalItems } from '@/stores/cartStore'
+import { useWishlistStore, selectWishlistCount } from '@/stores/wishlistStore'
 import { ProfileDrawer } from '@/components/shop/ProfileDrawer'
 import { VamiLogo } from '@/components/shop/VamiLogo'
 
@@ -25,8 +26,10 @@ export function Navbar() {
   const [searchQuery,   setSearchQuery]   = useState('')
   const searchInputRef  = useRef<HTMLInputElement>(null)
   const router          = useRouter()
-  const { toggleCart }  = useCartStore()
-  const totalItems      = useCartStore(selectTotalItems)
+  const { toggleCart }      = useCartStore()
+  const totalItems          = useCartStore(selectTotalItems)
+  const { toggleWishlist }  = useWishlistStore()
+  const wishlistCount       = useWishlistStore(selectWishlistCount)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -94,6 +97,20 @@ export function Navbar() {
               aria-label="Search"
             >
               <Search className="h-4 w-4" />
+            </button>
+
+            {/* Wishlist */}
+            <button
+              onClick={toggleWishlist}
+              className="relative p-2 text-muted transition-colors hover:text-on-background"
+              aria-label={`Wishlist (${wishlistCount})`}
+            >
+              <Heart className={`h-4 w-4 transition-colors ${wishlistCount > 0 ? 'text-primary-light fill-primary-light' : ''}`} />
+              {wishlistCount > 0 && (
+                <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                  {wishlistCount > 9 ? '9+' : wishlistCount}
+                </span>
+              )}
             </button>
 
             {/* Profile — My Orders, Track, WhatsApp */}
