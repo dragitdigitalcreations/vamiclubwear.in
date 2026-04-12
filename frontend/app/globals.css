@@ -4,23 +4,24 @@
 
 @layer base {
   :root {
-    --background:           40 30% 98%;      /* #FAFAF8 warm cream */
-    --foreground:           30 8%  11%;      /* #1C1A18 near-black */
+    --background:        0   0% 100%;    /* #FFFFFF */
+    --foreground:        0   0%  15%;    /* #252525 */
 
-    --surface:               0  0% 100%;     /* #FFFFFF pure white */
-    --surface-elevated:     35 15% 95%;      /* #F4F1ED warm light */
+    --surface:           0   0% 100%;    /* #FFFFFF */
+    --surface-elevated:  0   0%  97%;    /* #F7F7F7 */
+    --surface-overlay:   0   0%  94%;    /* #EFEFEF */
 
-    --primary:              30  8%  11%;     /* #1C1A18 editorial black */
-    --primary-foreground:   40 30% 98%;      /* #FAFAF8 */
+    --primary:           0   0%  15%;    /* #252525 */
+    --primary-foreground: 0  0% 100%;   /* #FFFFFF */
 
-    --muted:                30  8%  57%;     /* #9A9188 warm mid-grey */
-    --muted-foreground:     30  6%  44%;     /* #7A7068 */
+    --muted:             0   0%  55%;    /* #8D8D8D */
+    --muted-foreground:  0   0%  42%;    /* #6A6A6A */
 
-    --border:               35 14%  87%;     /* #E5E0D8 warm light */
-    --input:                35 15%  95%;     /* #F4F1ED */
-    --ring:                 30  8%  11%;     /* #1C1A18 */
+    --border:            0   0%  92%;    /* #EAEAEA */
+    --input:             0   0%  92%;    /* #EAEAEA */
+    --ring:              0   0%  71%;    /* #B5B5B5 */
 
-    --radius: 2px;
+    --radius: 10px;
   }
 
   html {
@@ -32,79 +33,81 @@
   }
 
   body {
-    @apply text-on-background antialiased;
+    @apply bg-background text-on-background antialiased;
     font-feature-settings: 'rlig' 1, 'calt' 1;
-    background-color: #FAFAF8;
   }
 
   /* ── Typography hierarchy ──────────────────────────────────────────────── */
   h1 {
     font-weight: 700;
-    color: #1C1A18;
+    color: #252525;
     letter-spacing: -0.025em;
   }
   h2 {
     font-weight: 600;
-    color: #1C1A18;
+    color: #252525;
     letter-spacing: -0.02em;
   }
   h3 {
     font-weight: 600;
-    color: #2E2B28;
+    color: #333333;
   }
   h4 {
     font-weight: 500;
-    color: #2E2B28;
+    color: #333333;
   }
   h5, h6 {
     font-weight: 500;
-    color: #9A9188;
+    color: #8D8D8D;
     letter-spacing: 0.04em;
   }
 
   /* ── Navbar transparent state ───────────────────────────────────────────── */
-  header.vami-nav-transparent {
+  .vami-nav-transparent {
     background: transparent;
   }
 
   /* ── Surfaces ────────────────────────────────────────────────────────────── */
   .bg-surface          { background-color: #FFFFFF !important; }
-  .bg-surface-elevated { background-color: #F4F1ED !important; }
-  .bg-background       { background-color: #FAFAF8 !important; }
+  .bg-surface-elevated { background-color: #F7F7F7 !important; }
+  .bg-surface-overlay  { background-color: #EFEFEF !important; }
+  .bg-background       { background-color: #FFFFFF !important; }
 
   /* ── Light scrollbar ─────────────────────────────────────────────────────── */
   ::-webkit-scrollbar        { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track  { background: #F4F1ED; }
-  ::-webkit-scrollbar-thumb  { background: #C4B5A8; border-radius: 3px; }
+  ::-webkit-scrollbar-track  { background: #F7F7F7; }
+  ::-webkit-scrollbar-thumb  { background: #D0D0D0; border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: #8B6B47; }
 }
 
 @layer utilities {
-  /* ── Skeleton shimmer (light) ── */
+  /* ── Skeleton shimmer (cool light grey) ── */
   .skeleton {
     background: linear-gradient(
       90deg,
-      #EDE9E3 25%,
-      #E5E0D8 50%,
-      #EDE9E3 75%
+      #F0F0F0 25%,
+      #E8E8E8 50%,
+      #F0F0F0 75%
     );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite linear;
   }
 
-  /* ── Hide scrollbar ── */
-  .scrollbar-hide {
+  /* ── Hide / no scrollbar ── */
+  .scrollbar-hide,
+  .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 
-  /* ── Card shadows (lighter for light theme) ── */
+  /* ── Card shadows ── */
   .shadow-card {
-    box-shadow: 0 1px 4px rgba(28, 26, 24, 0.08), 0 1px 2px rgba(28, 26, 24, 0.05);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
   }
   .shadow-card-hover {
-    box-shadow: 0 8px 24px rgba(28, 26, 24, 0.12), 0 2px 6px rgba(28, 26, 24, 0.07);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
   }
 
   /* ── Masonry ── */
@@ -123,22 +126,18 @@
     margin-bottom: 0.75rem;
   }
 
-  /* ── No scrollbar ── */
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-
   /* ── Video fade-in ── */
   .video-fade-in {
     animation: videoFadeIn 0.4s ease-out forwards;
   }
 
-  /* ── Texture overlay (adapted for light) ── */
+  /* ── Texture overlay ── */
   .texture-overlay { position: relative; }
   .texture-overlay::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, transparent 50%, rgba(250, 250, 248, 0.85) 100%);
+    background: linear-gradient(to bottom, transparent 50%, rgba(255,255,255,0.85) 100%);
     pointer-events: none;
   }
 }

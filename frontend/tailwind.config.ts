@@ -1,10 +1,14 @@
 import type { Config } from 'tailwindcss'
 
-// ─── Luxury Minimal Light Theme ──────────────────────────────────────────────
-// Inspired by premium fashion editorials & drbydanarazik.com
-// Background: Warm cream #FAFAF8
-// Primary CTA: Near-black #1C1A18 (luxury editorial buttons)
-// Brand Accent: Warm caramel #8B6B47 (preserves Vami DNA)
+// ─── Color system matching drbydanarazik.com reference ───────────────────────
+// Background:   #FFFFFF (pure white)
+// Foreground:   #252525 (near-black)
+// Border:       #EAEAEA (cool light grey)
+// Muted text:   #8D8D8D (medium cool grey)
+// Primary CTA:  #252525 (near-black buttons)
+// Brand accent: #8B6B47 (warm caramel — Vami identity)
+// Font:         DM Sans (free match to Metropolis)
+// Radius:       10px (matches reference --radius: .625rem)
 
 const config: Config = {
   darkMode: 'class',
@@ -16,58 +20,68 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Core surfaces
-        background: '#FAFAF8',      // warm off-white cream
+        background: '#FFFFFF',
         surface: {
-          DEFAULT:  '#FFFFFF',      // pure white
-          elevated: '#F4F1ED',      // very light warm
-          overlay:  '#EDE9E3',      // warm overlay
+          DEFAULT:  '#FFFFFF',
+          elevated: '#F7F7F7',
+          overlay:  '#EFEFEF',
         },
-        border: '#E5E0D8',          // warm light border
-        input:  '#F4F1ED',
-        ring:   '#1C1A18',
+        border: '#EAEAEA',
+        input:  '#EAEAEA',
+        ring:   '#B5B5B5',
 
-        // Primary — near-black for luxury buttons + caramel accent
         primary: {
-          DEFAULT:    '#1C1A18',    // near-black (editorial CTA)
-          light:      '#8B6B47',    // warm caramel accent (brand DNA)
-          dark:       '#0D0D0C',
-          foreground: '#FAFAF8',    // cream text on dark button
+          DEFAULT:    '#252525',    // near-black editorial CTA
+          light:      '#8B6B47',    // warm caramel brand accent
+          dark:       '#0D0D0D',
+          foreground: '#FFFFFF',
         },
 
-        // Text
-        'on-background': '#1C1A18',
-        'on-surface':    '#2E2B28',
+        'on-background': '#252525',
+        'on-surface':    '#333333',
 
         muted: {
-          DEFAULT:    '#9A9188',    // warm medium grey
-          foreground: '#7A7068',
+          DEFAULT:    '#8D8D8D',    // cool medium grey (secondary text)
+          foreground: '#6A6A6A',
         },
 
-        // Semantic
         accent: {
           DEFAULT:    '#8B6B47',
-          foreground: '#FAFAF8',
+          foreground: '#FFFFFF',
         },
         destructive: {
-          DEFAULT:    '#C0392B',
-          foreground: '#FDECEA',
+          DEFAULT:    '#D32F2F',
+          foreground: '#FFFFFF',
         },
         success: {
-          DEFAULT:    '#27AE60',
-          foreground: '#E8F8EF',
+          DEFAULT:    '#2E7D32',
+          foreground: '#FFFFFF',
         },
       },
 
       fontFamily: {
-        sans:    ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-playfair)', 'Georgia', 'serif'],
+        // DM Sans for everything — matches Metropolis used by reference
+        sans:    ['var(--font-dm-sans)', 'Arial', 'Helvetica', 'sans-serif'],
+        display: ['var(--font-dm-sans)', 'Arial', 'Helvetica', 'sans-serif'],
+      },
+
+      fontSize: {
+        // Reference-accurate scales
+        '2xs': ['0.625rem', { lineHeight: '1rem' }],
       },
 
       borderRadius: {
-        lg: '2px',
-        md: '2px',
-        sm: '1px',
+        DEFAULT: '10px',
+        lg:      '10px',
+        md:      '8px',
+        sm:      '6px',
+        full:    '9999px',
+      },
+
+      boxShadow: {
+        card:       '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+        'card-hover': '0 4px 16px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06)',
+        soft:       '0 2px 8px rgba(0,0,0,0.06)',
       },
 
       keyframes: {

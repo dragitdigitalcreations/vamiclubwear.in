@@ -1,20 +1,15 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
+import { DM_Sans } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/Toaster'
 
-// Body font — clean, modern
-const inter = Inter({
+// DM Sans — closest free match to Metropolis (used by drbydanarazik.com)
+// Clean, geometric, premium feel across all weights
+const dmSans = DM_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-dm-sans',
   display: 'swap',
-})
-
-// Display font — luxury editorial feel for product names, headers
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-playfair',
-  display: 'swap',
+  weight: ['300', '400', '500', '600', '700'],
 })
 
 export const metadata: Metadata = {
@@ -43,7 +38,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#FAFAF8',
+  themeColor: '#FFFFFF',
   colorScheme: 'light',
   width: 'device-width',
   initialScale: 1,
@@ -55,8 +50,7 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    // 'dark' class is always applied — app is dark-mode only per CLAUDE.md
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
+    <html lang="en" className={dmSans.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-on-background">
         {children}
         <Toaster />
