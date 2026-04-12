@@ -194,14 +194,32 @@ export const inventoryApi = {
   backfill: () =>
     request<{ created: number; locationName: string }>('/inventory/backfill', { method: 'POST' }),
 
-  reduce: (barcode: string, quantity = 1) =>
+  // Look up all variants of a product by any one of its barcodes
+  getByBarcode: (barcode: string) =>
     request<{
-      ok: boolean; barcode: string; sku: string
+      scannedVariantId: string
+      productId:        string
+      productName:      string
+      variants: Array<{
+        id:           string
+        sku:          string
+        size:         string | null
+        color:        string | null
+        fabric:       string | null
+        style:        string | null
+        price:        number
+        availableQty: number
+      }>
+    }>(`/inventory/by-barcode/${encodeURIComponent(barcode)}`),
+
+  reduce: (variantId: string, quantity = 1) =>
+    request<{
+      ok: boolean; sku: string
       productName: string; size: string | null; color: string | null
       deducted: number; newQuantity: number
     }>('/inventory/reduce', {
       method: 'PATCH',
-      body: JSON.stringify({ barcode, quantity }),
+      body: JSON.stringify({ variantId, quantity }),
     }),
 
   listHistory: (variantId?: string, page = 1, limit = 50) => {

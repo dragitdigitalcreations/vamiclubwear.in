@@ -48,7 +48,6 @@ export type CreateProductInput = z.infer<typeof createProductSchema>
 
 export const updateProductSchema = createProductSchema
   .partial()
-  .omit({ variants: true })
   .extend({ isActive: z.boolean().optional() })
 export type UpdateProductInput = z.infer<typeof updateProductSchema>
 

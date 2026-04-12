@@ -63,27 +63,96 @@ router.post('/backfill', requireAuth, async (_req: Request, res: Response, next:
     res.json({ created: orphans.length, locationName: location.name })
   } catch (err) { next(err) }
 })
-// PATCH /api/inventory/reduce — scan a barcode and reduce stock by qty (default 1)
+// GET /api/inventory/by-barcode/:barcode — look up all variants of a product by barcode
+// Returns the full product variant list so POS staff can pick the exact one sold
+router.get('/by-barcode/:barcode', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const barcode = decodeURIComponent(req.params.barcode)
+
+    // Find the variant that carries this barcode
+    const scanned = await prisma.productVariant.findUnique({
+      where:   { barcode },
+      select:  { id: true, productId: true },
+    })
+    if (!scanned) return res.status(404).json({ error: `No variant found for barcode "${barcode}"` })
+
+    // Return ALL active variants of the same product with their stock
+    const product = await prisma.product.findUnique({
+      where:  { id: scanned.productId },
+      select: {
+        id:   true,
+        name: true,
+        slug: true,
+        variants: {
+          where:   { isActive: true },
+          select: {
+            id:      true,
+            sku:     true,
+            size:    true,
+            color:   true,
+            fabric:  true,
+            style:   true,
+            price:   true,
+            inventory: {
+              select: { quantity: true, reserved: true },
+              take:   1,
+              orderBy: { createdAt: 'asc' },
+            },
+          },
+          orderBy: { sku: 'asc' },
+        },
+      },
+    })
+    if (!product) return res.status(404).json({ error: 'Product not found' })
+
+    const variants = product.variants.map((v) => ({
+      id:           v.id,
+      sku:          v.sku,
+      size:         v.size,
+      color:        v.color,
+      fabric:       v.fabric,
+      style:        v.style,
+      price:        Number(v.price),
+      availableQty: (v.inventory[0]?.quantity ?? 0) - (v.inventory[0]?.reserved ?? 0),
+    }))
+
+    res.json({
+      scannedVariantId: scanned.id,
+      productId:        product.id,
+      productName:      product.name,
+      variants,
+    })
+  } catch (err) { next(err) }
+})
+
+// PATCH /api/inventory/reduce — deduct stock by variantId (called after staff picks variant)
 // Used by POS scanner page. Requires auth. Prevents negative stock.
 router.patch('/reduce', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { barcode, quantity = 1 } = req.body as { barcode: string; quantity?: number }
-    if (!barcode || typeof barcode !== 'string') {
-      return res.status(400).json({ error: 'barcode is required' })
+    const { variantId, quantity = 1 } = req.body as { variantId: string; quantity?: number }
+    if (!variantId || typeof variantId !== 'string') {
+      return res.status(400).json({ error: 'variantId is required' })
     }
     const qty = Math.max(1, Math.floor(Number(quantity) || 1))
 
-    // Resolve variant by barcode
+    // Resolve variant + inventory
     const variant = await prisma.productVariant.findUnique({
-      where: { barcode },
-      include: {
-        product:   { select: { id: true, name: true, slug: true } },
-        inventory: { include: { location: { select: { id: true, name: true } } } },
+      where:   { id: variantId },
+      select: {
+        id:      true,
+        sku:     true,
+        size:    true,
+        color:   true,
+        product: { select: { name: true } },
+        inventory: {
+          select:  { id: true, quantity: true, reserved: true, version: true, locationId: true },
+          take:    1,
+          orderBy: { createdAt: 'asc' },
+        },
       },
     })
-    if (!variant) return res.status(404).json({ error: `No variant found for barcode "${barcode}"` })
+    if (!variant) return res.status(404).json({ error: `Variant not found` })
 
-    // Use first inventory location (Main Store)
     const inv = variant.inventory[0]
     if (!inv) return res.status(404).json({ error: 'No inventory record for this variant' })
 
@@ -97,8 +166,8 @@ router.patch('/reduce', requireAuth, async (req: Request, res: Response, next: N
 
     // Optimistic-lock update
     const updated = await prisma.inventory.updateMany({
-      where:  { id: inv.id, version: inv.version },
-      data:   { quantity: inv.quantity - qty, version: { increment: 1 } },
+      where: { id: inv.id, version: inv.version },
+      data:  { quantity: inv.quantity - qty, version: { increment: 1 } },
     })
     if (updated.count === 0) {
       return res.status(409).json({ error: 'Concurrent update conflict — please retry' })
@@ -113,14 +182,13 @@ router.patch('/reduce', requireAuth, async (req: Request, res: Response, next: N
         newQuantity: inv.quantity - qty,
         delta:       -qty,
         action:      'ADJUSTMENT',
-        note:        `POS scan deduction (barcode: ${barcode})`,
+        note:        `POS sale deduction`,
         performedBy: (req as any).adminUser?.email ?? 'pos-scanner',
       },
     })
 
     res.json({
       ok:          true,
-      barcode,
       sku:         variant.sku,
       productName: variant.product.name,
       size:        variant.size,

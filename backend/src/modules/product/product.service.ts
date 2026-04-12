@@ -216,31 +216,98 @@ export const productService = {
       throw new NotFoundError(`Product ${id}`)
     })
 
-    return prisma.product.update({
-      where: { id },
-      data: {
-        ...(data.name        !== undefined && { name: data.name }),
-        ...(data.slug        !== undefined && { slug: data.slug }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.basePrice   !== undefined && { basePrice: new Prisma.Decimal(data.basePrice) }),
-        ...(data.categoryId  !== undefined && { categoryId: data.categoryId }),
-        ...(data.isFeatured  !== undefined && { isFeatured: data.isFeatured }),
-        ...(data.isActive    !== undefined && { isActive:   data.isActive }),
-        // Replace media if provided
-        ...(data.media && data.media.length > 0 && {
-          media: {
-            deleteMany: {},
-            create: data.media.map((m, idx) => ({
-              url:       m.url,
-              type:      m.type,
-              altText:   m.altText,
-              isPrimary: m.isPrimary,
-              sortOrder: m.sortOrder ?? idx,
-            })),
-          },
-        }),
-      },
-      include: productFullInclude,
+    return prisma.$transaction(async (tx) => {
+      // 1. Update product-level fields
+      await tx.product.update({
+        where: { id },
+        data: {
+          ...(data.name        !== undefined && { name: data.name }),
+          ...(data.slug        !== undefined && { slug: data.slug }),
+          ...(data.description !== undefined && { description: data.description }),
+          ...(data.basePrice   !== undefined && { basePrice: new Prisma.Decimal(data.basePrice) }),
+          ...(data.categoryId  !== undefined && { categoryId: data.categoryId }),
+          ...(data.isFeatured  !== undefined && { isFeatured: data.isFeatured }),
+          ...(data.isActive    !== undefined && { isActive:   data.isActive }),
+          // Replace media if provided
+          ...(data.media && data.media.length > 0 && {
+            media: {
+              deleteMany: {},
+              create: data.media.map((m, idx) => ({
+                url:       m.url,
+                type:      m.type,
+                altText:   m.altText,
+                isPrimary: m.isPrimary,
+                sortOrder: m.sortOrder ?? idx,
+              })),
+            },
+          }),
+        },
+      })
+
+      // 2. Sync variants if provided
+      if (data.variants && data.variants.length > 0) {
+        // Get default location for inventory
+        const location = await tx.location.findFirst({ orderBy: { createdAt: 'asc' } })
+
+        for (const v of data.variants) {
+          const existing = await tx.productVariant.findUnique({ where: { sku: v.sku } })
+
+          if (existing && existing.productId === id) {
+            // Update existing variant
+            await tx.productVariant.update({
+              where: { sku: v.sku },
+              data: {
+                barcode:  v.barcode || null,
+                size:     v.size,
+                color:    v.color,
+                colorHex: v.colorHex,
+                fabric:   v.fabric,
+                style:    v.style,
+                price:    new Prisma.Decimal(v.price),
+              },
+            })
+            // Update stock if location available
+            if (location && v.stock !== undefined) {
+              await tx.inventory.updateMany({
+                where: { variantId: existing.id, locationId: location.id },
+                data:  { quantity: v.stock },
+              })
+            }
+          } else if (!existing) {
+            // Create new variant
+            const created = await tx.productVariant.create({
+              data: {
+                productId: id,
+                sku:      v.sku,
+                barcode:  v.barcode || null,
+                size:     v.size,
+                color:    v.color,
+                colorHex: v.colorHex,
+                fabric:   v.fabric,
+                style:    v.style,
+                price:    new Prisma.Decimal(v.price),
+              },
+            })
+            if (location) {
+              await tx.inventory.create({
+                data: {
+                  variantId:  created.id,
+                  locationId: location.id,
+                  quantity:   v.stock ?? 0,
+                  reserved:   0,
+                  version:    0,
+                },
+              })
+            }
+          }
+        }
+      }
+
+      // 3. Return updated product
+      return tx.product.findUniqueOrThrow({
+        where: { id },
+        include: productFullInclude,
+      })
     })
   },
 
