@@ -43,6 +43,16 @@ export function errorHandler(
     return
   }
 
+  // Prisma column/table not found — usually means a pending migration
+  if (
+    err instanceof Prisma.PrismaClientKnownRequestError &&
+    (err.code === 'P2022' || err.code === 'P2021')
+  ) {
+    console.error('[db-migration] Missing column/table — run prisma migrate deploy:', err.message)
+    res.status(500).json({ error: 'Database schema is out of date. Run prisma migrate deploy on the server.' })
+    return
+  }
+
   // Unknown — log internally, don't leak details to client
   console.error('[error]', err)
   res.status(500).json({
