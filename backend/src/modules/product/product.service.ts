@@ -349,7 +349,7 @@ export const productService = {
   // Used by the homepage video-showcase strip.
 
   async getShowcaseVideos(limit = 12) {
-    return prisma.product.findMany({
+    const products = await prisma.product.findMany({
       where: {
         isActive: true,
         media: { some: { type: 'VIDEO' } },
@@ -367,8 +367,23 @@ export const productService = {
           orderBy: { sortOrder: 'asc' },
           select:  { url: true },
         },
+        variants: {
+          where:   { isActive: true },
+          orderBy: { price: 'asc' },
+          take:    1,
+          select:  { price: true },
+        },
       },
     })
+    // Return lowest active-variant price (or basePrice as fallback)
+    return products.map((p) => ({
+      id:          p.id,
+      name:        p.name,
+      slug:        p.slug,
+      basePrice:   Number(p.basePrice),
+      lowestPrice: p.variants.length > 0 ? Number(p.variants[0].price) : Number(p.basePrice),
+      media:       p.media,
+    }))
   },
 
   // ── Variants ───────────────────────────────────────────────────────────────

@@ -11,6 +11,7 @@ import statsRoutes       from '../modules/stats/stats.routes'
 import adminRoutes       from '../modules/admin/admin.routes'
 import paymentRoutes     from '../modules/payment/payment.routes'
 import shippingRoutes    from '../modules/shipping/shipping.routes'
+import bannerRoutes      from '../modules/banner/banner.routes'
 
 const router = Router()
 
@@ -25,5 +26,6 @@ router.use('/shipping',     shippingRoutes)      // Delhivery shipping + invoice
 router.use('/webhooks',     webhookRoutes)
 router.use('/uploads',      uploadRoutes)
 router.use('/stats',        statsRoutes)
+router.use('/banners',      bannerRoutes)
 
 export default router

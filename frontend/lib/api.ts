@@ -432,3 +432,43 @@ export const webhookLogApi = {
 
 // Keep legacy alias used in existing admin pages
 export const posSyncApi = webhookLogApi
+
+// ── Hero Banners ──────────────────────────────────────────────────────────────
+
+export interface HeroBanner {
+  id:           string
+  sortOrder:    number
+  isActive:     boolean
+  eyebrow:      string | null
+  titleLine1:   string | null
+  titleLine2:   string | null
+  subtitle:     string | null
+  accentColor:  string
+  darkTheme:    boolean
+  ctaLabel:     string | null
+  ctaHref:      string | null
+  ctaAltLabel:  string | null
+  ctaAltHref:   string | null
+  imageDesktop: string | null
+  imageTablet:  string | null
+  imageMobile:  string | null
+  createdAt:    string
+  updatedAt:    string
+}
+
+export const bannersApi = {
+  // Public — active banners for storefront
+  list: () => request<HeroBanner[]>('/banners'),
+
+  // Admin — all banners
+  listAll: () => request<HeroBanner[]>('/banners/admin'),
+
+  create: (data: Partial<HeroBanner>) =>
+    request<HeroBanner>('/banners', { method: 'POST', body: JSON.stringify(data) }),
+
+  update: (id: string, data: Partial<HeroBanner>) =>
+    request<HeroBanner>(`/banners/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  delete: (id: string) =>
+    request<{ ok: boolean }>(`/banners/${id}`, { method: 'DELETE' }),
+}

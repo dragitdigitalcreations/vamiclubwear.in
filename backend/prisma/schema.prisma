@@ -296,6 +296,43 @@ model AdminUser {
 }
 
 // ─────────────────────────────────────────────
+// HERO BANNERS
+// Uploadable hero carousel slides for the storefront.
+// Each slide stores separate images for desktop, tablet, and mobile.
+// ─────────────────────────────────────────────
+
+model HeroBanner {
+  id           String   @id @default(cuid())
+  sortOrder    Int      @default(0)        // display order (0 = first slide)
+  isActive     Boolean  @default(true)
+
+  // Text content
+  eyebrow      String?
+  titleLine1   String?
+  titleLine2   String?
+  subtitle     String?
+  accentColor  String   @default("#8B6B47")
+  darkTheme    Boolean  @default(false)     // white text on dark bg when true
+
+  // CTA buttons
+  ctaLabel     String?
+  ctaHref      String?
+  ctaAltLabel  String?
+  ctaAltHref   String?
+
+  // Responsive images (Cloudinary URLs)
+  imageDesktop String?  // ≥1024px
+  imageTablet  String?  // 768–1023px
+  imageMobile  String?  // <768px
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+// ─────────────────────────────────────────────
 // INVENTORY HISTORY
 // Audit trail for every stock change.
 // ─────────────────────────────────────────────

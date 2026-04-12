@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ShoppingBag, Menu, X, Search, User, Heart } from 'lucide-react'
+import { ShoppingBag, Menu, X, Search, User, Heart, SlidersHorizontal } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useCartStore, selectTotalItems } from '@/stores/cartStore'
@@ -76,7 +76,7 @@ export function Navbar() {
           {/* Search bar — desktop center, fills remaining space */}
           <form
             onSubmit={handleSearchSubmit}
-            className="hidden md:flex flex-1 max-w-md mx-auto items-center gap-2 h-9 rounded-full border border-border bg-surface-elevated px-4 transition-all duration-200 focus-within:border-ring focus-within:bg-white focus-within:shadow-sm"
+            className="hidden md:flex flex-1 max-w-md mx-auto items-center gap-2 h-9 rounded-full border border-border bg-surface-elevated px-3 transition-all duration-200 focus-within:border-ring focus-within:bg-white focus-within:shadow-sm"
           >
             <Search className="h-3.5 w-3.5 flex-shrink-0 text-muted" />
             <input
@@ -96,6 +96,17 @@ export function Navbar() {
                 <X className="h-3 w-3" />
               </button>
             )}
+            {/* Filter icon — divider + link to products with filters */}
+            <span className="h-4 w-px bg-border flex-shrink-0" />
+            <button
+              type="button"
+              onClick={() => router.push('/products')}
+              className="flex-shrink-0 text-muted hover:text-on-background transition-colors"
+              aria-label="Open filters"
+              title="Filter products"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+            </button>
           </form>
 
           {/* Mobile: push icons to the right */}

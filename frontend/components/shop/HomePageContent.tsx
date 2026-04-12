@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { ArrowRight, ChevronLeft, ChevronRight, Truck, RotateCcw, Zap, ShieldCheck } from 'lucide-react'
 import { productsApi } from '@/lib/api'
@@ -11,10 +10,10 @@ import type { Product } from '@/types/product'
 
 // ─── Shared animation ─────────────────────────────────────────────────────────
 const fadeUp = {
-  hidden:  { opacity: 0, y: 36 },
+  hidden:  { opacity: 0, y: 32 },
   visible: (i = 0) => ({
     opacity: 1, y: 0,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: i * 0.1 },
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: i * 0.1 },
   }),
 }
 
@@ -27,220 +26,215 @@ const COLLECTIONS = [
 
 const MARQUEE_WORDS = ['Fusion', 'Bridal', 'Modest', 'Couture', 'Heritage', 'Craft', 'Elegance', 'Kerala']
 
-// ─── Hero Carousel ────────────────────────────────────────────────────────────
-const SLIDES = [
+// ─── Hero Carousel ─────────────────────────────────────────────────────────────
+const STATIC_SLIDES = [
   {
-    id:           1,
-    eyebrow:      'New Season — Spring 2025',
-    titleLine1:   'Where Heritage',
-    titleLine2:   'Meets Modernity',
-    accentLine:   'Meets Modernity',
-    sub:          'Premium Indo-Western couture, thoughtfully crafted in Manjeri, Kerala.',
-    cta:          { label: 'Shop Now',    href: '/products' },
-    ctaAlt:       { label: 'Bridal Edit', href: '/products?category=bridal' },
-    bg:           'bg-gradient-to-br from-[#FAF7F2] via-[#FAFAF8] to-[#F5F1EC]',
-    accentColor:  '#8B6B47',
-    dark:         false,
+    id:          1,
+    eyebrow:     'New Season — Spring 2025',
+    titleLine1:  'Where Heritage',
+    titleLine2:  'Meets Modernity',
+    sub:         'Premium Indo-Western couture, thoughtfully crafted in Manjeri, Kerala.',
+    cta:         { label: 'Shop Now',    href: '/products' },
+    ctaAlt:      { label: 'Bridal Edit', href: '/products?category=bridal' },
+    bg:          'linear-gradient(135deg, #FAF7F2 0%, #FAFAF8 50%, #F5F1EC 100%)',
+    accentColor: '#8B6B47',
+    dark:        false,
   },
   {
-    id:           2,
-    eyebrow:      'Bridal Collection 2025',
-    titleLine1:   'Your Finest',
-    titleLine2:   'Moment',
-    accentLine:   'Moment',
-    sub:          'Bespoke bridal couture crafted for the most precious chapter of your story.',
-    cta:          { label: 'Explore Bridal', href: '/products?category=bridal' },
-    ctaAlt:       { label: 'Get in Touch',   href: '/contact' },
-    bg:           'bg-gradient-to-br from-[#180F09] via-[#2C1A10] to-[#0E0806]',
-    accentColor:  '#D4956A',
-    dark:         true,
+    id:          2,
+    eyebrow:     'Bridal Collection 2025',
+    titleLine1:  'Your Finest',
+    titleLine2:  'Moment',
+    sub:         'Bespoke bridal couture crafted for the most precious chapter of your story.',
+    cta:         { label: 'Explore Bridal', href: '/products?category=bridal' },
+    ctaAlt:      { label: 'Get in Touch',   href: '/contact' },
+    bg:          'linear-gradient(135deg, #180F09 0%, #2C1A10 50%, #0E0806 100%)',
+    accentColor: '#D4956A',
+    dark:        true,
   },
   {
-    id:           3,
-    eyebrow:      'Fusion Wear',
-    titleLine1:   'East Meets',
-    titleLine2:   'West',
-    accentLine:   'West',
-    sub:          'Contemporary silhouettes rooted in Indo-Western tradition. Wear both worlds.',
-    cta:          { label: 'Shop Fusion', href: '/products?category=fusion' },
-    ctaAlt:       { label: 'View All',    href: '/products' },
-    bg:           'bg-gradient-to-br from-[#EEE8E0] via-[#EAE2D8] to-[#E2D8CE]',
-    accentColor:  '#6B4A31',
-    dark:         false,
+    id:          3,
+    eyebrow:     'Fusion Wear',
+    titleLine1:  'East Meets',
+    titleLine2:  'West',
+    sub:         'Contemporary silhouettes rooted in Indo-Western tradition. Wear both worlds.',
+    cta:         { label: 'Shop Fusion', href: '/products?category=fusion' },
+    ctaAlt:      { label: 'View All',    href: '/products' },
+    bg:          'linear-gradient(135deg, #EEE8E0 0%, #EAE2D8 50%, #E2D8CE 100%)',
+    accentColor: '#6B4A31',
+    dark:        false,
   },
 ]
+
+// Slide motion — right-to-left: new slides enter from the right
+const slideVariants = {
+  enter: (dir: number) => ({ x: dir >= 0 ? '100%' : '-100%', opacity: 1 }),
+  center: { x: '0%', opacity: 1 },
+  exit:  (dir: number) => ({ x: dir >= 0 ? '-100%' : '100%', opacity: 1 }),
+}
+
+const SLIDE_TRANSITION = { duration: 0.52, ease: [0.32, 0, 0.67, 0] as [number, number, number, number] }
 
 function HeroCarousel() {
   const [current,   setCurrent]   = useState(0)
   const [direction, setDirection] = useState(1)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
 
-  const go = useCallback((idx: number, dir: number) => {
-    setDirection(dir)
-    setCurrent(idx)
+  const go = useCallback((nextIdx: number, dir: number) => {
     clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      setDirection(1)
-      setCurrent((c) => (c + 1) % SLIDES.length)
-    }, 5500)
+    setDirection(dir)
+    setCurrent(nextIdx)
   }, [])
 
+  // Auto-advance every 5.5 s
   useEffect(() => {
     timerRef.current = setTimeout(() => {
-      setDirection(1)
-      setCurrent((c) => (c + 1) % SLIDES.length)
+      go((current + 1) % STATIC_SLIDES.length, 1)
     }, 5500)
     return () => clearTimeout(timerRef.current)
-  }, [current])
+  }, [current, go])
 
-  function prev() { go((current - 1 + SLIDES.length) % SLIDES.length, -1) }
-  function next() { go((current + 1) % SLIDES.length, 1) }
-
-  const slide = SLIDES[current]
-  const textColor  = slide.dark ? 'text-white'           : 'text-on-background'
-  const mutedColor = slide.dark ? 'text-white/55'        : 'text-muted'
-  const borderCol  = slide.dark ? 'border-white/25'      : 'border-border'
-  const btnAltCls  = slide.dark
-    ? 'border border-white/30 text-white/80 hover:bg-white hover:text-on-background'
-    : 'border border-border text-on-background hover:bg-surface-elevated'
+  const slide = STATIC_SLIDES[current]
+  const tc  = slide.dark ? 'text-white'      : 'text-on-background'
+  const mc  = slide.dark ? 'text-white/55'   : 'text-muted'
+  const bc  = slide.dark ? 'border-white/20' : 'border-border'
 
   return (
-    <section className="relative overflow-hidden" style={{ minHeight: '92vh' }}>
+    // Fixed-height container — height NEVER changes so no layout jump
+    <section className="relative h-[92vh] overflow-hidden select-none">
 
-      {/* ── Slide background (crossfade) ── */}
-      <AnimatePresence mode="sync" initial={false}>
+      {/* ── Slide layers (absolute, full-size) ── */}
+      <AnimatePresence initial={false} custom={direction}>
         <motion.div
-          key={slide.id}
-          className={`absolute inset-0 ${slide.bg}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.7, ease: 'easeInOut' }}
-        />
-      </AnimatePresence>
-
-      {/* Subtle warm glow */}
-      <div
-        className="absolute bottom-0 right-0 h-[50%] w-[45%] rounded-full blur-[160px] pointer-events-none transition-colors duration-700"
-        style={{ background: `${slide.accentColor}12` }}
-      />
-
-      {/* ── Slide content ── */}
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={`content-${slide.id}`}
-          className="relative z-10 mx-auto w-full max-w-7xl px-6 md:px-12"
-          style={{ paddingTop: 'clamp(7rem, 14vw, 10rem)', paddingBottom: '5rem' }}
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -16 }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          key={`slide-${slide.id}`}
+          className="absolute inset-0 flex items-center"
+          style={{ background: slide.bg }}
+          custom={direction}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={SLIDE_TRANSITION}
         >
-          <div className="max-w-2xl">
-            {/* Eyebrow */}
-            <p
-              className="mb-5 inline-flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.45em]"
-              style={{ color: slide.accentColor }}
-            >
-              <span className="h-px w-10" style={{ backgroundColor: `${slide.accentColor}80` }} />
-              {slide.eyebrow}
-            </p>
+          {/* Glow accent */}
+          <div
+            className="pointer-events-none absolute bottom-0 right-0 h-[50%] w-[40%] rounded-full blur-[160px]"
+            style={{ background: `${slide.accentColor}10` }}
+          />
 
-            {/* Headline */}
-            <h1 className={`font-display text-[clamp(3rem,8vw,6.5rem)] font-bold leading-[1.02] tracking-tight ${textColor}`}>
-              {slide.titleLine1}
-              <br />
-              <em className="not-italic" style={{ color: slide.accentColor }}>
-                {slide.titleLine2}
-              </em>
-            </h1>
+          {/* Content — centered left column, fixed padding clears 2-row navbar (~92px) */}
+          <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-20 pt-36 md:px-12">
+            <div className="max-w-xl">
 
-            {/* Sub */}
-            <p className={`mt-7 max-w-sm text-[15px] leading-relaxed ${mutedColor}`}>
-              {slide.sub}
-            </p>
+              {/* Eyebrow */}
+              <p className="mb-6 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.45em]"
+                style={{ color: slide.accentColor }}>
+                <span className="h-px w-10 flex-shrink-0" style={{ background: `${slide.accentColor}60` }} />
+                {slide.eyebrow}
+              </p>
 
-            {/* CTAs */}
-            <div className="mt-10 flex flex-wrap items-center gap-3">
-              <Link
-                href={slide.cta.href}
-                className="group inline-flex items-center gap-2.5 px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.25em] transition-all duration-300 hover:gap-4"
-                style={{ backgroundColor: slide.accentColor, color: '#FFFFFF' }}
-              >
-                {slide.cta.label}
-                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
-              <Link
-                href={slide.ctaAlt.href}
-                className={`inline-flex items-center gap-2 px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.25em] transition-all duration-300 ${btnAltCls}`}
-              >
-                {slide.ctaAlt.label}
-              </Link>
-            </div>
+              {/* Headline */}
+              <h1 className={`font-display text-[clamp(2.8rem,7vw,6rem)] font-bold leading-[1.02] tracking-tight ${tc}`}>
+                {slide.titleLine1}
+                <br />
+                <em className="not-italic" style={{ color: slide.accentColor }}>
+                  {slide.titleLine2}
+                </em>
+              </h1>
 
-            {/* Trust strip */}
-            <div className={`mt-14 flex flex-wrap items-center gap-8 border-t pt-8 ${borderCol}`}>
-              {[
-                { label: 'Free shipping', sub: 'orders ₹2500+' },
-                { label: 'Handcrafted',   sub: 'Manjeri, Kerala' },
-                { label: 'Easy returns',  sub: '7-day policy' },
-              ].map((item) => (
-                <div key={item.label}>
-                  <p className={`text-[11px] font-semibold uppercase tracking-wider ${textColor}`}>{item.label}</p>
-                  <p className={`mt-0.5 text-[11px] ${mutedColor}`}>{item.sub}</p>
-                </div>
-              ))}
+              {/* Sub */}
+              <p className={`mt-6 max-w-sm text-[15px] leading-relaxed ${mc}`}>
+                {slide.sub}
+              </p>
+
+              {/* CTAs */}
+              <div className="mt-9 flex flex-wrap items-center gap-3">
+                <Link
+                  href={slide.cta.href}
+                  className="group inline-flex items-center gap-2.5 px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition-all duration-300 hover:gap-4"
+                  style={{ backgroundColor: slide.accentColor }}
+                >
+                  {slide.cta.label}
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  href={slide.ctaAlt.href}
+                  className={`inline-flex items-center gap-2 border px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] transition-all duration-300 hover:bg-white/10 ${bc} ${tc}`}
+                >
+                  {slide.ctaAlt.label}
+                </Link>
+              </div>
+
+              {/* Trust strip */}
+              <div className={`mt-12 flex flex-wrap items-center gap-8 border-t pt-7 ${bc}`}>
+                {[
+                  { label: 'Free shipping', sub: 'orders ₹2500+' },
+                  { label: 'Handcrafted',   sub: 'Manjeri, Kerala' },
+                  { label: 'Easy returns',  sub: '7-day policy' },
+                ].map((item) => (
+                  <div key={item.label}>
+                    <p className={`text-[11px] font-semibold uppercase tracking-wider ${tc}`}>{item.label}</p>
+                    <p className={`mt-0.5 text-[11px] ${mc}`}>{item.sub}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </motion.div>
       </AnimatePresence>
 
-      {/* ── Prev / Next arrows ── */}
+      {/* ── Prev / Next arrows — fixed position over slides ── */}
       <button
-        onClick={prev}
-        className={`absolute left-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 hover:scale-105 ${
-          slide.dark ? 'border-white/25 text-white/70 hover:bg-white/15' : 'border-border bg-white/70 text-muted hover:bg-white hover:text-on-background'
+        onClick={() => go((current - 1 + STATIC_SLIDES.length) % STATIC_SLIDES.length, -1)}
+        className={`absolute left-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border transition-all duration-200 hover:scale-105 ${
+          slide.dark
+            ? 'border-white/25 text-white/70 hover:bg-white/15'
+            : 'border-border bg-white/80 text-muted hover:bg-white hover:text-on-background'
         }`}
         aria-label="Previous slide"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
       <button
-        onClick={next}
-        className={`absolute right-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 hover:scale-105 ${
-          slide.dark ? 'border-white/25 text-white/70 hover:bg-white/15' : 'border-border bg-white/70 text-muted hover:bg-white hover:text-on-background'
+        onClick={() => go((current + 1) % STATIC_SLIDES.length, 1)}
+        className={`absolute right-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border transition-all duration-200 hover:scale-105 ${
+          slide.dark
+            ? 'border-white/25 text-white/70 hover:bg-white/15'
+            : 'border-border bg-white/80 text-muted hover:bg-white hover:text-on-background'
         }`}
         aria-label="Next slide"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
 
-      {/* ── Dot indicators ── */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-        {SLIDES.map((s, i) => (
+      {/* ── Dot indicators — fixed at bottom-center ── */}
+      <div className="absolute bottom-7 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
+        {STATIC_SLIDES.map((s, i) => (
           <button
             key={s.id}
             onClick={() => go(i, i > current ? 1 : -1)}
-            aria-label={`Slide ${i + 1}`}
-            className="transition-all duration-300 rounded-full"
+            aria-label={`Go to slide ${i + 1}`}
+            className="rounded-full transition-all duration-300"
             style={{
-              width:           i === current ? '24px' : '6px',
+              width:           i === current ? '22px' : '6px',
               height:          '6px',
-              backgroundColor: i === current ? slide.accentColor : `${slide.accentColor}40`,
+              backgroundColor: i === current
+                ? slide.accentColor
+                : `${slide.accentColor}40`,
             }}
           />
         ))}
       </div>
 
       {/* Scroll cue */}
-      <div className="absolute bottom-8 right-8 hidden md:flex flex-col items-end gap-2 z-20">
+      <div className="absolute bottom-7 right-8 z-20 hidden md:flex flex-col items-end gap-2">
         <motion.div
-          animate={{ y: [0, 7, 0] }}
+          animate={{ y: [0, 6, 0] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
           className="h-10 w-[1px]"
           style={{ background: `linear-gradient(to bottom, ${slide.accentColor}60, transparent)` }}
         />
-        <span className={`text-[9px] uppercase tracking-[0.3em] ${mutedColor}`}>Scroll</span>
+        <span className={`text-[9px] uppercase tracking-[0.3em] ${mc}`}>Scroll</span>
       </div>
     </section>
   )
@@ -281,7 +275,7 @@ function BenefitsStrip() {
         <div className="grid grid-cols-2 divide-x divide-y divide-border/40 md:grid-cols-4 md:divide-y-0">
           {benefits.map(({ Icon, label, sub }) => (
             <div key={label} className="flex items-center gap-3 px-6 py-5">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/8 text-primary-light">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-elevated text-primary-light">
                 <Icon className="h-4 w-4" />
               </div>
               <div>
@@ -335,10 +329,8 @@ function CollectionsGrid() {
                   {col.sub}
                 </p>
                 <h3 className="font-display text-3xl font-bold text-white">{col.label}</h3>
-                <span
-                  className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em]"
-                  style={{ color: col.accent }}
-                >
+                <span className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em]"
+                  style={{ color: col.accent }}>
                   Explore
                   <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1.5" />
                 </span>
@@ -351,63 +343,31 @@ function CollectionsGrid() {
   )
 }
 
-// ─── Featured products (Best Sellers) ────────────────────────────────────────
-function FeaturedProducts() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading,  setLoading]  = useState(true)
-
-  useEffect(() => {
-    productsApi
-      .list({ isFeatured: 'true', isActive: 'true', limit: 4 })
-      .then((res) => {
-        if ((res as any).data?.length > 0) {
-          setProducts((res as any).data)
-        } else {
-          return productsApi.list({ isActive: 'true', limit: 4 })
-            .then((r) => setProducts((r as any).data ?? []))
-        }
-      })
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false))
-  }, [])
-
+// ─── Product grid section helper ──────────────────────────────────────────────
+function ProductGrid({ products, loading, cols = 4 }: { products: Product[]; loading: boolean; cols?: number }) {
+  const colClass = cols === 4
+    ? 'grid-cols-2 md:grid-cols-4'
+    : 'grid-cols-2 md:grid-cols-3'
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 md:px-8">
-      <motion.div
-        variants={fadeUp} initial="hidden" whileInView="visible"
-        viewport={{ once: true, margin: '-60px' }}
-        className="mb-10 flex items-end justify-between"
-      >
-        <div>
-          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Most Popular</p>
-          <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Best Sellers</h2>
-        </div>
-        <Link href="/products"
-          className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
-          View All <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </motion.div>
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-5">
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i}>
-                <div className="skeleton aspect-[3/4] w-full rounded-[10px]" />
-                <div className="mt-3 space-y-2">
-                  <div className="skeleton h-4 w-3/4 rounded" />
-                  <div className="skeleton h-4 w-1/4 rounded" />
-                </div>
+    <div className={`grid gap-3 sm:gap-4 md:gap-5 ${colClass}`}>
+      {loading
+        ? Array.from({ length: cols === 4 ? 8 : cols }).map((_, i) => (
+            <div key={i}>
+              <div className="skeleton aspect-[3/4] w-full rounded-[10px]" />
+              <div className="mt-3 space-y-2">
+                <div className="skeleton h-4 w-3/4 rounded" />
+                <div className="skeleton h-4 w-1/4 rounded" />
               </div>
-            ))
-          : products.map((product, i) => (
-              <motion.div key={product.id}
-                variants={fadeUp} initial="hidden" whileInView="visible"
-                viewport={{ once: true, margin: '-30px' }} custom={i * 0.4}>
-                <ProductCard product={product} priority={i < 2} />
-              </motion.div>
-            ))}
-      </div>
-    </section>
+            </div>
+          ))
+        : products.map((product, i) => (
+            <motion.div key={product.id}
+              variants={fadeUp} initial="hidden" whileInView="visible"
+              viewport={{ once: true, margin: '-30px' }} custom={i * 0.12}>
+              <ProductCard product={product} priority={i < 2} />
+            </motion.div>
+          ))}
+    </div>
   )
 }
 
@@ -427,44 +387,20 @@ function NewArrivalsSection() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 md:px-8">
-      <motion.div
-        variants={fadeUp} initial="hidden" whileInView="visible"
+      <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
-        className="mb-10 flex items-end justify-between"
-      >
+        className="mb-10 flex items-end justify-between">
         <div>
           <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Just Dropped</p>
           <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">New Arrivals</h2>
         </div>
-        <Link href="/products"
-          className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
+        <Link href="/products" className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
           View All <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </motion.div>
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-5">
-        {loading
-          ? Array.from({ length: 8 }).map((_, i) => (
-              <div key={i}>
-                <div className="skeleton aspect-[3/4] w-full rounded-[10px]" />
-                <div className="mt-3 space-y-2">
-                  <div className="skeleton h-4 w-3/4 rounded" />
-                  <div className="skeleton h-4 w-1/4 rounded" />
-                </div>
-              </div>
-            ))
-          : products.map((product, i) => (
-              <motion.div key={product.id}
-                variants={fadeUp} initial="hidden" whileInView="visible"
-                viewport={{ once: true, margin: '-30px' }} custom={i * 0.15}>
-                <ProductCard product={product} priority={i < 2} />
-              </motion.div>
-            ))}
-      </div>
-
+      <ProductGrid products={products} loading={loading} cols={4} />
       <div className="mt-8 flex justify-center md:hidden">
-        <Link href="/products"
-          className="inline-flex items-center gap-2 border border-border px-8 py-3 text-xs font-semibold uppercase tracking-widest text-on-background hover:bg-surface-elevated transition-all">
+        <Link href="/products" className="inline-flex items-center gap-2 border border-border px-8 py-3 text-xs font-semibold uppercase tracking-widest text-on-background hover:bg-surface-elevated transition-all">
           View All <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
@@ -472,7 +408,43 @@ function NewArrivalsSection() {
   )
 }
 
-// ─── Trending Products ────────────────────────────────────────────────────────
+// ─── Best Sellers ─────────────────────────────────────────────────────────────
+function FeaturedProducts() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading,  setLoading]  = useState(true)
+
+  useEffect(() => {
+    productsApi
+      .list({ isFeatured: 'true', isActive: 'true', limit: 4 })
+      .then((res) => {
+        const data = (res as any).data ?? []
+        if (data.length > 0) { setProducts(data); return }
+        return productsApi.list({ isActive: 'true', limit: 4 })
+          .then((r) => setProducts((r as any).data ?? []))
+      })
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-20 md:px-8">
+      <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
+        viewport={{ once: true, margin: '-60px' }}
+        className="mb-10 flex items-end justify-between">
+        <div>
+          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Most Popular</p>
+          <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Best Sellers</h2>
+        </div>
+        <Link href="/products" className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
+          View All <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </motion.div>
+      <ProductGrid products={products} loading={loading} cols={4} />
+    </section>
+  )
+}
+
+// ─── Trending ─────────────────────────────────────────────────────────────────
 function TrendingSection() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading,  setLoading]  = useState(true)
@@ -495,51 +467,30 @@ function TrendingSection() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 pb-20 md:px-8">
-      <motion.div
-        variants={fadeUp} initial="hidden" whileInView="visible"
+      <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
-        className="mb-10 flex items-end justify-between"
-      >
+        className="mb-10 flex items-end justify-between">
         <div>
           <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Right Now</p>
           <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Trending</h2>
         </div>
-        <Link href="/products"
-          className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
+        <Link href="/products" className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
           View All <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </motion.div>
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-5">
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i}>
-                <div className="skeleton aspect-[3/4] w-full rounded-[10px]" />
-                <div className="mt-3 space-y-2">
-                  <div className="skeleton h-4 w-3/4 rounded" />
-                  <div className="skeleton h-4 w-1/4 rounded" />
-                </div>
-              </div>
-            ))
-          : products.map((product, i) => (
-              <motion.div key={product.id}
-                variants={fadeUp} initial="hidden" whileInView="visible"
-                viewport={{ once: true, margin: '-30px' }} custom={i * 0.15}>
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
-      </div>
+      <ProductGrid products={products} loading={loading} cols={4} />
     </section>
   )
 }
 
 // ─── Video Showcase ───────────────────────────────────────────────────────────
 interface ShowcaseItem {
-  id:        string
-  name:      string
-  slug:      string
-  basePrice: number
-  media:     Array<{ url: string }>
+  id:          string
+  name:        string
+  slug:        string
+  basePrice:   number
+  lowestPrice: number
+  media:       Array<{ url: string }>
 }
 
 function VideoCard({ item }: { item: ShowcaseItem }) {
@@ -552,13 +503,13 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
     if (!el) return
     const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0]
-        if (entry.isIntersecting) {
+        const e = entries[0]
+        if (e.isIntersecting) {
           videoRef.current?.play().catch(() => {})
         } else {
           if (videoRef.current) {
             videoRef.current.pause()
-            if (entry.intersectionRatio === 0) videoRef.current.currentTime = 0
+            if (e.intersectionRatio === 0) videoRef.current.currentTime = 0
           }
         }
       },
@@ -567,6 +518,8 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
+
+  const displayPrice = item.lowestPrice ?? item.basePrice
 
   return (
     <div
@@ -583,10 +536,10 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
           className={`h-full w-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         />
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent p-4 pt-16">
-          <p className="text-[9px] font-medium uppercase tracking-[0.3em] text-white/55 mb-1">Vami Clubwear</p>
+          <p className="mb-1 text-[9px] font-medium uppercase tracking-[0.3em] text-white/55">Vami Clubwear</p>
           <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2">{item.name}</h3>
-          <p className="mt-1 text-xs font-medium text-primary-light">
-            ₹{Number(item.basePrice).toLocaleString('en-IN')}
+          <p className="mt-1 text-xs font-semibold text-primary-light">
+            ₹{displayPrice.toLocaleString('en-IN')}
           </p>
           <Link
             href={`/products/${item.slug}`}
@@ -607,7 +560,7 @@ function VideoShowcase() {
 
   useEffect(() => {
     productsApi.getShowcaseVideos()
-      .then(setItems)
+      .then((data: any) => setItems(data))
       .catch(() => setItems([]))
       .finally(() => setLoading(false))
   }, [])
@@ -621,11 +574,9 @@ function VideoShowcase() {
   return (
     <section className="py-20 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <motion.div
-          variants={fadeUp} initial="hidden" whileInView="visible"
+        <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}
-          className="mb-10 flex items-end justify-between"
-        >
+          className="mb-10 flex items-end justify-between">
           <div>
             <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">In Motion</p>
             <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Shop the Look</h2>
@@ -635,23 +586,17 @@ function VideoShowcase() {
             <div className="hidden md:flex items-center gap-2">
               <button onClick={() => scroll('left')}
                 className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border text-muted hover:border-on-background hover:text-on-background hover:bg-surface-elevated transition-all duration-200"
-                aria-label="Scroll left">
-                <ChevronLeft className="h-4 w-4" />
-              </button>
+                aria-label="Scroll left"><ChevronLeft className="h-4 w-4" /></button>
               <button onClick={() => scroll('right')}
                 className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border text-muted hover:border-on-background hover:text-on-background hover:bg-surface-elevated transition-all duration-200"
-                aria-label="Scroll right">
-                <ChevronRight className="h-4 w-4" />
-              </button>
+                aria-label="Scroll right"><ChevronRight className="h-4 w-4" /></button>
             </div>
           )}
         </motion.div>
       </div>
 
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 pb-3 md:px-8"
-      >
+      <div ref={scrollRef}
+        className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 pb-3 md:px-8">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex-shrink-0 w-[240px] sm:w-[270px] md:w-[300px] snap-start">
