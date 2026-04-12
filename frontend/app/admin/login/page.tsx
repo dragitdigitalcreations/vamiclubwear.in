@@ -30,8 +30,9 @@ export default function AdminLoginPage() {
       setUser({ id: user.id, name: user.name, email: user.email, role: user.role })
       router.replace('/admin/dashboard')
     } catch (err: any) {
-      setError(err.message ?? 'Login failed')
-      toast.error('Invalid credentials')
+      const msg = err.message ?? 'Login failed'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
