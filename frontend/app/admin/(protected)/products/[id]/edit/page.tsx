@@ -43,12 +43,14 @@ export default function EditProductPage() {
           isActive:    p.isActive,
           variants:    (p.variants ?? []).map((v: any) => ({
             sku:      v.sku,
+            barcode:  v.barcode  ?? '',
             size:     v.size     ?? '',
             color:    v.color    ?? '',
             colorHex: v.colorHex ?? '',
             fabric:   v.fabric   ?? '',
             style:    v.style    ?? '',
             price:    Number(v.price),
+            stock:    Number(v.inventory?.[0]?.quantity ?? 0),
           })),
         })
         setInitialMedia((p.media ?? []).map(mapMediaItem))

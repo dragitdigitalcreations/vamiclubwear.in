@@ -8,14 +8,29 @@ import {
 } from './product.schema'
 import { NotFoundError, ConflictError } from '../../utils/errors'
 
-// Reusable include for full product (storefront)
+// Reusable include for full product (storefront + admin edit)
 const productFullInclude = {
   category: { select: { id: true, name: true, slug: true } },
   variants: {
     where: { isActive: true },
-    include: {
+    select: {
+      id:       true,
+      sku:      true,
+      barcode:  true,
+      size:     true,
+      color:    true,
+      colorHex: true,
+      fabric:   true,
+      style:    true,
+      price:    true,
+      isActive: true,
       inventory: {
-        include: { location: { select: { id: true, name: true } } },
+        select: {
+          id:         true,
+          quantity:   true,
+          reserved:   true,
+          location:   { select: { id: true, name: true } },
+        },
       },
     },
   },
