@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/Toaster'
+import { LenisProvider } from '@/components/shop/LenisProvider'
 
 // Body font — clean, modern
 const inter = Inter({
@@ -58,7 +59,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
     // 'dark' class is always applied — app is dark-mode only per CLAUDE.md
     <html lang="en" className={`dark ${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-on-background">
-        {children}
+        <LenisProvider>
+          {children}
+        </LenisProvider>
         <Toaster />
       </body>
     </html>

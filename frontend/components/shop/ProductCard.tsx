@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, Eye } from 'lucide-react'
 import { Product, getPrimaryImage, getVariantsByColor } from '@/types/product'
 import { useCartStore } from '@/stores/cartStore'
+import { cloudinaryUrl } from '@/lib/cloudinary'
 
 interface ProductCardProps {
   product: Product
@@ -23,7 +24,14 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const [addedPulse, setAddedPulse] = useState(false)
   const { addItem } = useCartStore()
 
-  const imageUrl = getPrimaryImage(product)
+  const rawImageUrl  = getPrimaryImage(product)
+  const imageUrl     = rawImageUrl ? cloudinaryUrl(rawImageUrl, { w: 600, q: 80 }) : null
+  // Second image for hover swap (if available)
+  const hoverImages  = product.media?.filter((m) => m.type === 'IMAGE').sort((a, b) => a.sortOrder - b.sortOrder)
+  const hoverImageUrl = hoverImages && hoverImages.length > 1
+    ? cloudinaryUrl(hoverImages[1].url, { w: 600, q: 80 })
+    : null
+
   const colors   = getVariantsByColor(product.variants)
   const isNew    = isNewProduct(product.createdAt)
 
@@ -62,14 +70,31 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         className="relative overflow-hidden rounded-[14px] bg-surface-elevated aspect-[3/4] shadow-card transition-shadow duration-300 group-hover:shadow-card-hover"
       >
         {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={product.name}
-            fill
-            priority={priority}
-            className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.06]"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
+          <>
+            {/* Primary image */}
+            <Image
+              src={imageUrl}
+              alt={product.name}
+              fill
+              priority={priority}
+              className={`object-cover transition-all duration-500 ease-out ${
+                hovered && hoverImageUrl ? 'opacity-0 scale-[1.04]' : 'opacity-100 scale-100 group-hover:scale-[1.04]'
+              }`}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            />
+            {/* Hover-swap second image */}
+            {hoverImageUrl && (
+              <Image
+                src={hoverImageUrl}
+                alt={product.name}
+                fill
+                className={`object-cover transition-all duration-500 ease-out ${
+                  hovered ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.04]'
+                }`}
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              />
+            )}
+          </>
         ) : (
           <div className="flex h-full items-center justify-center text-muted">
             <ShoppingBag className="h-10 w-10 opacity-20" />

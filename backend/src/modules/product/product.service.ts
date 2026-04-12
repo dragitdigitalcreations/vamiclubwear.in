@@ -7,6 +7,7 @@ import {
   UpdateProductInput,
 } from './product.schema'
 import { NotFoundError, ConflictError } from '../../utils/errors'
+import { cache } from '../../lib/cache'
 
 // Reusable include for full product (storefront + admin edit)
 const productFullInclude = {
@@ -160,16 +161,38 @@ export const productService = {
       resolvedCategoryId = cat?.id
     }
 
+    // Full-text search via raw Prisma query for PostgreSQL GIN index performance
+    // Falls back to ILIKE for short/single-word queries
+    let productIdsFromSearch: string[] | undefined
+    if (search && search.trim().length >= 2) {
+      try {
+        const tsQuery = search.trim().split(/\s+/).map(w => `${w}:*`).join(' & ')
+        const rows = await prisma.$queryRaw<{ id: string }[]>`
+          SELECT id FROM "Product"
+          WHERE to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, ''))
+            @@ to_tsquery('english', ${tsQuery})
+          LIMIT 200
+        `
+        productIdsFromSearch = rows.map(r => r.id)
+      } catch {
+        // GIN index not yet available — fall through to ILIKE
+      }
+    }
+
     const where: Prisma.ProductWhereInput = {
       ...(resolvedCategoryId !== undefined && { categoryId: resolvedCategoryId }),
       ...(isActive           !== undefined && { isActive }),
       ...(isFeatured         !== undefined && { isFeatured }),
-      ...(search             !== undefined && {
-        OR: [
-          { name:        { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
-        ],
-      }),
+      ...(search             !== undefined && (
+        productIdsFromSearch !== undefined
+          ? { id: { in: productIdsFromSearch } }
+          : {
+              OR: [
+                { name:        { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+              ],
+            }
+      )),
     }
 
     const [products, total] = await Promise.all([
@@ -202,12 +225,18 @@ export const productService = {
   },
 
   async getProductBySlug(slug: string) {
-    const product = await prisma.product.findUnique({
-      where: { slug },
-      include: productFullInclude,
-    })
-    if (!product) throw new NotFoundError(`Product "${slug}"`)
-    return product
+    return cache.wrap(
+      `product:slug:${slug}`,
+      async () => {
+        const product = await prisma.product.findUnique({
+          where: { slug },
+          include: productFullInclude,
+        })
+        if (!product) throw new NotFoundError(`Product "${slug}"`)
+        return product
+      },
+      3600, // 1 hour — invalidated on update/delete
+    )
   },
 
   async updateProduct(id: string, data: UpdateProductInput) {
@@ -302,10 +331,16 @@ export const productService = {
       }
 
       // 3. Return updated product
-      return tx.product.findUniqueOrThrow({
+      const updated = await tx.product.findUniqueOrThrow({
         where: { id },
         include: productFullInclude,
       })
+
+      // Invalidate caches for this product
+      cache.del(`product:slug:${updated.slug}`).catch(() => {})
+      cache.delPattern('products:list:*').catch(() => {})
+
+      return updated
     })
   },
 
@@ -380,7 +415,7 @@ export const productService = {
   },
 
   async deleteProduct(id: string) {
-    await prisma.product.findUniqueOrThrow({ where: { id } }).catch(() => {
+    const toDelete = await prisma.product.findUniqueOrThrow({ where: { id } }).catch(() => {
       throw new NotFoundError(`Product ${id}`)
     })
     // Cascade: delete inventory → orderItems ref variants (keep orders, just delete product+variants+media)
@@ -392,6 +427,9 @@ export const productService = {
       await tx.productVariant.deleteMany({ where: { productId: id } })
       await tx.product.delete({ where: { id } })
     })
+    // Invalidate caches
+    cache.del(`product:slug:${toDelete.slug}`).catch(() => {})
+    cache.delPattern('products:list:*').catch(() => {})
     return { ok: true }
   },
 
