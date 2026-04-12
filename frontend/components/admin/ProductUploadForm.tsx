@@ -97,7 +97,8 @@ interface ProductUploadFormProps {
 
 export function ProductUploadForm({ initialData, productId, initialMedia }: ProductUploadFormProps) {
   const router = useRouter()
-  const [submitError, setSubmitError]           = useState<string | null>(null)
+  const [submitError, setSubmitError]               = useState<string | null>(null)
+  const [slugConflict, setSlugConflict]             = useState(false)
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
   const [mediaItems, setMediaItems]             = useState<MediaItem[]>(initialMedia ?? [])
   const [categories, setCategories]             = useState<Array<{ id: string; name: string }>>([])
@@ -181,6 +182,22 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
       router.refresh()
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : 'An unexpected error occurred.'
+
+      // Auto-fix slug conflict: suggest slug-2, slug-3, etc.
+      if (err instanceof ApiError && err.message.toLowerCase().includes('slug')) {
+        const currentSlug = data.slug
+        const match = currentSlug.match(/^(.*?)(-(\d+))?$/)
+        const base = match?.[1] ?? currentSlug
+        const num  = match?.[3] ? parseInt(match[3]) + 1 : 2
+        const suggested = `${base}-${num}`
+        setValue('slug', suggested, { shouldValidate: true })
+        setSlugManuallyEdited(true)
+        setSlugConflict(true)
+        setSubmitError(`URL slug "${currentSlug}" is already taken — changed to "${suggested}". Click Save again to confirm.`)
+        return
+      }
+      setSlugConflict(false)
+
       setSubmitError(msg)
       toast.error(msg)
     }
@@ -214,7 +231,10 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
                 <Label htmlFor="slug">
                   URL Slug <span className="text-destructive">*</span>
                 </Label>
-                <div className="flex items-center gap-1 rounded-md border border-border bg-input focus-within:ring-1 focus-within:ring-ring overflow-hidden">
+                <div className={cn(
+                  'flex items-center gap-1 rounded-md border bg-input focus-within:ring-1 focus-within:ring-ring overflow-hidden',
+                  slugConflict ? 'border-yellow-500' : 'border-border'
+                )}>
                   <span className="shrink-0 border-r border-border bg-surface-elevated px-3 py-2 text-xs text-muted select-none">
                     /products/
                   </span>
@@ -223,10 +243,13 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
                     className="flex-1 bg-transparent px-2 py-2 text-sm text-on-background outline-none placeholder:text-muted"
                     placeholder="zari-fusion-suit"
                     {...register('slug', {
-                      onChange: () => setSlugManuallyEdited(true),
+                      onChange: () => { setSlugManuallyEdited(true); setSlugConflict(false) },
                     })}
                   />
                 </div>
+                {slugConflict && (
+                  <p className="text-xs text-yellow-400">Slug was taken — updated above. Save again to confirm.</p>
+                )}
                 {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
               </div>
             </div>
