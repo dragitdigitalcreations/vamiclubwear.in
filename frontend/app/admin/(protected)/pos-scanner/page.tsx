@@ -136,7 +136,7 @@ export default function PosScannerPage() {
         color:       result.color,
         newQuantity: result.newQuantity,
         timestamp:   new Date(),
-        status:      isLow ? 'low-stock' : 'ok',
+        status:      (isLow ? 'low-stock' : 'ok') as ScanResult['status'],
       }, ...prev].slice(0, 50)) // keep last 50 scans
 
       setTotalSold((n) => n + 1)
@@ -151,7 +151,7 @@ export default function PosScannerPage() {
         color:       null,
         newQuantity: 0,
         timestamp:   new Date(),
-        status:      'error',
+        status:      'error' as ScanResult['status'],
         error:       err.message ?? 'Scan failed',
       }, ...prev].slice(0, 50))
     } finally {
