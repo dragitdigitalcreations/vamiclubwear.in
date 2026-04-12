@@ -38,7 +38,7 @@ const productSchema = z.object({
   slug:        z.string()
                  .min(2, 'Slug is required')
                  .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
-  barcode:     z.string().max(128).optional().transform((v) => v === '' ? undefined : v),
+  barcode:     z.string().max(128).optional(),
   description: z.string().optional(),
   basePrice:   z.number({ invalid_type_error: 'Price must be a number' })
                 .positive('Price must be greater than ₹0'),

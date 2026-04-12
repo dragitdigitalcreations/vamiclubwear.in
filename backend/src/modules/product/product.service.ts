@@ -92,7 +92,7 @@ export const productService = {
         data: {
           name:        data.name,
           slug:        data.slug,
-          barcode:     (data as any).barcode || null,
+          barcode:     data.barcode || null,
           description: data.description,
           basePrice:   new Prisma.Decimal(data.basePrice),
           categoryId:  data.categoryId,
@@ -222,7 +222,7 @@ export const productService = {
         data: {
           ...(data.name        !== undefined && { name: data.name }),
           ...(data.slug        !== undefined && { slug: data.slug }),
-          ...((data as any).barcode !== undefined && { barcode: (data as any).barcode || null }),
+          ...(data.barcode !== undefined && { barcode: data.barcode || null }),
           ...(data.description !== undefined && { description: data.description }),
           ...(data.basePrice   !== undefined && { basePrice: new Prisma.Decimal(data.basePrice) }),
           ...(data.categoryId  !== undefined && { categoryId: data.categoryId }),

@@ -35,7 +35,7 @@ export const createProductSchema = z.object({
                  .min(2)
                  .max(200)
                  .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
-  barcode:     z.string().max(128).optional().transform(v => v === '' ? undefined : v),
+  barcode:     z.string().max(128).optional(),
   description: z.string().max(5000).optional(),
   basePrice:   z.number().positive('basePrice must be > 0'),
   categoryId:  z.string().cuid('Invalid categoryId'),
