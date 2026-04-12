@@ -31,58 +31,42 @@ const MARQUEE_WORDS = ['Fusion', 'Bridal', 'Modest', 'Couture', 'Heritage', 'Cra
 function Hero() {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
-  const bgY    = useTransform(scrollYProgress, [0, 1], ['0%', '22%'])
-  const fgOp   = useTransform(scrollYProgress, [0, 0.65], [1, 0])
-  const fgY    = useTransform(scrollYProgress, [0, 1], ['0%', '-8%'])
+  const fgOp = useTransform(scrollYProgress, [0, 0.65], [1, 0])
+  const fgY  = useTransform(scrollYProgress, [0, 1], ['0%', '-6%'])
 
   return (
     <section
       ref={ref}
-      className="relative flex min-h-[85vh] items-center overflow-hidden bg-[#100a06]"
+      className="relative flex min-h-[90vh] items-center overflow-hidden bg-background"
     >
-      {/* Parallax background layer */}
-      <motion.div
-        style={{ y: bgY }}
-        className="absolute inset-0"
-      >
-        {/* Rich gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1f0e06] via-[#120c09] to-[#0a0a0a]" />
-        {/* Subtle diagonal fabric texture */}
-        <div
-          className="absolute inset-0 opacity-[0.035]"
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              45deg,
-              transparent,
-              transparent 2px,
-              rgba(255,255,255,0.8) 2px,
-              rgba(255,255,255,0.8) 3px
-            )`,
-            backgroundSize: '28px 28px',
-          }}
-        />
-        {/* Radial glow — warm amber from bottom-right */}
-        <div className="absolute bottom-0 right-0 h-[60%] w-[55%] rounded-full bg-[#5C4033]/20 blur-[120px]" />
-        <div className="absolute top-0 left-0 h-[40%] w-[40%] rounded-full bg-[#3D2B1F]/15 blur-[90px]" />
-      </motion.div>
+      {/* Subtle warm editorial decoration */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Barely-there warm gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#FAF7F2] via-[#FAFAF8] to-[#F5F1EC]" />
+        {/* Warm glow — very subtle */}
+        <div className="absolute bottom-0 right-0 h-[55%] w-[50%] rounded-full bg-[#8B6B47]/[0.06] blur-[160px]" />
+        {/* Editorial thin lines */}
+        <div className="absolute right-[12%] top-0 h-full w-[1px] bg-border/50" />
+        <div className="absolute right-[18%] top-[20%] h-[60%] w-[1px] bg-border/30" />
+      </div>
 
       {/* Foreground content */}
       <motion.div
         style={{ opacity: fgOp, y: fgY }}
-        className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-8 pt-28 md:px-12 md:pt-32"
+        className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-8 pt-28 md:px-12 md:pt-36"
       >
-        <div className="max-w-3xl">
+        <div className="max-w-2xl">
           <motion.p
             variants={fadeUp} initial="hidden" animate="visible" custom={0}
-            className="mb-5 inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.35em] text-primary-light"
+            className="mb-5 inline-flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.45em] text-primary-light"
           >
-            <span className="h-px w-8 bg-primary-light/60" />
+            <span className="h-px w-10 bg-primary-light/50" />
             New Season — Spring 2025
           </motion.p>
 
           <motion.h1
             variants={fadeUp} initial="hidden" animate="visible" custom={1}
-            className="font-display text-[clamp(3rem,8vw,6rem)] font-bold leading-[1.02] tracking-tight text-on-background"
+            className="font-display text-[clamp(3rem,8vw,6.5rem)] font-bold leading-[1.0] tracking-tight text-on-background"
           >
             Where Heritage
             <br />
@@ -91,42 +75,42 @@ function Hero() {
 
           <motion.p
             variants={fadeUp} initial="hidden" animate="visible" custom={2}
-            className="mt-6 max-w-md text-base leading-relaxed text-muted md:text-lg"
+            className="mt-7 max-w-sm text-[15px] leading-relaxed text-muted"
           >
             Premium Indo-Western couture, thoughtfully crafted in Manjeri, Kerala.
           </motion.p>
 
           <motion.div
             variants={fadeUp} initial="hidden" animate="visible" custom={3}
-            className="mt-10 flex flex-wrap items-center gap-4"
+            className="mt-10 flex flex-wrap items-center gap-3"
           >
             <Link
               href="/products"
-              className="group inline-flex items-center gap-2.5 bg-primary px-9 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-all duration-300 hover:bg-primary-light hover:gap-3.5"
+              className="group inline-flex items-center gap-2.5 bg-on-background px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-background transition-all duration-300 hover:gap-4"
             >
               Shop Now
               <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
             <Link
               href="/products?category=bridal"
-              className="inline-flex items-center gap-2 border border-border/60 px-9 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-on-background/80 transition-all duration-300 hover:border-on-background hover:text-on-background"
+              className="inline-flex items-center gap-2 border border-border px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-on-background transition-all duration-300 hover:bg-surface-elevated"
             >
               Bridal Edit
             </Link>
           </motion.div>
 
-          {/* Trust signals */}
+          {/* Trust strip */}
           <motion.div
             variants={fadeUp} initial="hidden" animate="visible" custom={4}
-            className="mt-12 flex flex-wrap items-center gap-6 border-t border-border/30 pt-8"
+            className="mt-14 flex flex-wrap items-center gap-8 border-t border-border pt-8"
           >
             {[
-              { label: 'Free shipping', sub: 'on orders ₹2500+' },
+              { label: 'Free shipping', sub: 'orders ₹2500+' },
               { label: 'Handcrafted', sub: 'Manjeri, Kerala' },
               { label: 'Easy returns', sub: '7-day policy' },
             ].map((item) => (
               <div key={item.label}>
-                <p className="text-xs font-semibold uppercase tracking-wider text-on-background">{item.label}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-on-background">{item.label}</p>
                 <p className="mt-0.5 text-[11px] text-muted">{item.sub}</p>
               </div>
             ))}
@@ -142,9 +126,9 @@ function Hero() {
         <motion.div
           animate={{ y: [0, 7, 0] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-          className="h-10 w-[1px] bg-gradient-to-b from-muted/60 to-transparent"
+          className="h-10 w-[1px] bg-gradient-to-b from-muted/50 to-transparent"
         />
-        <span className="text-[9px] uppercase tracking-[0.25em] text-muted/60">Scroll</span>
+        <span className="text-[9px] uppercase tracking-[0.3em] text-muted/60">Scroll</span>
       </motion.div>
     </section>
   )
@@ -154,16 +138,16 @@ function Hero() {
 function MarqueeStrip() {
   const repeated = [...MARQUEE_WORDS, ...MARQUEE_WORDS, ...MARQUEE_WORDS]
   return (
-    <div className="overflow-hidden border-y border-border/60 bg-surface py-3.5">
+    <div className="overflow-hidden border-y border-border bg-surface-elevated py-3">
       <motion.div
         animate={{ x: ['0%', '-33.33%'] }}
-        transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
+        transition={{ duration: 32, repeat: Infinity, ease: 'linear' }}
         className="flex gap-10 whitespace-nowrap"
       >
         {repeated.map((word, i) => (
-          <span key={i} className="flex items-center gap-10 text-[11px] font-semibold uppercase tracking-[0.3em] text-muted/70">
+          <span key={i} className="flex items-center gap-10 text-[10px] font-semibold uppercase tracking-[0.4em] text-muted">
             {word}
-            <span className="h-1 w-1 rounded-full bg-primary/60" />
+            <span className="h-1 w-1 rounded-full bg-primary-light/50" />
           </span>
         ))}
       </motion.div>
@@ -190,14 +174,14 @@ function CollectionsGrid() {
         </Link>
       </motion.div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {COLLECTIONS.map((col, i) => (
           <motion.div key={col.slug}
             variants={fadeUp} initial="hidden" whileInView="visible"
             viewport={{ once: true, margin: '-50px' }} custom={i * 0.3}>
             <Link href={`/products?category=${col.slug}`}
-              className="group relative flex h-[420px] flex-col justify-end overflow-hidden rounded-[18px]">
-              <div className={`absolute inset-0 bg-gradient-to-br ${col.gradient} transition-transform duration-500 ease-out group-hover:scale-[1.04]`} />
+              className="group relative flex h-[440px] flex-col justify-end overflow-hidden">
+              <div className={`absolute inset-0 bg-gradient-to-br ${col.gradient} transition-transform duration-700 ease-out group-hover:scale-[1.03]`} />
 
               {/* Inner glow rings */}
               <motion.div
@@ -213,7 +197,7 @@ function CollectionsGrid() {
                 transition={{ duration: 7.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.25 }}
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent rounded-[18px]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
               <div className="relative z-10 p-7">
                 <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.3em]" style={{ color: col.accent }}>
@@ -242,32 +226,31 @@ function PromoBanner() {
     <motion.section
       variants={fadeUp} initial="hidden" whileInView="visible"
       viewport={{ once: true, margin: '-40px' }}
-      className="mx-4 md:mx-8 overflow-hidden rounded-[18px]"
+      className="mx-4 md:mx-8 overflow-hidden"
     >
       <Link href="/products"
-        className="group relative flex h-[200px] md:h-[260px] items-center justify-center overflow-hidden rounded-[18px] bg-gradient-to-r from-[#1C0D08] via-[#2A1510] to-[#1C0D08]">
-        {/* Dot grid */}
+        className="group relative flex h-[200px] md:h-[260px] items-center justify-center overflow-hidden bg-on-background">
+        {/* Animated line */}
+        <motion.div
+          className="absolute h-[1px] w-3/4 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+          animate={{ scaleX: [0.5, 1, 0.5], opacity: [0.2, 0.5, 0.2] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        {/* Grid dots */}
         <div
-          className="absolute inset-0 opacity-[0.05]"
+          className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage: 'radial-gradient(circle, #C4956A 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
+            backgroundImage: 'radial-gradient(circle, #FAFAF8 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
           }}
         />
-        {/* Animated glow line */}
-        <motion.div
-          className="absolute h-[1px] w-3/4 rounded-full bg-gradient-to-r from-transparent via-primary/50 to-transparent"
-          animate={{ scaleX: [0.5, 1, 0.5], opacity: [0.4, 0.9, 0.4] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        />
-
         <div className="relative z-10 text-center px-6">
-          <p className="text-[10px] uppercase tracking-[0.45em] text-primary-light mb-3">Just Arrived</p>
+          <p className="text-[10px] uppercase tracking-[0.5em] text-white/50 mb-3">Just Arrived</p>
           <h2 className="font-display text-4xl md:text-6xl font-bold tracking-tight text-white">
             What&rsquo;s New
           </h2>
-          <p className="mt-2.5 text-sm text-muted/80">Fresh drops from the Vami studio</p>
-          <span className="mt-7 inline-flex items-center gap-2 border border-primary/40 px-7 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary-light/90 transition-all duration-300 group-hover:bg-primary group-hover:border-primary group-hover:text-white group-hover:gap-3">
+          <p className="mt-2.5 text-sm text-white/50">Fresh drops from the Vami studio</p>
+          <span className="mt-8 inline-flex items-center gap-2 border border-white/25 px-8 py-3 text-[10px] font-semibold uppercase tracking-[0.25em] text-white/80 transition-all duration-300 group-hover:bg-white group-hover:text-on-background group-hover:gap-3">
             Shop New Arrivals <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
           </span>
         </div>
@@ -279,17 +262,17 @@ function PromoBanner() {
 // ─── Brand statement ──────────────────────────────────────────────────────────
 function BrandStatement() {
   return (
-    <section className="border-y border-border/50 bg-surface py-20">
+    <section className="border-y border-border bg-surface py-24">
       <div className="mx-auto max-w-3xl px-6 text-center">
         <motion.blockquote
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}>
-          <p className="font-display text-2xl font-bold leading-relaxed text-on-background md:text-3xl lg:text-4xl">
+          <p className="font-display text-2xl font-semibold leading-relaxed text-on-background md:text-3xl lg:text-[2.6rem] lg:leading-snug">
             &ldquo;Every piece tells a story of{' '}
             <em className="not-italic text-primary-light">two worlds</em>&nbsp;—
             the timeless grace of the East and the clean lines of the West.&rdquo;
           </p>
-          <footer className="mt-8 text-[10px] uppercase tracking-[0.35em] text-muted">
+          <footer className="mt-8 text-[10px] uppercase tracking-[0.45em] text-muted">
             — The Vami Studio, Manjeri
           </footer>
         </motion.blockquote>
@@ -407,10 +390,10 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
   return (
     <div
       ref={containerRef}
-      className="group relative flex-shrink-0 w-[240px] sm:w-[270px] md:w-[300px] overflow-hidden rounded-[16px] bg-surface-elevated shadow-card transition-shadow duration-300 hover:shadow-card-hover snap-start"
+      className="group relative flex-shrink-0 w-[240px] sm:w-[270px] md:w-[300px] overflow-hidden bg-surface-elevated shadow-card transition-shadow duration-300 hover:shadow-card-hover snap-start"
     >
       {/* Video — 3:4 portrait */}
-      <div className="relative aspect-[3/4] overflow-hidden rounded-[16px]">
+      <div className="relative aspect-[3/4] overflow-hidden">
         {/* Poster shimmer while loading */}
         {!loaded && (
           <div className="absolute inset-0 skeleton" />
@@ -431,7 +414,7 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
         />
 
         {/* Bottom gradient + info */}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent p-4 pt-16 rounded-b-[16px]">
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent p-4 pt-16">
           <p className="text-[9px] font-medium uppercase tracking-[0.3em] text-white/55 mb-1">Vami Clubwear</p>
           <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2">{item.name}</h3>
           <p className="mt-1 text-xs font-medium text-primary-light">

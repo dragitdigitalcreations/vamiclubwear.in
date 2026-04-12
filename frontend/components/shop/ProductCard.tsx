@@ -80,7 +80,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
       onMouseLeave={() => setHovered(false)}
     >
       {/* ── Image container ── */}
-      <div className="relative overflow-hidden rounded-[14px] bg-surface-elevated aspect-[3/4] shadow-card transition-shadow duration-300 group-hover:shadow-card-hover">
+      <div className="relative overflow-hidden bg-surface-elevated aspect-[3/4] shadow-card transition-shadow duration-300 group-hover:shadow-card-hover">
         {imageUrl ? (
           <>
             <Image
@@ -147,7 +147,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="absolute inset-0 z-10 flex items-end gap-2 rounded-[14px] bg-black/20 p-3"
+              className="absolute inset-0 z-10 flex items-end gap-2 bg-black/10 p-3"
             >
               {defaultVariant && (
                 <motion.button
@@ -156,10 +156,10 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
                   exit={{ y: 8, opacity: 0 }}
                   transition={{ duration: 0.18, delay: 0.02 }}
                   onClick={handleQuickAdd}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-[10px] py-2.5 text-[10px] font-semibold uppercase tracking-widest backdrop-blur-sm transition-colors duration-200 ${
+                  className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[10px] font-semibold uppercase tracking-widest backdrop-blur-sm transition-colors duration-200 ${
                     addedPulse
-                      ? 'bg-green-700/90 text-white'
-                      : 'bg-background/80 text-on-background hover:bg-primary hover:text-white'
+                      ? 'bg-green-700 text-white'
+                      : 'bg-white/90 text-on-background hover:bg-on-background hover:text-white'
                   }`}
                   aria-label="Quick add to cart"
                 >
@@ -173,7 +173,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 8, opacity: 0 }}
                 transition={{ duration: 0.18, delay: 0.05 }}
-                className="flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center rounded-[10px] bg-background/80 backdrop-blur-sm transition-colors duration-200 hover:bg-primary"
+                className="flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center bg-white/90 backdrop-blur-sm transition-colors duration-200 hover:bg-on-background hover:text-white"
                 aria-label="View product"
               >
                 <Eye className="h-3.5 w-3.5 text-on-background" />
@@ -218,7 +218,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 export function ProductCardSkeleton() {
   return (
     <div>
-      <div className="skeleton aspect-[3/4] w-full rounded-[14px]" />
+      <div className="skeleton aspect-[3/4] w-full" />
       <div className="mt-3 space-y-2 px-1">
         <div className="skeleton h-4 w-3/4 rounded" />
         <div className="skeleton h-3 w-1/3 rounded" />

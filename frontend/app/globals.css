@@ -4,32 +4,27 @@
 
 @layer base {
   :root {
-    --background: 0 0% 7%;           /* #121212 Deep Charcoal */
-    --foreground: 25 22% 88%;        /* #E8E0DB */
+    --background:           40 30% 98%;      /* #FAFAF8 warm cream */
+    --foreground:           30 8%  11%;      /* #1C1A18 near-black */
 
-    --surface: 0 0% 12%;             /* #1E1E1E Soft Black */
-    --surface-elevated: 0 0% 16%;    /* #2A2A2A */
+    --surface:               0  0% 100%;     /* #FFFFFF pure white */
+    --surface-elevated:     35 15% 95%;      /* #F4F1ED warm light */
 
-    --primary: 16 27% 28%;           /* #5C4033 Mocha Mousse */
-    --primary-foreground: 25 52% 95%;/* #F5EDE8 */
+    --primary:              30  8%  11%;     /* #1C1A18 editorial black */
+    --primary-foreground:   40 30% 98%;      /* #FAFAF8 */
 
-    --muted: 16 10% 49%;             /* #8A7B74 */
-    --muted-foreground: 16 8% 39%;   /* #6B5E58 */
+    --muted:                30  8%  57%;     /* #9A9188 warm mid-grey */
+    --muted-foreground:     30  6%  44%;     /* #7A7068 */
 
-    --border: 0 0% 20%;              /* #333333 */
-    --input: 0 0% 16%;               /* #2A2A2A */
-    --ring: 16 27% 28%;              /* #5C4033 */
+    --border:               35 14%  87%;     /* #E5E0D8 warm light */
+    --input:                35 15%  95%;     /* #F4F1ED */
+    --ring:                 30  8%  11%;     /* #1C1A18 */
 
-    --radius: 0.5rem;
-
-    /* Card shadow — subtle depth without heaviness */
-    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
-    --card-shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3);
+    --radius: 2px;
   }
 
-  /* Force dark mode — this app is dark-only per CLAUDE.md */
   html {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   * {
@@ -39,116 +34,80 @@
   body {
     @apply text-on-background antialiased;
     font-feature-settings: 'rlig' 1, 'calt' 1;
-    /* Texture background — tiled at natural resolution, never scaled or stretched */
-    background-color: #121212;
-    background-image: url('/vami-bg.png');
-    background-repeat: repeat;
-    background-size: auto;        /* NEVER stretch — tile at natural pixel size */
-    background-attachment: local; /* scrolls with content — no mobile GPU jank */
+    background-color: #FAFAF8;
   }
 
-  /* ── Typography hierarchy on textured background ─────────────────────────
-   * No text-shadow — instead we use weight, color, and spacing contrast:
-   *   h1/h2 → heavy weight + slightly warm cream (#F5EDE8) vs body (#F0EAE5)
-   *   h3/h4 → medium weight + standard on-background
-   *   h5/h6 → book weight + muted (#A09088) for tertiary labels
-   * This creates clear depth without shadow artifacts on the texture.
-   * ─────────────────────────────────────────────────────────────────────── */
+  /* ── Typography hierarchy ──────────────────────────────────────────────── */
   h1 {
     font-weight: 700;
-    color: #F5EDE8;
-    letter-spacing: -0.02em;
+    color: #1C1A18;
+    letter-spacing: -0.025em;
   }
   h2 {
     font-weight: 600;
-    color: #F0EAE5;
-    letter-spacing: -0.01em;
+    color: #1C1A18;
+    letter-spacing: -0.02em;
   }
   h3 {
     font-weight: 600;
-    color: #E8DFDA;
+    color: #2E2B28;
   }
   h4 {
     font-weight: 500;
-    color: #D0C2BA;
+    color: #2E2B28;
   }
   h5, h6 {
     font-weight: 500;
-    color: #A09088;
+    color: #9A9188;
     letter-spacing: 0.04em;
   }
 
-  /* ── Navbar top-gradient scrim ────────────────────────────────────────────
-   * When the navbar is transparent (at page top) the logo and links sit
-   * directly on the texture. A narrow gradient behind the nav ensures
-   * legibility without changing the navbar component.
-   * ─────────────────────────────────────────────────────────────────────── */
+  /* ── Navbar transparent state ───────────────────────────────────────────── */
   header.vami-nav-transparent {
-    background: linear-gradient(
-      to bottom,
-      rgba(10, 8, 6, 0.65) 0%,
-      rgba(10, 8, 6, 0.0) 100%
-    );
+    background: transparent;
   }
 
-  /* ── Surfaces must always be opaque (override any accidental transparency) */
-  .bg-surface          { background-color: #1E1E1E !important; }
-  .bg-surface-elevated { background-color: #2A2A2A !important; }
-  .bg-background       { background-color: #121212 !important; }
+  /* ── Surfaces ────────────────────────────────────────────────────────────── */
+  .bg-surface          { background-color: #FFFFFF !important; }
+  .bg-surface-elevated { background-color: #F4F1ED !important; }
+  .bg-background       { background-color: #FAFAF8 !important; }
 
-  /* Custom scrollbar to match dark theme */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: #1E1E1E;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #5C4033;
-    border-radius: 3px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #7A5C4E;
-  }
+  /* ── Light scrollbar ─────────────────────────────────────────────────────── */
+  ::-webkit-scrollbar        { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track  { background: #F4F1ED; }
+  ::-webkit-scrollbar-thumb  { background: #C4B5A8; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #8B6B47; }
 }
 
 @layer utilities {
-  /* ── Skeleton shimmer ── */
+  /* ── Skeleton shimmer (light) ── */
   .skeleton {
     background: linear-gradient(
       90deg,
-      #2A2A2A 25%,
-      #333333 50%,
-      #2A2A2A 75%
+      #EDE9E3 25%,
+      #E5E0D8 50%,
+      #EDE9E3 75%
     );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite linear;
   }
 
-  /* ── Hide scrollbar (cross-browser) ── */
+  /* ── Hide scrollbar ── */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  /* ── Card shadow utilities ── */
+  /* ── Card shadows (lighter for light theme) ── */
   .shadow-card {
-    box-shadow: var(--card-shadow);
+    box-shadow: 0 1px 4px rgba(28, 26, 24, 0.08), 0 1px 2px rgba(28, 26, 24, 0.05);
   }
   .shadow-card-hover {
-    box-shadow: var(--card-shadow-hover);
+    box-shadow: 0 8px 24px rgba(28, 26, 24, 0.12), 0 2px 6px rgba(28, 26, 24, 0.07);
   }
 
-  /* ── Video fade-in ── */
-  .video-fade-in {
-    animation: videoFadeIn 0.4s ease-out forwards;
-  }
-
-  /* ── Masonry column layout ── */
+  /* ── Masonry ── */
   .masonry-grid {
     columns: 2;
     column-gap: 0.75rem;
@@ -164,25 +123,23 @@
     margin-bottom: 0.75rem;
   }
 
-  /* ── Garment texture overlay ── */
-  .texture-overlay {
-    position: relative;
+  /* ── No scrollbar ── */
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* ── Video fade-in ── */
+  .video-fade-in {
+    animation: videoFadeIn 0.4s ease-out forwards;
   }
+
+  /* ── Texture overlay (adapted for light) ── */
+  .texture-overlay { position: relative; }
   .texture-overlay::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, transparent 50%, rgba(18, 18, 18, 0.85) 100%);
+    background: linear-gradient(to bottom, transparent 50%, rgba(250, 250, 248, 0.85) 100%);
     pointer-events: none;
-  }
-
-  /* ── No scrollbar (alias) ── */
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
   }
 }
 

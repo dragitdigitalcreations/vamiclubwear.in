@@ -33,7 +33,7 @@ function MediaGallery({ media }: { media: ProductMedia[] }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row-reverse">
       {/* Main media */}
-      <div className="relative aspect-[3/4] flex-1 overflow-hidden rounded-lg bg-surface-elevated">
+      <div className="relative aspect-[3/4] flex-1 overflow-hidden bg-surface-elevated">
         <AnimatePresence mode="wait">
           <motion.div
             key={active}
@@ -70,14 +70,14 @@ function MediaGallery({ media }: { media: ProductMedia[] }) {
           <>
             <button
               onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center bg-white/85 text-on-background backdrop-blur-sm transition-colors hover:bg-white"
               aria-label="Previous"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center bg-white/85 text-on-background backdrop-blur-sm transition-colors hover:bg-white"
               aria-label="Next"
             >
               <ChevronRight className="h-4 w-4" />

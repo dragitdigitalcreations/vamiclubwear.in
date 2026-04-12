@@ -43,8 +43,8 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#121212',
-  colorScheme: 'dark',
+  themeColor: '#FAFAF8',
+  colorScheme: 'light',
   width: 'device-width',
   initialScale: 1,
 }
@@ -56,7 +56,7 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     // 'dark' class is always applied — app is dark-mode only per CLAUDE.md
-    <html lang="en" className={`dark ${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-on-background">
         {children}
         <Toaster />

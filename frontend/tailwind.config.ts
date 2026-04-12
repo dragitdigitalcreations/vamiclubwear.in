@@ -1,9 +1,10 @@
 import type { Config } from 'tailwindcss'
 
-// Brand palette from CLAUDE.md visual spec:
-// Background: Deep Charcoal #121212
-// Surfaces:   Soft Black  #1E1E1E
-// Primary:    Mocha Mousse #5C4033
+// ─── Luxury Minimal Light Theme ──────────────────────────────────────────────
+// Inspired by premium fashion editorials & drbydanarazik.com
+// Background: Warm cream #FAFAF8
+// Primary CTA: Near-black #1C1A18 (luxury editorial buttons)
+// Brand Accent: Warm caramel #8B6B47 (preserves Vami DNA)
 
 const config: Config = {
   darkMode: 'class',
@@ -15,44 +16,38 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Core surfaces — all solid, hide texture beneath them
-        background: '#121212',
+        // Core surfaces
+        background: '#FAFAF8',      // warm off-white cream
         surface: {
-          DEFAULT:  '#1E1E1E',
-          elevated: '#2A2A2A',
-          overlay:  '#303030',
+          DEFAULT:  '#FFFFFF',      // pure white
+          elevated: '#F4F1ED',      // very light warm
+          overlay:  '#EDE9E3',      // warm overlay
         },
-        border: '#333333',
-        input:  '#2A2A2A',
-        ring:   '#5C4033',
+        border: '#E5E0D8',          // warm light border
+        input:  '#F4F1ED',
+        ring:   '#1C1A18',
 
-        // Primary — Mocha Mousse
+        // Primary — near-black for luxury buttons + caramel accent
         primary: {
-          DEFAULT:    '#5C4033',
-          // Boosted from #7A5C4E → warm amber so eyebrow/accent text
-          // is clearly legible on both the dark texture and surface backgrounds
-          light:      '#C49060',
-          dark:       '#3E2B20',
-          foreground: '#F5EDE8',
+          DEFAULT:    '#1C1A18',    // near-black (editorial CTA)
+          light:      '#8B6B47',    // warm caramel accent (brand DNA)
+          dark:       '#0D0D0C',
+          foreground: '#FAFAF8',    // cream text on dark button
         },
 
-        // Text hierarchy — slightly boosted for legibility on textured bg
-        // on-background: was #E8E0DB → #F0EAE5 (more white-directed, crisper on texture)
-        'on-background': '#F0EAE5',
-        // on-surface: was #C4B5AE → #D0C2BA (readable on solid dark surfaces)
-        'on-surface':    '#D0C2BA',
+        // Text
+        'on-background': '#1C1A18',
+        'on-surface':    '#2E2B28',
 
         muted: {
-          // was #8A7B74 → #A09088 (boosted so muted text still reads as
-          // secondary but doesn't disappear into brownish texture tiles)
-          DEFAULT:    '#A09088',
-          foreground: '#7A6E68',
+          DEFAULT:    '#9A9188',    // warm medium grey
+          foreground: '#7A7068',
         },
 
         // Semantic
         accent: {
-          DEFAULT:    '#5C4033',
-          foreground: '#F5EDE8',
+          DEFAULT:    '#8B6B47',
+          foreground: '#FAFAF8',
         },
         destructive: {
           DEFAULT:    '#C0392B',
@@ -70,9 +65,9 @@ const config: Config = {
       },
 
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg: '2px',
+        md: '2px',
+        sm: '1px',
       },
 
       keyframes: {
