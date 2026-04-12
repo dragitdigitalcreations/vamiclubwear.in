@@ -72,6 +72,12 @@ export const authApi = {
   me: () => request<{ user: { id: string; email: string; role: string } }>('/auth/me'),
 
   logout: () => request('/auth/logout', { method: 'POST' }),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<{ ok: boolean; message: string }>('/auth/change-password', {
+      method: 'PATCH',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
 }
 
 // ── Products ─────────────────────────────────────────────────────────────────

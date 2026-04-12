@@ -11,6 +11,7 @@ import {
   Users,
   LogOut,
   ChevronRight,
+  Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
@@ -31,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Orders',     href: '/admin/orders',     icon: ShoppingCart,    section: 'orders' },
   { label: 'POS Sync',   href: '/admin/pos-sync',   icon: RefreshCw,       section: 'pos-sync' },
   { label: 'Users',      href: '/admin/users',      icon: Users,           section: 'users' },
+  { label: 'Settings',   href: '/admin/settings',   icon: Settings,        section: 'dashboard' },
 ]
 
 export function AdminSidebar() {
