@@ -122,8 +122,8 @@ const config: Config = {
 
       // ── Typography scale ──────────────────────────────────────────────────────
       fontFamily: {
-        sans:    ['var(--font-dm-sans)', 'Arial', 'Helvetica', 'sans-serif'],
-        display: ['var(--font-dm-sans)', 'Arial', 'Helvetica', 'sans-serif'],
+        sans:    ['Metropolis', 'Arial', 'Helvetica', 'sans-serif'],
+        display: ['Metropolis', 'Arial', 'Helvetica', 'sans-serif'],
       },
 
       fontSize: {

@@ -69,6 +69,9 @@
     @apply antialiased;
     background-color: var(--bg);
     color: var(--fg-1);
+    font-family: Metropolis, Arial, Helvetica, sans-serif;
+    font-weight: 400;
+    font-style: normal;
     font-feature-settings: 'rlig' 1, 'calt' 1;
   }
 
