@@ -4,6 +4,7 @@ import { Navbar }           from '@/components/shop/Navbar'
 import { Footer }           from '@/components/shop/Footer'
 import { CartDrawer }       from '@/components/shop/CartDrawer'
 import { WishlistDrawer }   from '@/components/shop/WishlistDrawer'
+import { FilterDrawer }     from '@/components/shop/FilterDrawer'
 import { PageTransition }   from '@/components/shop/PageTransition'
 import { LenisProvider }    from '@/components/shop/LenisProvider'
 
@@ -17,6 +18,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       <Footer />
       <CartDrawer />
       <WishlistDrawer />
+      <FilterDrawer />
     </LenisProvider>
   )
 }

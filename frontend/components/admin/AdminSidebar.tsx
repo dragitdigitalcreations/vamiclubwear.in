@@ -57,7 +57,7 @@ export function AdminSidebar() {
 
       {/* ── Brand ── */}
       <div className="flex h-14 items-center gap-3 border-b border-border px-5">
-        <VamiLogo height={22} />
+        <VamiLogo size="sm" />
         <div className="h-4 w-px bg-border" />
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Admin</p>
       </div>

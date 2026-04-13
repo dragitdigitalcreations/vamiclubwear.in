@@ -300,8 +300,8 @@ function CollectionsGrid() {
         className="mb-10 flex items-end justify-between"
       >
         <div>
-          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Explore</p>
-          <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Our Collections</h2>
+          <p className="mb-1 t-micro">Explore</p>
+          <h2 className="t-h1">Our Collections</h2>
         </div>
         <Link href="/products"
           className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
@@ -391,8 +391,8 @@ function NewArrivalsSection() {
         viewport={{ once: true, margin: '-60px' }}
         className="mb-10 flex items-end justify-between">
         <div>
-          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Just Dropped</p>
-          <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">New Arrivals</h2>
+          <p className="mb-1 t-micro">Just Dropped</p>
+          <h2 className="t-h1">New Arrivals</h2>
         </div>
         <Link href="/products" className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
           View All <ArrowRight className="h-3.5 w-3.5" />
@@ -432,8 +432,8 @@ function FeaturedProducts() {
         viewport={{ once: true, margin: '-60px' }}
         className="mb-10 flex items-end justify-between">
         <div>
-          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Most Popular</p>
-          <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Best Sellers</h2>
+          <p className="mb-1 t-micro">Most Popular</p>
+          <h2 className="t-h1">Best Sellers</h2>
         </div>
         <Link href="/products" className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
           View All <ArrowRight className="h-3.5 w-3.5" />
@@ -471,8 +471,8 @@ function TrendingSection() {
         viewport={{ once: true, margin: '-60px' }}
         className="mb-10 flex items-end justify-between">
         <div>
-          <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">Right Now</p>
-          <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Trending</h2>
+          <p className="mb-1 t-micro">Right Now</p>
+          <h2 className="t-h1">Trending</h2>
         </div>
         <Link href="/products" className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
           View All <ArrowRight className="h-3.5 w-3.5" />
@@ -578,8 +578,8 @@ function VideoShowcase() {
           viewport={{ once: true, margin: '-50px' }}
           className="mb-10 flex items-end justify-between">
           <div>
-            <p className="mb-1 text-[11px] uppercase tracking-[0.35em] text-primary-light">In Motion</p>
-            <h2 className="font-display text-4xl font-bold text-on-background md:text-5xl">Shop the Look</h2>
+            <p className="mb-1 t-micro">In Motion</p>
+            <h2 className="t-h1">Shop the Look</h2>
             <p className="mt-2 text-sm text-muted">Scroll past each piece to preview it in motion</p>
           </div>
           {items.length > 3 && (

@@ -2,98 +2,312 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   VAMI CLUBWEAR — DESIGN HIERARCHY SYSTEM
+   ───────────────────────────────────────
+   Every element on the site maps to a tier. Use the semantic classes below
+   instead of raw Tailwind utilities so the hierarchy stays consistent.
+═══════════════════════════════════════════════════════════════════════════ */
+
 @layer base {
   :root {
-    --background:        0   0% 100%;    /* #FFFFFF */
-    --foreground:        0   0%  15%;    /* #252525 */
+    /* ── Surface tiers ── */
+    --bg:               #FFFFFF;
+    --surface:          #FFFFFF;
+    --surface-raised:   #FAFAFA;
+    --surface-elevated: #F5F5F5;
+    --surface-overlay:  #EFEFEF;
 
-    --surface:           0   0% 100%;    /* #FFFFFF */
-    --surface-elevated:  0   0%  97%;    /* #F7F7F7 */
-    --surface-overlay:   0   0%  94%;    /* #EFEFEF */
+    /* ── Text tiers ── */
+    --fg-1: #1A1A1A;   /* headlines, primary CTAs */
+    --fg-2: #3D3D3D;   /* subheadings, body */
+    --fg-3: #666666;   /* secondary body */
+    --fg-4: #999999;   /* captions, metadata */
+    --fg-5: #C4C4C4;   /* placeholders */
 
-    --primary:           0   0%  15%;    /* #252525 */
-    --primary-foreground: 0  0% 100%;   /* #FFFFFF */
+    /* ── Brand (caramel) ── */
+    --brand:        #8B6B47;
+    --brand-light:  #C4956A;
+    --brand-lighter:#DDB896;
+    --brand-dark:   #5C4033;
 
-    --muted:             0   0%  55%;    /* #8D8D8D */
-    --muted-foreground:  0   0%  42%;    /* #6A6A6A */
+    /* ── Borders ── */
+    --border:       #E8E8E8;
+    --border-strong:#C4C4C4;
+    --ring:         #B0B0B0;
 
-    --border:            0   0%  92%;    /* #EAEAEA */
-    --input:             0   0%  92%;    /* #EAEAEA */
-    --ring:              0   0%  71%;    /* #B5B5B5 */
+    /* ── Logo sizes ── */
+    --logo-xs: 16px;
+    --logo-sm: 20px;
+    --logo-md: 28px;   /* navbar default */
+    --logo-lg: 40px;   /* footer */
+    --logo-xl: 56px;   /* hero / splash */
+
+    /* ── Radius scale ── */
+    --r-xs:  4px;
+    --r-sm:  6px;
+    --r-md:  8px;
+    --r-lg:  10px;     /* default card/input */
+    --r-xl:  16px;
+    --r-full:9999px;
+
+    /* ── Elevation ── */
+    --shadow-z1: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-z2: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-z3: 0 4px 16px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+    --shadow-z4: 0 8px 32px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
+    --shadow-z5: 0 24px 64px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.08);
 
     --radius: 10px;
   }
 
-  html {
-    color-scheme: light;
-  }
+  html { color-scheme: light; }
 
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
 
   body {
-    @apply bg-background text-on-background antialiased;
+    @apply antialiased;
+    background-color: var(--bg);
+    color: var(--fg-1);
     font-feature-settings: 'rlig' 1, 'calt' 1;
   }
 
-  /* ── Typography hierarchy ──────────────────────────────────────────────── */
-  h1 {
-    font-weight: 700;
-    color: #252525;
-    letter-spacing: -0.025em;
-  }
-  h2 {
-    font-weight: 600;
-    color: #252525;
-    letter-spacing: -0.02em;
-  }
-  h3 {
-    font-weight: 600;
-    color: #333333;
-  }
-  h4 {
-    font-weight: 500;
-    color: #333333;
-  }
-  h5, h6 {
-    font-weight: 500;
-    color: #8D8D8D;
-    letter-spacing: 0.04em;
-  }
+  /* ── Default heading hierarchy ── */
+  h1 { font-weight: 700; color: var(--fg-1); letter-spacing: -0.025em; }
+  h2 { font-weight: 600; color: var(--fg-1); letter-spacing: -0.020em; }
+  h3 { font-weight: 600; color: var(--fg-2); letter-spacing: -0.010em; }
+  h4 { font-weight: 600; color: var(--fg-2); }
+  h5,
+  h6 { font-weight: 500; color: var(--fg-4); letter-spacing: 0.04em; }
 
-  /* ── Navbar transparent state ───────────────────────────────────────────── */
-  .vami-nav-transparent {
-    background: transparent;
-  }
-
-  /* ── Surfaces ────────────────────────────────────────────────────────────── */
-  .bg-surface          { background-color: #FFFFFF !important; }
-  .bg-surface-elevated { background-color: #F7F7F7 !important; }
-  .bg-surface-overlay  { background-color: #EFEFEF !important; }
-  .bg-background       { background-color: #FFFFFF !important; }
-
-  /* ── Light scrollbar ─────────────────────────────────────────────────────── */
+  /* ── Scrollbar ── */
   ::-webkit-scrollbar        { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track  { background: #F7F7F7; }
+  ::-webkit-scrollbar-track  { background: var(--surface-elevated); }
   ::-webkit-scrollbar-thumb  { background: #D0D0D0; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #8B6B47; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--brand); }
+
+  /* ── Navbar transparent state ── */
+  .vami-nav-transparent { background: transparent; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENT LAYER — semantic classes mapped to the hierarchy
+═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+
+  /* ─── Typography ──────────────────────────────────────────────────────── */
+
+  .t-display {
+    font-size: clamp(3rem, 8vw, 7rem);
+    font-weight: 700;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    color: var(--fg-1);
+  }
+
+  .t-h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    color: var(--fg-1);
+  }
+
+  .t-h2 {
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--fg-1);
+  }
+
+  .t-h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    color: var(--fg-2);
+  }
+
+  .t-h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--fg-2);
+  }
+
+  .t-body-lg {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--fg-2);
+  }
+
+  .t-body {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--fg-2);
+  }
+
+  .t-body-sm {
+    font-size: 0.75rem;
+    line-height: 1.55;
+    color: var(--fg-3);
+  }
+
+  /* Uppercase label — tabs, badges, toolbar labels */
+  .t-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--fg-4);
+  }
+
+  /* Eyebrow micro-label — hero eyebrows, section kickers */
+  .t-micro {
+    font-size: 0.625rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--brand);
+  }
+
+  /* ─── Logo sizes ──────────────────────────────────────────────────────── */
+
+  .logo-xs  { height: var(--logo-xs);  width: auto; display: block; flex-shrink: 0; }
+  .logo-sm  { height: var(--logo-sm);  width: auto; display: block; flex-shrink: 0; }
+  .logo-md  { height: var(--logo-md);  width: auto; display: block; flex-shrink: 0; }
+  .logo-lg  { height: var(--logo-lg);  width: auto; display: block; flex-shrink: 0; }
+  .logo-xl  { height: var(--logo-xl);  width: auto; display: block; flex-shrink: 0; }
+
+  /* ─── Button hierarchy ────────────────────────────────────────────────── */
+
+  /* Tier 1 — Black, primary action */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 2.5rem;
+    background-color: var(--fg-1);
+    color: #FFFFFF;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border-radius: var(--r-lg);
+    transition: background-color 150ms, gap 200ms;
+  }
+  .btn-primary:hover { background-color: #000000; }
+
+  /* Tier 2 — Brand caramel */
+  .btn-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 2.5rem;
+    background-color: var(--brand);
+    color: #FFFFFF;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border-radius: var(--r-lg);
+    transition: background-color 150ms;
+  }
+  .btn-brand:hover { background-color: var(--brand-dark); }
+
+  /* Tier 3 — Outlined */
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 2.5rem;
+    border: 1px solid var(--border-strong);
+    color: var(--fg-1);
+    background: transparent;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border-radius: var(--r-lg);
+    transition: background-color 150ms, border-color 150ms;
+  }
+  .btn-secondary:hover { background-color: var(--surface-elevated); border-color: var(--fg-1); }
+
+  /* Tier 4 — Ghost / text */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: var(--fg-3);
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: color 150ms;
+  }
+  .btn-ghost:hover { color: var(--fg-1); }
+
+  /* ─── Card elevation ──────────────────────────────────────────────────── */
+
+  .card { border-radius: var(--r-lg); background: var(--surface); }
+  .card-z1 { box-shadow: var(--shadow-z1); }
+  .card-z2 { box-shadow: var(--shadow-z2); }
+  .card-z3 { box-shadow: var(--shadow-z3); }
+
+  /* ─── Input ───────────────────────────────────────────────────────────── */
+
+  .input-base {
+    width: 100%;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border);
+    background: var(--surface-elevated);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--fg-1);
+    outline: none;
+    transition: border-color 150ms, background-color 150ms;
+  }
+  .input-base::placeholder { color: var(--fg-5); }
+  .input-base:focus { border-color: var(--ring); background: var(--surface); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY LAYER
+═══════════════════════════════════════════════════════════════════════════ */
+
 @layer utilities {
-  /* ── Skeleton shimmer (cool light grey) ── */
+
+  /* ─── Surface overrides (keep bg-* classes working) ── */
+  .bg-background        { background-color: var(--bg) !important; }
+  .bg-surface           { background-color: var(--surface) !important; }
+  .bg-surface-raised    { background-color: var(--surface-raised) !important; }
+  .bg-surface-elevated  { background-color: var(--surface-elevated) !important; }
+  .bg-surface-overlay   { background-color: var(--surface-overlay) !important; }
+
+  /* ─── Text tier shorthands ── */
+  .text-fg-1 { color: var(--fg-1); }
+  .text-fg-2 { color: var(--fg-2); }
+  .text-fg-3 { color: var(--fg-3); }
+  .text-fg-4 { color: var(--fg-4); }
+  .text-fg-5 { color: var(--fg-5); }
+  .text-brand       { color: var(--brand); }
+  .text-brand-light { color: var(--brand-light); }
+
+  /* ─── Skeleton shimmer ── */
   .skeleton {
-    background: linear-gradient(
-      90deg,
-      #F0F0F0 25%,
-      #E8E8E8 50%,
-      #F0F0F0 75%
-    );
+    background: linear-gradient(90deg, #F0F0F0 25%, #E8E8E8 50%, #F0F0F0 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite linear;
   }
 
-  /* ── Hide / no scrollbar ── */
+  /* ─── Scrollbar hide ── */
   .scrollbar-hide,
   .no-scrollbar {
     -ms-overflow-style: none;
@@ -102,36 +316,22 @@
   .scrollbar-hide::-webkit-scrollbar,
   .no-scrollbar::-webkit-scrollbar { display: none; }
 
-  /* ── Card shadows ── */
-  .shadow-card {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-  }
-  .shadow-card-hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
-  }
+  /* ─── Legacy shadow aliases ── */
+  .shadow-card       { box-shadow: var(--shadow-z2); }
+  .shadow-card-hover { box-shadow: var(--shadow-z3); }
+  .shadow-soft       { box-shadow: var(--shadow-z1); }
+  .shadow-z5         { box-shadow: var(--shadow-z5); }
 
-  /* ── Masonry ── */
-  .masonry-grid {
-    columns: 2;
-    column-gap: 0.75rem;
-  }
-  @media (min-width: 768px) {
-    .masonry-grid { columns: 3; column-gap: 1rem; }
-  }
-  @media (min-width: 1280px) {
-    .masonry-grid { columns: 4; column-gap: 1.25rem; }
-  }
-  .masonry-item {
-    break-inside: avoid;
-    margin-bottom: 0.75rem;
-  }
+  /* ─── Masonry ── */
+  .masonry-grid { columns: 2; column-gap: 0.75rem; }
+  @media (min-width: 768px)  { .masonry-grid { columns: 3; column-gap: 1rem; } }
+  @media (min-width: 1280px) { .masonry-grid { columns: 4; column-gap: 1.25rem; } }
+  .masonry-item { break-inside: avoid; margin-bottom: 0.75rem; }
 
-  /* ── Video fade-in ── */
-  .video-fade-in {
-    animation: videoFadeIn 0.4s ease-out forwards;
-  }
+  /* ─── Video fade-in ── */
+  .video-fade-in { animation: videoFadeIn 0.4s ease-out forwards; }
 
-  /* ── Texture overlay ── */
+  /* ─── Texture overlay ── */
   .texture-overlay { position: relative; }
   .texture-overlay::after {
     content: '';

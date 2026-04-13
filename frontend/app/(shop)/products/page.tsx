@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SlidersHorizontal, X } from 'lucide-react'
+import { useFilterStore } from '@/stores/filterStore'
 import { Product } from '@/types/product'
 import { ProductCard, ProductCardSkeleton } from '@/components/shop/ProductCard'
 import { productsApi } from '@/lib/api'
@@ -38,6 +39,8 @@ function ProductsContent() {
   const categorySlug = searchParams.get('category') ?? ''
   const sortParam    = searchParams.get('sort') ?? 'newest'
   const pageParam    = Number(searchParams.get('page') ?? '1')
+
+  const { openFilter } = useFilterStore()
 
   const [products,   setProducts]   = useState<Product[]>([])
   const [totalPages, setTotalPages] = useState(1)
@@ -89,10 +92,8 @@ function ProductsContent() {
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="flex items-end gap-6 py-10">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-primary-light mb-1">Vami</p>
-              <h1 className="font-display text-4xl font-bold text-on-background md:text-5xl">
-                Collections
-              </h1>
+              <p className="mb-1 t-micro">Vami</p>
+              <h1 className="t-h1">Collections</h1>
             </div>
             {total > 0 && !loading && (
               <p className="mb-1 text-sm text-muted">{total} pieces</p>
@@ -121,10 +122,13 @@ function ProductsContent() {
       {/* Toolbar */}
       <div className="sticky top-16 z-20 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-8">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-muted" />
-            <span className="text-xs text-muted">{loading ? '…' : `${total} results`}</span>
-          </div>
+          <button
+            onClick={openFilter}
+            className="flex items-center gap-2 text-xs text-muted transition-colors hover:text-on-background"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <span>{loading ? '…' : `${total} results`}</span>
+          </button>
 
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted">Sort:</span>

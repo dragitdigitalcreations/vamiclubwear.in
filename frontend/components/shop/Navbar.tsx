@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useCartStore, selectTotalItems } from '@/stores/cartStore'
 import { useWishlistStore, selectWishlistCount } from '@/stores/wishlistStore'
+import { useFilterStore } from '@/stores/filterStore'
 import { ProfileDrawer } from '@/components/shop/ProfileDrawer'
 import { VamiLogo } from '@/components/shop/VamiLogo'
 
@@ -30,6 +31,7 @@ export function Navbar() {
   const totalItems         = useCartStore(selectTotalItems)
   const { toggleWishlist } = useWishlistStore()
   const wishlistCount      = useWishlistStore(selectWishlistCount)
+  const { toggleFilter }   = useFilterStore()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -70,7 +72,7 @@ export function Navbar() {
 
           {/* Logo — left anchor */}
           <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
-            <VamiLogo height={28} />
+            <VamiLogo size="md" />
           </Link>
 
           {/* Search bar — desktop center, fills remaining space */}
@@ -100,7 +102,7 @@ export function Navbar() {
             <span className="h-4 w-px bg-border flex-shrink-0" />
             <button
               type="button"
-              onClick={() => router.push('/products')}
+              onClick={toggleFilter}
               className="flex-shrink-0 text-muted hover:text-on-background transition-colors"
               aria-label="Open filters"
               title="Filter products"

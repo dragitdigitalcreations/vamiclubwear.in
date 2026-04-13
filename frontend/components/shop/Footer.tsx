@@ -31,7 +31,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link href="/" aria-label="Vami Clubwear — Home">
-              <VamiLogo height={60} />
+              <VamiLogo size="lg" />
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted max-w-xs">
               Premium Indo-Western fashion for the modern woman. Crafted with intention, worn with grace.

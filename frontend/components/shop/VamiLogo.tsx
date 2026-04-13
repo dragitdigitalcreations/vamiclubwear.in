@@ -2,34 +2,53 @@
  * VamiLogo — renders the official Vami Clubwear SVG logo.
  *
  * The SVG has viewBox="0 0 140 50" (2.8:1 landscape ratio).
- * We always set an explicit height so the width scales proportionally
- * via the intrinsic aspect-ratio of the SVG — never stretching.
+ * Prefer the `size` prop for hierarchy-consistent sizing; `height` is
+ * still accepted for one-off pixel overrides.
+ *
+ * Size map (matches CSS --logo-* variables):
+ *   xs  16px — favicon / compact admin
+ *   sm  20px — admin sidebar
+ *   md  28px — navbar (default)
+ *   lg  40px — footer
+ *   xl  56px — hero / splash
  *
  * Usage:
- *   <VamiLogo height={32} />           // Navbar (default)
- *   <VamiLogo height={40} />           // Footer
- *   <VamiLogo height={28} className="…" />
+ *   <VamiLogo size="md" />          // navbar
+ *   <VamiLogo size="lg" />          // footer
+ *   <VamiLogo height={32} />        // arbitrary override
  */
 
+const SIZE_MAP: Record<string, number> = {
+  xs:  16,
+  sm:  20,
+  md:  28,
+  lg:  40,
+  xl:  56,
+}
+
 interface VamiLogoProps {
-  /** Rendered height in px. Width is always auto (preserves SVG aspect ratio). */
+  /** Semantic size variant — maps to the CSS --logo-* hierarchy. */
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  /** Explicit pixel height — overrides `size` when provided. */
   height?: number
   className?: string
 }
 
-export function VamiLogo({ height = 32, className = '' }: VamiLogoProps) {
+export function VamiLogo({ size = 'md', height, className = '' }: VamiLogoProps) {
+  const px = height ?? SIZE_MAP[size]
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src="/logo.svg"
       alt="Vami Clubwear"
-      height={height}
+      height={px}
       width="auto"
       style={{
-        height:    `${height}px`,
-        width:     'auto',
-        display:   'block',
-        maxWidth:  'none',   // never compress horizontally
+        height:     `${px}px`,
+        width:      'auto',
+        display:    'block',
+        maxWidth:   'none',
         flexShrink: 0,
       }}
       className={className}
