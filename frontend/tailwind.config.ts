@@ -129,7 +129,7 @@ const config: Config = {
       fontSize: {
         // Semantic scale
         'display':  ['clamp(3rem,8vw,7rem)',        { lineHeight: '1.0',  letterSpacing: '-0.03em',  fontWeight: '700' }],
-        'h1':       ['clamp(2rem,5vw,3.5rem)',       { lineHeight: '1.08', letterSpacing: '-0.025em', fontWeight: '700' }],
+        'h1':       ['clamp(2rem,5vw,3rem)',          { lineHeight: '1.08', letterSpacing: '-0.025em', fontWeight: '700' }],
         'h2':       ['clamp(1.5rem,3vw,2.25rem)',    { lineHeight: '1.15', letterSpacing: '-0.02em',  fontWeight: '600' }],
         'h3':       ['1.25rem',                      { lineHeight: '1.3',  letterSpacing: '-0.01em',  fontWeight: '600' }],
         'h4':       ['1rem',                         { lineHeight: '1.4',  letterSpacing: '0',        fontWeight: '600' }],
