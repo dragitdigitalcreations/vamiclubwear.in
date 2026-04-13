@@ -3,26 +3,11 @@
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { SlidersHorizontal, X } from 'lucide-react'
-import { useFilterStore } from '@/stores/filterStore'
 import { Product } from '@/types/product'
 import { ProductCard, ProductCardSkeleton } from '@/components/shop/ProductCard'
 import { productsApi } from '@/lib/api'
 import { toast } from '@/stores/toastStore'
 
-const CATEGORIES = [
-  { slug: '',                    label: 'All' },
-  { slug: 'indo-western-fusion', label: 'Fusion Wear' },
-  { slug: 'bridal-collection',   label: 'Bridal' },
-  { slug: 'modest-wear',         label: 'Modest Fashion' },
-  { slug: 'dupattas-drapes',     label: 'Dupattas' },
-]
-
-const SORT_OPTIONS = [
-  { value: 'newest',     label: 'Newest First' },
-  { value: 'price-asc',  label: 'Price: Low to High' },
-  { value: 'price-desc', label: 'Price: High to Low' },
-]
 
 const fadeUp = {
   hidden:  { opacity: 0, y: 24 },
@@ -39,8 +24,6 @@ function ProductsContent() {
   const categorySlug = searchParams.get('category') ?? ''
   const sortParam    = searchParams.get('sort') ?? 'newest'
   const pageParam    = Number(searchParams.get('page') ?? '1')
-
-  const { openFilter } = useFilterStore()
 
   const [products,   setProducts]   = useState<Product[]>([])
   const [totalPages, setTotalPages] = useState(1)
@@ -100,63 +83,7 @@ function ProductsContent() {
             )}
           </div>
 
-          {/* Category tabs */}
-          <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.slug}
-                onClick={() => setParam('category', cat.slug)}
-                className={`flex-shrink-0 pb-3 text-xs font-medium uppercase tracking-widest border-b-2 transition-colors ${
-                  categorySlug === cat.slug
-                    ? 'border-on-background text-on-background'
-                    : 'border-transparent text-muted hover:text-on-background'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
         </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="sticky top-16 z-20 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-8">
-          <button
-            onClick={openFilter}
-            className="flex items-center gap-2 text-xs text-muted transition-colors hover:text-on-background"
-          >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            <span>{loading ? '…' : `${total} results`}</span>
-          </button>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted">Sort:</span>
-            <select
-              value={sortParam}
-              onChange={(e) => setParam('sort', e.target.value)}
-              className="bg-transparent text-xs font-medium text-on-background outline-none cursor-pointer"
-            >
-              {SORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value} className="bg-surface text-on-background">
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {categorySlug && (
-          <div className="mx-auto max-w-7xl px-4 pb-2 md:px-8">
-            <button
-              onClick={() => setParam('category', '')}
-              className="inline-flex items-center gap-1.5 bg-surface px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-on-background"
-            >
-              {CATEGORIES.find((c) => c.slug === categorySlug)?.label ?? categorySlug}
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Grid */}
@@ -168,7 +95,7 @@ function ProductsContent() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-5"
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4"
             >
               {Array.from({ length: 8 }).map((_, i) => (
                 <ProductCardSkeleton key={i} />
@@ -197,7 +124,7 @@ function ProductsContent() {
           ) : (
             <motion.div
               key={`grid-${categorySlug}-${sortParam}-${pageParam}`}
-              className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-5"
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4"
             >
               {products.map((product, i) => (
                 <motion.div
@@ -255,7 +182,7 @@ export default function ProductsPage() {
   return (
     <Suspense fallback={
       <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4">
           {Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton aspect-[3/4] rounded" />)}
         </div>
       </div>

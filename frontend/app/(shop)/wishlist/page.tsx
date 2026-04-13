@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, ShoppingBag, X, ArrowRight } from 'lucide-react'
 import { useWishlistStore } from '@/stores/wishlistStore'
-import { useCartStore } from '@/stores/cartStore'
 import { cloudinaryUrl } from '@/lib/cloudinary'
 
 const fadeUp = {
@@ -67,7 +66,7 @@ export default function WishlistPage() {
           ) : (
             <motion.div
               key="grid"
-              className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-5"
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4"
             >
               {items.map((item, i) => (
                 <motion.div

@@ -388,11 +388,9 @@ function CollectionsGrid() {
 
 // ─── Product grid section helper ──────────────────────────────────────────────
 function ProductGrid({ products, loading, cols = 4 }: { products: Product[]; loading: boolean; cols?: number }) {
-  const colClass = cols === 4
-    ? 'grid-cols-2 md:grid-cols-4'
-    : 'grid-cols-2 md:grid-cols-3'
+  const colClass = 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'
   return (
-    <div className={`grid gap-3 sm:gap-4 md:gap-5 ${colClass}`}>
+    <div className={`grid gap-3 md:gap-4 ${colClass}`}>
       {loading
         ? Array.from({ length: cols === 4 ? 8 : cols }).map((_, i) => (
             <div key={i}>
