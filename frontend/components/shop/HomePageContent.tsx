@@ -73,7 +73,7 @@ const slideVariants = {
   exit:  (dir: number) => ({ x: dir >= 0 ? '-100%' : '100%', opacity: 1 }),
 }
 
-const SLIDE_TRANSITION = { duration: 0.52, ease: [0.32, 0, 0.67, 0] as [number, number, number, number] }
+const SLIDE_TRANSITION = { duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }
 
 function HeroCarousel() {
   const [current,   setCurrent]   = useState(0)
@@ -90,7 +90,7 @@ function HeroCarousel() {
   useEffect(() => {
     timerRef.current = setTimeout(() => {
       go((current + 1) % STATIC_SLIDES.length, 1)
-    }, 5500)
+    }, 7000)
     return () => clearTimeout(timerRef.current)
   }, [current, go])
 
