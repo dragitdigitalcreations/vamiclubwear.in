@@ -165,6 +165,18 @@ function HeroCarousel() {
           exit="exit"
           transition={SLIDE_TRANSITION}
         >
+          {/* ── Top scrim — shields the transparent navbar zone from slide content ── */}
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-44"
+            style={{
+              background: slide.bgImage
+                ? 'linear-gradient(180deg, rgba(0,0,0,0.32) 0%, transparent 100%)'
+                : slide.dark
+                  ? `linear-gradient(180deg, rgba(24,15,9,0.75) 0%, transparent 100%)`
+                  : `linear-gradient(180deg, rgba(250,247,242,0.90) 0%, transparent 100%)`,
+            }}
+          />
+
           {/* Glow accent */}
           <div
             className="pointer-events-none absolute bottom-0 right-0 h-[50%] w-[40%] rounded-full blur-[160px]"

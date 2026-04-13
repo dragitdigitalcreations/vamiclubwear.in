@@ -112,8 +112,17 @@ export function Navbar() {
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
-          {/* Logo */}
-          <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
+          {/* Logo — frosted pill when transparent so it's legible over any hero */}
+          <Link
+            href="/"
+            aria-label="Vami Clubwear — Home"
+            className={cn(
+              'flex-shrink-0 transition-all duration-300',
+              scrolled
+                ? 'rounded-none bg-transparent p-0 shadow-none'
+                : 'rounded-full bg-white/75 px-3 py-1.5 shadow-[0_1px_12px_rgba(0,0,0,0.10)] backdrop-blur-md ring-1 ring-black/[0.05]'
+            )}
+          >
             <VamiLogo size="md" />
           </Link>
 
