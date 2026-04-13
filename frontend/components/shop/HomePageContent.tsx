@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRef, useEffect, useState, useCallback } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight, Truck, RotateCcw, Zap, ShieldCheck } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, Truck, RotateCcw, Zap } from 'lucide-react'
 import { productsApi, bannersApi } from '@/lib/api'
 import type { HeroBanner } from '@/lib/api'
 import { ProductCard } from '@/components/shop/ProductCard'
@@ -305,34 +305,97 @@ function MarqueeStrip() {
   )
 }
 
-// ─── Benefits strip ───────────────────────────────────────────────────────────
-function BenefitsStrip() {
-  const benefits = [
-    { Icon: Truck,       label: 'Free Shipping',   sub: 'On orders ₹2500+' },
-    { Icon: RotateCcw,   label: 'Easy Returns',    sub: '7-day hassle-free' },
-    { Icon: Zap,         label: 'Fast Delivery',   sub: 'Pan-India express' },
-    { Icon: ShieldCheck, label: 'Secure Checkout', sub: '100% safe payments' },
-  ]
+// ─── About section ────────────────────────────────────────────────────────────
+function AboutSection() {
   return (
-    <section className="border-y border-border/50 bg-surface">
-      <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10">
-        <div className="grid grid-cols-2 divide-x divide-y divide-border/40 md:grid-cols-4 md:divide-y-0">
-          {benefits.map(({ Icon, label, sub }) => (
-            <div key={label} className="flex items-center gap-3 px-6 py-5">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-elevated text-primary-light">
-                <Icon className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-on-background">{label}</p>
-                <p className="text-[11px] text-muted">{sub}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+    <section className="relative overflow-hidden py-24 md:py-36">
+      {/* Watermark monogram */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
+      >
+        <span
+          className="font-display font-bold leading-none text-on-background/[0.035]"
+          style={{ fontSize: 'clamp(180px, 38vw, 500px)' }}
+        >
+          V
+        </span>
+      </div>
+
+      <div className="relative mx-auto max-w-3xl px-6 text-center">
+        <motion.h2
+          variants={fadeUp} initial="hidden" whileInView="visible"
+          viewport={{ once: true }}
+          className="font-display text-4xl font-semibold text-on-background md:text-5xl"
+        >
+          About Vami
+        </motion.h2>
+
+        <motion.p
+          variants={fadeUp} initial="hidden" whileInView="visible"
+          viewport={{ once: true }} custom={0.15}
+          className="mt-8 text-base leading-[1.85] text-muted md:text-lg"
+        >
+          Vami Clubwear is a premium Indo-Western fashion label born from the rich cultural
+          heritage of Manjeri, Kerala. We reimagine traditional silhouettes — from bespoke
+          bridal ensembles to everyday fusion wear — as statements of individuality, grace,
+          and quiet luxury. Every piece is crafted with intention, worn with pride.
+        </motion.p>
+
+        <motion.div
+          variants={fadeUp} initial="hidden" whileInView="visible"
+          viewport={{ once: true }} custom={0.28}
+          className="mt-10 flex items-center justify-center gap-5"
+        >
+          <span className="h-px w-20 bg-border/50" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.4em] text-muted">
+            Manjeri · Kerala · India
+          </span>
+          <span className="h-px w-20 bg-border/50" />
+        </motion.div>
       </div>
     </section>
   )
 }
+
+// ─── Benefits cards ───────────────────────────────────────────────────────────
+function BenefitsCards() {
+  const benefits = [
+    { Icon: Truck,     label: 'Free Shipping',          sub: 'On orders ₹2500+' },
+    { Icon: RotateCcw, label: 'Easy Return & Exchange', sub: '7-day hassle-free' },
+    { Icon: Zap,       label: 'Fast Delivery',          sub: '5–7 business days' },
+  ]
+  return (
+    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 pb-24">
+      <motion.h2
+        variants={fadeUp} initial="hidden" whileInView="visible"
+        viewport={{ once: true }}
+        className="mb-10 text-center font-display text-3xl font-semibold text-on-background md:text-4xl"
+      >
+        Our Benefits
+      </motion.h2>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {benefits.map(({ Icon, label, sub }, i) => (
+          <motion.div
+            key={label}
+            variants={fadeUp} initial="hidden" whileInView="visible"
+            viewport={{ once: true }} custom={i * 0.15}
+            className="flex items-center gap-5 rounded-2xl border border-border bg-surface px-7 py-7"
+          >
+            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-on-background text-white">
+              <Icon className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-on-background">{label}</p>
+              <p className="mt-1 text-sm text-muted">{sub}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 
 // ─── Collections grid ─────────────────────────────────────────────────────────
 function CollectionsGrid() {
@@ -664,11 +727,12 @@ export function HomePageContent() {
     <>
       <HeroCarousel />
       <MarqueeStrip />
-      <BenefitsStrip />
       <CollectionsGrid />
       <NewArrivalsSection />
       <FeaturedProducts />
       <TrendingSection />
+      <AboutSection />
+      <BenefitsCards />
       <VideoShowcase />
     </>
   )
