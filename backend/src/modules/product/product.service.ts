@@ -39,7 +39,9 @@ const productFullInclude = {
   },
 } satisfies Prisma.ProductInclude
 
-// Lightweight include for listing cards (skip heavy inventory join)
+// Lightweight include for listing cards
+// Includes minimal inventory (quantity + reserved only) so the frontend
+// can cap cart quantity correctly, and 2 images for the hover-swap effect.
 const productListInclude = {
   category: { select: { id: true, name: true, slug: true } },
   variants: {
@@ -47,11 +49,14 @@ const productListInclude = {
     select: {
       id: true, sku: true, size: true, color: true, colorHex: true,
       fabric: true, style: true, price: true, isActive: true,
+      inventory: {
+        select: { quantity: true, reserved: true },
+      },
     },
   },
   media: {
-    where: { isPrimary: true },
-    take: 1,
+    where: { type: 'IMAGE' as const },
+    take: 2,
     orderBy: { sortOrder: 'asc' as const },
   },
 } satisfies Prisma.ProductInclude
