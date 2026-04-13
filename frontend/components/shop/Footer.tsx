@@ -33,17 +33,17 @@ export function Footer() {
 
   return (
     <footer className="border-t border-border bg-surface mt-24">
-      <div className="mx-auto w-full px-6 py-12">
+      <div className="mx-auto w-full px-6 py-16 md:py-20">
 
         {/* ── Main grid (5-col, logo spans 2) ── */}
         <div className="grid grid-cols-1 gap-12 md:grid-cols-5">
 
           {/* Col 1–2 — Brand */}
-          <div className="md:col-span-2 flex flex-col gap-5">
+          <div className="md:col-span-2 flex flex-col gap-6">
             <Link href="/" aria-label="Vami Clubwear — Home">
-              <VamiLogo size="lg" />
+              <VamiLogo height={72} />
             </Link>
-            <p className="max-w-xs text-sm leading-relaxed text-muted">
+            <p className="max-w-xs text-sm leading-relaxed text-muted/80">
               Premium Indo-Western fashion for the modern woman.
               Crafted with intention, worn with grace.
             </p>
@@ -77,15 +77,15 @@ export function Footer() {
 
           {/* Col 3 — Collections */}
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-on-background">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-on-background">
               Collections
             </h3>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-5 space-y-3.5">
               {COLLECTIONS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted transition-colors hover:text-on-background"
+                    className="text-sm text-muted/90 transition-colors hover:text-on-background"
                   >
                     {link.label}
                   </Link>
@@ -96,15 +96,15 @@ export function Footer() {
 
           {/* Col 4 — Information */}
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-on-background">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-on-background">
               Information
             </h3>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-5 space-y-3.5">
               {INFO_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted transition-colors hover:text-on-background"
+                    className="text-sm text-muted/90 transition-colors hover:text-on-background"
                   >
                     {link.label}
                   </Link>
@@ -115,15 +115,15 @@ export function Footer() {
 
           {/* Col 5 — Account */}
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-on-background">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-on-background">
               Account
             </h3>
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-5 space-y-3.5">
               {ACCOUNT_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted transition-colors hover:text-on-background"
+                    className="text-sm text-muted/90 transition-colors hover:text-on-background"
                   >
                     {link.label}
                   </Link>

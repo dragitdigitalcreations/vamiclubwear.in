@@ -20,9 +20,10 @@ const fadeUp = {
 
 // ─── Collections ──────────────────────────────────────────────────────────────
 const COLLECTIONS = [
-  { slug: 'fusion',  label: 'Fusion Wear',    sub: 'East meets West',    gradient: 'from-[#3D2B1F] to-[#1a1008]', accent: '#C4956A' },
-  { slug: 'bridal',  label: 'Bridal',         sub: 'Your finest moment', gradient: 'from-[#2B1B2E] to-[#0d0710]', accent: '#D4A5C9' },
-  { slug: 'modest',  label: 'Modest Fashion', sub: 'Elegance redefined', gradient: 'from-[#1A2B2B] to-[#081515]', accent: '#7EC8C8' },
+  { slug: 'fusion',    label: 'Fusion Wear',    sub: 'East meets West',    gradient: 'from-[#3D2B1F] to-[#1a1008]', accent: '#C4956A' },
+  { slug: 'bridal',    label: 'Bridal',         sub: 'Your finest moment', gradient: 'from-[#2B1B2E] to-[#0d0710]', accent: '#D4A5C9' },
+  { slug: 'modest',    label: 'Modest Fashion', sub: 'Elegance redefined', gradient: 'from-[#1A2B2B] to-[#081515]', accent: '#7EC8C8' },
+  { slug: 'dupattas',  label: 'Dupattas',       sub: 'The art of draping', gradient: 'from-[#2B2010] to-[#0f0a00]', accent: '#E8C97A' },
 ]
 
 const MARQUEE_WORDS = ['Fusion', 'Bridal', 'Modest', 'Couture', 'Heritage', 'Craft', 'Elegance', 'Kerala']
@@ -352,13 +353,13 @@ function CollectionsGrid() {
         </Link>
       </motion.div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
         {COLLECTIONS.map((col, i) => (
           <motion.div key={col.slug}
             variants={fadeUp} initial="hidden" whileInView="visible"
             viewport={{ once: true, margin: '-50px' }} custom={i * 0.3}>
             <Link href={`/products?category=${col.slug}`}
-              className="group relative flex h-[420px] flex-col justify-end overflow-hidden rounded-[10px]">
+              className="group relative flex h-[380px] flex-col justify-end overflow-hidden rounded-[10px]">
               <div className={`absolute inset-0 bg-gradient-to-br ${col.gradient} transition-transform duration-700 ease-out group-hover:scale-[1.03]`} />
               <motion.div
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border opacity-[0.12]"
