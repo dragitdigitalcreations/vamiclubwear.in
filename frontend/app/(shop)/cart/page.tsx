@@ -507,7 +507,7 @@ export default function CartPage() {
     <>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-        className="mx-auto max-w-7xl px-4 pt-28 pb-20 md:px-8"
+        className="mx-auto max-w-7xl px-4 pt-28 pb-10 md:px-8"
       >
         <motion.div variants={fadeUp} initial="hidden" animate="visible" className="mb-12 flex items-center justify-between">
           <div>

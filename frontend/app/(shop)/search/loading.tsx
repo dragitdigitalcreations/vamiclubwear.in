@@ -1,6 +1,6 @@
 export default function SearchLoading() {
   return (
-    <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 pt-32 pb-24">
+    <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 pt-32 pb-10">
       <div className="mb-10">
         <div className="skeleton h-9 w-24 rounded mb-6" />
         <div className="skeleton h-12 w-full max-w-xl rounded" />

@@ -308,7 +308,7 @@ function MarqueeStrip() {
 // ─── About section ────────────────────────────────────────────────────────────
 function AboutSection() {
   return (
-    <section className="relative overflow-hidden py-24 md:py-36">
+    <section className="relative overflow-hidden py-10 md:py-16">
       {/* Watermark monogram */}
       <div
         aria-hidden
@@ -366,7 +366,7 @@ function BenefitsCards() {
     { Icon: Zap,       label: 'Fast Delivery',          sub: '5–7 business days' },
   ]
   return (
-    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 pb-24">
+    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 pb-10">
       <motion.h2
         variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true }}
@@ -400,7 +400,7 @@ function BenefitsCards() {
 // ─── Collections grid ─────────────────────────────────────────────────────────
 function CollectionsGrid() {
   return (
-    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-20">
+    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-10">
       <motion.div
         variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
@@ -491,7 +491,7 @@ function NewArrivalsSection() {
   if (!loading && products.length === 0) return null
 
   return (
-    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-20">
+    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-10">
       <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
         className="mb-10 flex items-end justify-between">
@@ -532,7 +532,7 @@ function FeaturedProducts() {
   }, [])
 
   return (
-    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-20">
+    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-10">
       <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
         className="mb-10 flex items-end justify-between">
@@ -571,7 +571,7 @@ function TrendingSection() {
   if (!loading && products.length === 0) return null
 
   return (
-    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 pb-20">
+    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 pb-10">
       <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
         className="mb-10 flex items-end justify-between">
@@ -677,7 +677,7 @@ function VideoShowcase() {
   if (!loading && items.length === 0) return null
 
   return (
-    <section className="py-20">
+    <section className="py-10">
       <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10">
         <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}

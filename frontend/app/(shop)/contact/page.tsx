@@ -38,7 +38,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-32 pb-24 md:px-8">
+    <div className="mx-auto max-w-5xl px-4 pt-32 pb-10 md:px-8">
       <div className="mb-12">
         <p className="text-xs font-medium uppercase tracking-[0.3em] text-primary-light mb-4">Get In Touch</p>
         <h1 className="font-display text-4xl font-bold text-on-background md:text-5xl">Contact Us</h1>

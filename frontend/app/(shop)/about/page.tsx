@@ -5,7 +5,7 @@ export const metadata = { title: 'About Us — Vami Clubwear' }
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-32 pb-24 md:px-8">
+    <div className="mx-auto max-w-4xl px-4 pt-32 pb-10 md:px-8">
 
       <div className="mb-12">
         <p className="text-xs font-medium uppercase tracking-[0.3em] text-primary-light mb-4">Our Story</p>

@@ -203,7 +203,7 @@ function MyOrdersContent() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pt-32 pb-24 md:px-8">
+    <div className="mx-auto max-w-2xl px-4 pt-32 pb-10 md:px-8">
 
       {/* Header */}
       <motion.div

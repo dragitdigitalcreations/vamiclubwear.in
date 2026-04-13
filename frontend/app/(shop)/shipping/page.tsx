@@ -13,7 +13,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function ShippingPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 pt-32 pb-24 md:px-8">
+    <div className="mx-auto max-w-3xl px-4 pt-32 pb-10 md:px-8">
       <div className="mb-12">
         <p className="text-xs font-medium uppercase tracking-[0.3em] text-primary-light mb-4">Policy</p>
         <h1 className="font-display text-4xl font-bold text-on-background">Shipping &amp; Returns</h1>

@@ -401,7 +401,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="mx-auto max-w-7xl px-4 pt-28 pb-24 md:px-8"
+        className="mx-auto max-w-7xl px-4 pt-28 pb-10 md:px-8"
       >
         {/* Breadcrumb */}
         <nav className="mb-8 flex items-center gap-2 text-xs text-muted flex-wrap">

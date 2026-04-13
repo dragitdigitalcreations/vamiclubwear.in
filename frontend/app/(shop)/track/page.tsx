@@ -168,7 +168,7 @@ function TrackContent() {
   }
 
   return (
-    <div className="mx-auto max-w-xl px-4 pt-32 pb-24 md:px-8">
+    <div className="mx-auto max-w-xl px-4 pt-32 pb-10 md:px-8">
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
         <p className="mb-2 text-xs uppercase tracking-[0.3em] text-primary-light">Order Tracking</p>
         <h1 className="mb-8 font-display text-4xl font-bold text-on-background">Track Your Order</h1>
