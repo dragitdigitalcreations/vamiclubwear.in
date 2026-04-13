@@ -731,9 +731,9 @@ export function HomePageContent() {
       <NewArrivalsSection />
       <FeaturedProducts />
       <TrendingSection />
+      <VideoShowcase />
       <AboutSection />
       <BenefitsCards />
-      <VideoShowcase />
     </>
   )
 }
