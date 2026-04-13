@@ -96,7 +96,7 @@ export function Navbar() {
         className={cn(
           'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
           scrolled
-            ? 'bg-background/96 backdrop-blur-md shadow-[0_1px_0_0_rgba(0,0,0,0.06)]'
+            ? 'bg-white/80 shadow-[0_1px_0_0_rgba(0,0,0,0.06)]'
             : 'bg-transparent'
         )}
       >
@@ -299,20 +299,24 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* ── Row 2 : Nav links centered (desktop only) ── */}
+        {/* ── Row 2 : Nav links — each in its own glassmorphism pill ── */}
         <div
           className={cn(
-            'hidden md:flex justify-center items-center gap-8 h-9 transition-all duration-500',
-            scrolled
-              ? 'border-t border-border/50'
-              : 'border-t border-white/15'
+            'hidden md:flex justify-center items-center gap-2 py-2 transition-all duration-500',
+            scrolled ? 'border-t border-border/40' : 'border-t border-white/10'
           )}
         >
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted transition-colors hover:text-on-background whitespace-nowrap"
+              className={cn(
+                'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200',
+                'backdrop-blur-md border',
+                scrolled
+                  ? 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
+                  : 'bg-white/[0.10] border-white/[0.18] text-white/80 hover:bg-white/[0.20] hover:border-white/[0.30] hover:text-white'
+              )}
             >
               {link.label}
             </Link>
