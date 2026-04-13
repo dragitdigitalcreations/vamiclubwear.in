@@ -314,7 +314,7 @@ function BenefitsStrip() {
   ]
   return (
     <section className="border-y border-border/50 bg-surface">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10">
         <div className="grid grid-cols-2 divide-x divide-y divide-border/40 md:grid-cols-4 md:divide-y-0">
           {benefits.map(({ Icon, label, sub }) => (
             <div key={label} className="flex items-center gap-3 px-6 py-5">
@@ -336,7 +336,7 @@ function BenefitsStrip() {
 // ─── Collections grid ─────────────────────────────────────────────────────────
 function CollectionsGrid() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 md:px-8">
+    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-20">
       <motion.div
         variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
@@ -427,7 +427,7 @@ function NewArrivalsSection() {
   if (!loading && products.length === 0) return null
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 md:px-8">
+    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-20">
       <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
         className="mb-10 flex items-end justify-between">
@@ -468,7 +468,7 @@ function FeaturedProducts() {
   }, [])
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 md:px-8">
+    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-20">
       <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
         className="mb-10 flex items-end justify-between">
@@ -507,7 +507,7 @@ function TrendingSection() {
   if (!loading && products.length === 0) return null
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-20 md:px-8">
+    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 pb-20">
       <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
         className="mb-10 flex items-end justify-between">
@@ -614,7 +614,7 @@ function VideoShowcase() {
 
   return (
     <section className="py-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10">
         <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}
           className="mb-10 flex items-end justify-between">

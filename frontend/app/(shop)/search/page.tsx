@@ -51,7 +51,7 @@ function SearchResults() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-32 pb-24 md:px-8">
+    <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 pt-32 pb-24">
       <div className="mb-10">
         <h1 className="font-display text-3xl font-bold text-on-background mb-6">Search</h1>
         <div className="relative max-w-xl">

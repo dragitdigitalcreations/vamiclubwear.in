@@ -72,7 +72,7 @@ function ProductsContent() {
     <div className="pt-16">
       {/* Header */}
       <div className="border-b border-border">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10">
           <div className="flex items-end gap-6 py-10">
             <div>
               <p className="mb-1 t-micro">Vami</p>
@@ -87,7 +87,7 @@ function ProductsContent() {
       </div>
 
       {/* Grid */}
-      <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
+      <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-10">
         <AnimatePresence mode="wait">
           {loading ? (
             <motion.div
@@ -181,7 +181,7 @@ function ProductsContent() {
 export default function ProductsPage() {
   return (
     <Suspense fallback={
-      <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
+      <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-10">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4">
           {Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton aspect-[3/4] rounded" />)}
         </div>

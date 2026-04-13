@@ -22,7 +22,7 @@ export default function WishlistPage() {
     <div className="pt-16 min-h-screen">
       {/* ── Header ── */}
       <div className="border-b border-border">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10">
           <div className="flex items-end gap-4 py-10">
             <div>
               <p className="mb-1 t-micro">Saved</p>
@@ -39,7 +39,7 @@ export default function WishlistPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
+      <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-10">
         <AnimatePresence mode="wait">
           {items.length === 0 ? (
             <motion.div
