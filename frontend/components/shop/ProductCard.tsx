@@ -10,6 +10,23 @@ import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
 import { cloudinaryUrl } from '@/lib/cloudinary'
 
+// ─── Price display — actual price + optional crossed-out base price ────────────
+function PriceDisplay({ actualPrice, basePrice }: { actualPrice: number; basePrice: number }) {
+  const hasDiscount = actualPrice < basePrice
+  return (
+    <div className="mt-1 flex items-center gap-2">
+      <span className="text-sm font-semibold text-on-background">
+        ₹{actualPrice.toLocaleString('en-IN')}
+      </span>
+      {hasDiscount && (
+        <span className="text-xs text-muted/50 line-through">
+          ₹{basePrice.toLocaleString('en-IN')}
+        </span>
+      )}
+    </div>
+  )
+}
+
 interface ProductCardProps {
   product: Product
   priority?: boolean
@@ -168,9 +185,10 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         <h3 className="text-sm font-medium leading-snug text-on-background line-clamp-1 transition-colors duration-200 group-hover:text-muted">
           {product.name}
         </h3>
-        <p className="mt-1 text-sm font-semibold text-on-background">
-          ₹{Number(product.basePrice).toLocaleString('en-IN')}
-        </p>
+        <PriceDisplay
+          actualPrice={defaultVariant ? Number(defaultVariant.price) : Number(product.basePrice)}
+          basePrice={Number(product.basePrice)}
+        />
       </div>
     </Link>
   )
