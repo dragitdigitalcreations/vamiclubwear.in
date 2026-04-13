@@ -88,7 +88,7 @@
   h1, h2, h3, h4, h5, h6 { font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif; }
   h1 { font-weight: 700; color: var(--fg-1); letter-spacing: -0.025em; }
   h2 { font-weight: 600; color: var(--fg-1); letter-spacing: -0.020em; }
-  h3 { font-weight: 600; color: var(--fg-2); letter-spacing: -0.010em; }
+  h3 { font-family: Metropolis, Arial, Helvetica, sans-serif; font-weight: 600; color: var(--fg-2); letter-spacing: -0.010em; }
   h4 { font-weight: 600; color: var(--fg-2); }
   h5,
   h6 { font-weight: 500; color: var(--fg-4); letter-spacing: 0.04em; }
@@ -139,7 +139,7 @@
   }
 
   .t-h3 {
-    font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif;
+    font-family: Metropolis, Arial, Helvetica, sans-serif;
     font-size: 1.25rem;
     font-weight: 600;
     line-height: 1.3;
