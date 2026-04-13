@@ -123,7 +123,7 @@ const config: Config = {
       // ── Typography scale ──────────────────────────────────────────────────────
       fontFamily: {
         sans:    ['Metropolis', 'Arial', 'Helvetica', 'sans-serif'],
-        display: ['Metropolis', 'Arial', 'Helvetica', 'sans-serif'],
+        display: ['NTFabulous', 'Metropolis', 'Arial', 'Helvetica', 'sans-serif'],
       },
 
       fontSize: {

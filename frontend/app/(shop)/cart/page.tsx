@@ -475,7 +475,7 @@ function OrderConfirmation({ orderNumber, onClose }: { orderNumber: string; onCl
 // ─── Cart Page ────────────────────────────────────────────────────────────────
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, clearCart } = useCartStore()
+  const { items, updateQuantity, removeItem } = useCartStore()
   const totalItems = useCartStore(selectTotalItems)
   const subtotal   = useCartStore(selectSubtotal)
 
@@ -490,11 +490,11 @@ export default function CartPage() {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center gap-6 px-4 text-center pt-16">
         <ShoppingBag className="h-16 w-16 text-muted opacity-30" />
-        <h1 className="font-display text-3xl font-bold text-on-background">Your Bag is Empty</h1>
+        <h1 className="font-display text-3xl font-bold text-on-background">Your Cart is Empty</h1>
         <p className="text-muted text-sm max-w-sm">Explore our collections to find something you love.</p>
         <Link
           href="/products"
-          className="mt-4 inline-flex items-center gap-2 bg-primary px-8 py-3.5 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
+          className="mt-4 inline-flex items-center gap-2 bg-on-background px-8 py-3.5 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
         >
           Explore Collections
           <ArrowRight className="h-3.5 w-3.5" />
@@ -503,130 +503,116 @@ export default function CartPage() {
     )
   }
 
+  const total = subtotal + (subtotal >= 2500 ? 0 : 80)
+
   return (
     <>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-        className="mx-auto max-w-7xl px-4 pt-28 pb-10 md:px-8"
+        className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 pt-28 pb-10"
       >
-        <motion.div variants={fadeUp} initial="hidden" animate="visible" className="mb-12 flex items-center justify-between">
+        {/* Heading */}
+        <motion.h1
+          variants={fadeUp} initial="hidden" animate="visible"
+          className="font-display text-4xl font-bold text-on-background mb-8"
+        >
+          Cart
+        </motion.h1>
+
+        {/* Item cards */}
+        <AnimatePresence initial={false}>
+          {items.map((item, i) => (
+            <motion.div
+              key={item.variantId}
+              layout
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: -32, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: i * 0.05 }}
+              className="mb-4 flex items-center gap-5 rounded-xl border border-border bg-surface px-5 py-5"
+            >
+              {/* Image */}
+              <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-surface-elevated">
+                {item.imageUrl ? (
+                  <Image src={item.imageUrl} alt={item.productName} fill className="object-cover" sizes="96px" />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <ShoppingBag className="h-7 w-7 text-muted opacity-30" />
+                  </div>
+                )}
+              </div>
+
+              {/* Details */}
+              <div className="flex-1 min-w-0">
+                <Link
+                  href={`/products/${item.productSlug}`}
+                  className="font-semibold text-on-background hover:text-primary-light transition-colors leading-snug line-clamp-2"
+                >
+                  {item.productName}
+                </Link>
+                <p className="mt-1.5 text-sm text-muted">
+                  {item.size  && <span>Size: <span className="font-medium text-on-background">{item.size}</span></span>}
+                  {item.size && item.color && <span className="mx-2 opacity-40">·</span>}
+                  {item.color && (
+                    <span>Color: <span className="font-medium" style={{ color: item.colorHex ?? undefined }}>{item.color}</span></span>
+                  )}
+                  {(item.size || item.color) && <span className="mx-2 opacity-40">·</span>}
+                  <span>Price: <span className="font-semibold text-on-background">₹{item.price.toLocaleString('en-IN')}</span></span>
+                </p>
+              </div>
+
+              {/* Qty controls + remove — stacked on the right */}
+              <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={() => updateQuantity(item.variantId, 1)}
+                  className="flex h-8 w-8 items-center justify-center rounded-md bg-on-background text-white text-sm font-bold transition-opacity hover:opacity-80"
+                  aria-label="Increase quantity"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-on-background text-white text-sm font-semibold">
+                  {item.quantity}
+                </div>
+                <button
+                  onClick={() => updateQuantity(item.variantId, -1)}
+                  className="flex h-8 w-8 items-center justify-center rounded-md bg-on-background text-white text-sm font-bold transition-opacity hover:opacity-80"
+                  aria-label="Decrease quantity"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => removeItem(item.variantId)}
+                  className="mt-1 text-red-500 hover:text-red-600 transition-colors"
+                  aria-label="Remove item"
+                >
+                  <Minus className="hidden" />
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                  </svg>
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {/* Total bar */}
+        <div className="mt-6 border-t border-border pt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="font-display text-4xl font-bold text-on-background md:text-5xl">Your Bag</h1>
-            <p className="mt-1 text-sm text-muted">{totalItems} {totalItems === 1 ? 'item' : 'items'}</p>
+            <p className="text-base font-bold text-on-background">
+              Total ({totalItems} {totalItems === 1 ? 'item' : 'items'}): ₹{total.toLocaleString('en-IN')}
+            </p>
+            {subtotal < 2500 && (
+              <p className="mt-1 text-xs text-amber-500">
+                Add ₹{(2500 - subtotal).toLocaleString('en-IN')} more for free shipping
+              </p>
+            )}
           </div>
-          <Link
-            href="/products"
-            className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted transition-colors hover:text-on-background md:flex"
+          <button
+            onClick={() => setCheckoutOpen(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-on-background px-8 py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-85"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />Continue Shopping
-          </Link>
-        </motion.div>
-
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
-          {/* Items */}
-          <div className="lg:col-span-2">
-            <ul className="divide-y divide-border">
-              <AnimatePresence initial={false}>
-                {items.map((item) => (
-                  <motion.li
-                    key={item.variantId}
-                    layout
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, x: -40, height: 0 }}
-                    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <div className="flex gap-5 py-6">
-                      <div className="relative h-28 w-20 flex-shrink-0 overflow-hidden bg-surface-elevated md:h-36 md:w-28">
-                        {item.imageUrl ? (
-                          <Image src={item.imageUrl} alt={item.productName} fill className="object-cover" sizes="112px" />
-                        ) : (
-                          <div className="flex h-full items-center justify-center">
-                            <ShoppingBag className="h-8 w-8 text-muted opacity-30" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-1 flex-col justify-between">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <Link href={`/products/${item.productSlug}`} className="font-medium text-on-background hover:text-primary-light transition-colors">
-                              {item.productName}
-                            </Link>
-                            <div className="mt-1 flex flex-wrap gap-2">
-                              {item.color && (
-                                <span className="flex items-center gap-1 text-xs text-muted">
-                                  {item.colorHex && <span className="inline-block h-2.5 w-2.5 rounded-full border border-border/60" style={{ backgroundColor: item.colorHex }} />}
-                                  {item.color}
-                                </span>
-                              )}
-                              {item.size && <span className="text-xs text-muted">Size: {item.size}</span>}
-                            </div>
-                            <p className="mt-1.5 text-sm font-semibold text-on-background">₹{item.price.toLocaleString('en-IN')}</p>
-                          </div>
-                          <button onClick={() => removeItem(item.variantId)} className="flex-shrink-0 p-1 text-muted hover:text-on-background transition-colors" aria-label="Remove">
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-
-                        <div className="flex items-center justify-between mt-4">
-                          <div className="flex items-center border border-border">
-                            <button onClick={() => updateQuantity(item.variantId, -1)} className="px-3 py-1.5 text-muted hover:text-on-background transition-colors"><Minus className="h-3 w-3" /></button>
-                            <span className="min-w-[2rem] text-center text-xs font-medium text-on-background">{item.quantity}</span>
-                            <button onClick={() => updateQuantity(item.variantId, 1)} className="px-3 py-1.5 text-muted hover:text-on-background transition-colors"><Plus className="h-3 w-3" /></button>
-                          </div>
-                          <p className="text-sm font-semibold text-on-background">₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ul>
-            <button onClick={clearCart} className="mt-4 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors underline underline-offset-4">
-              Clear Bag
-            </button>
-          </div>
-
-          {/* Order summary */}
-          <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}>
-            <div className="sticky top-24 border border-border bg-surface p-6 space-y-5">
-              <h2 className="font-display text-xl font-semibold text-on-background">Order Summary</h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between text-muted">
-                  <span>Subtotal ({totalItems} {totalItems === 1 ? 'item' : 'items'})</span>
-                  <span>₹{subtotal.toLocaleString('en-IN')}</span>
-                </div>
-                <div className="flex justify-between text-muted">
-                  <span>Shipping</span>
-                  <span>{subtotal >= 2500 ? <span className="text-green-400">Free</span> : '₹80'}</span>
-                </div>
-              </div>
-              <div className="border-t border-border pt-4 flex justify-between font-semibold text-on-background">
-                <span>Total</span>
-                <span>₹{(subtotal + (subtotal >= 2500 ? 0 : 80)).toLocaleString('en-IN')}</span>
-              </div>
-              {subtotal < 2500 && (
-                <p className="text-xs text-amber-400">Add ₹{(2500 - subtotal).toLocaleString('en-IN')} more for free shipping</p>
-              )}
-
-              {/* Payment method badges */}
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {['UPI', 'Cards', 'Net Banking', 'Wallets', 'COD'].map(m => (
-                  <span key={m} className="border border-border px-2 py-0.5 text-[10px] text-muted uppercase tracking-wider">{m}</span>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setCheckoutOpen(true)}
-                className="w-full bg-primary py-4 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
-              >
-                Proceed to Checkout
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </motion.div>
+            Proceed to Checkout
+          </button>
         </div>
       </motion.div>
 
