@@ -193,7 +193,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         </h3>
 
         {/* Category name — low opacity, between name and price */}
-        <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted/50 line-clamp-1">
+        <p className="mt-0.5 text-[9px] uppercase tracking-[0.12em] text-muted/50 line-clamp-1">
           {product.category.name}
         </p>
 

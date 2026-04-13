@@ -295,7 +295,7 @@ function MarqueeStrip() {
         className="flex gap-10 whitespace-nowrap"
       >
         {repeated.map((word, i) => (
-          <span key={i} className="flex items-center gap-10 text-[10px] font-semibold uppercase tracking-[0.4em] text-muted">
+          <span key={i} className="flex items-center gap-10 text-[9px] font-semibold uppercase tracking-[0.2em] text-muted">
             {word}
             <span className="h-1 w-1 rounded-full bg-primary-light/50" />
           </span>
@@ -326,7 +326,7 @@ function AboutSection() {
         <motion.h2
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }}
-          className="font-display text-4xl font-semibold text-on-background md:text-5xl"
+          className="font-display text-3xl font-semibold text-on-background md:text-4xl"
         >
           About Vami
         </motion.h2>
@@ -334,7 +334,7 @@ function AboutSection() {
         <motion.p
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }} custom={0.15}
-          className="mt-8 text-base leading-[1.85] text-muted md:text-lg"
+          className="mt-8 text-sm leading-[1.85] text-muted md:text-base"
         >
           Vami Clubwear is a premium Indo-Western fashion label born from the rich cultural
           heritage of Manjeri, Kerala. We reimagine traditional silhouettes — from bespoke
@@ -348,7 +348,7 @@ function AboutSection() {
           className="mt-10 flex items-center justify-center gap-5"
         >
           <span className="h-px w-20 bg-border/50" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.4em] text-muted">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted">
             Manjeri · Kerala · India
           </span>
           <span className="h-px w-20 bg-border/50" />
@@ -370,7 +370,7 @@ function BenefitsCards() {
       <motion.h2
         variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true }}
-        className="mb-10 text-center font-display text-3xl font-semibold text-on-background md:text-4xl"
+        className="mb-10 text-center font-display text-2xl font-semibold text-on-background md:text-3xl"
       >
         Our Benefits
       </motion.h2>
@@ -386,8 +386,8 @@ function BenefitsCards() {
               <Icon className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-semibold text-on-background">{label}</p>
-              <p className="mt-1 text-sm text-muted">{sub}</p>
+              <p className="text-sm font-semibold text-on-background">{label}</p>
+              <p className="mt-0.5 text-[11px] text-muted">{sub}</p>
             </div>
           </motion.div>
         ))}
@@ -432,11 +432,11 @@ function CollectionsGrid() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
               <div className="relative z-10 p-7">
-                <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.3em]" style={{ color: col.accent }}>
+                <p className="mb-1 text-[9px] font-medium uppercase tracking-[0.15em]" style={{ color: col.accent }}>
                   {col.sub}
                 </p>
-                <h3 className="font-display text-3xl font-bold text-white">{col.label}</h3>
-                <span className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em]"
+                <h3 className="font-display text-[20px] font-bold text-white">{col.label}</h3>
+                <span className="mt-4 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em]"
                   style={{ color: col.accent }}>
                   Explore
                   <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1.5" />
@@ -685,7 +685,7 @@ function VideoShowcase() {
           <div>
             <p className="mb-1 t-micro">In Motion</p>
             <h2 className="t-h1">Shop the Look</h2>
-            <p className="mt-2 text-sm text-muted">Scroll past each piece to preview it in motion</p>
+            <p className="mt-2 text-[12px] text-muted">Scroll past each piece to preview it in motion</p>
           </div>
           {items.length > 3 && (
             <div className="hidden md:flex items-center gap-2">
