@@ -640,7 +640,7 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
           onCanPlay={() => setLoaded(true)}
           className={`h-full w-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         />
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent p-4 pt-16">
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-10 pb-10 pt-16">
           <p className="mb-1 text-[9px] font-medium uppercase tracking-[0.3em] text-white/55">Vami Clubwear</p>
           <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2">{item.name}</h3>
           <p className="mt-1 text-xs font-semibold text-primary-light">
@@ -700,11 +700,10 @@ function VideoShowcase() {
         </motion.div>
       </div>
 
-      {/* Scroll track — full viewport width, padding mirrors the max-w-7xl gutter */}
+      {/* Scroll track — 40px leading/trailing gutter matches site padding */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-3"
-        style={{ paddingLeft: 'max(1rem, calc((100vw - 80rem) / 2 + 1rem))', paddingRight: '1rem' }}
+        className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-3 px-4 sm:px-6 md:px-8 lg:px-10"
       >
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
@@ -714,8 +713,6 @@ function VideoShowcase() {
             ))
           : items.map((item) => <VideoCard key={item.id} item={item} />)
         }
-        {/* trailing spacer so last card gets breathing room */}
-        <div className="flex-shrink-0 w-4 md:w-8" aria-hidden="true" />
       </div>
     </section>
   )
