@@ -30,20 +30,23 @@ const MARQUEE_WORDS = ['Fusion', 'Bridal', 'Modest', 'Couture', 'Heritage', 'Cra
 // ─── Hero Carousel ─────────────────────────────────────────────────────────────
 
 interface SlideData {
-  id:         string | number
-  eyebrow:    string
-  titleLine1: string
-  titleLine2: string
-  sub:        string
-  cta:        { label: string; href: string }
-  ctaAlt:     { label: string; href: string }
-  bg:         string
-  bgImage?:   string | null  // if set, used as background-image over `bg`
-  accentColor:string
-  dark:       boolean
+  id:          string | number
+  eyebrow:     string
+  titleLine1:  string
+  titleLine2:  string
+  sub:         string
+  cta:         { label: string; href: string }
+  ctaAlt:      { label: string; href: string }
+  bg:          string
+  // Responsive image variants — each is optional; <picture> picks the right one
+  bgDesktop?:  string | null
+  bgTablet?:   string | null
+  bgMobile?:   string | null
+  accentColor: string
+  dark:        boolean
 }
 
-// Map a DB HeroBanner → SlideData for the carousel
+// Map a DB HeroBanner → SlideData — no fallback text; empty = don't render
 function bannerToSlide(b: HeroBanner): SlideData {
   return {
     id:          b.id,
@@ -51,12 +54,14 @@ function bannerToSlide(b: HeroBanner): SlideData {
     titleLine1:  b.titleLine1  ?? '',
     titleLine2:  b.titleLine2  ?? '',
     sub:         b.subtitle    ?? '',
-    cta:         { label: b.ctaLabel    ?? 'Shop Now',  href: b.ctaHref    ?? '/products' },
-    ctaAlt:      { label: b.ctaAltLabel ?? 'View All',  href: b.ctaAltHref ?? '/products' },
+    cta:         { label: b.ctaLabel    ?? '', href: b.ctaHref    ?? '' },
+    ctaAlt:      { label: b.ctaAltLabel ?? '', href: b.ctaAltHref ?? '' },
     bg: b.darkTheme
       ? 'linear-gradient(135deg, #180F09 0%, #2C1A10 50%, #0E0806 100%)'
       : 'linear-gradient(135deg, #FAF7F2 0%, #FAFAF8 50%, #F5F1EC 100%)',
-    bgImage:     b.imageDesktop ?? null,
+    bgDesktop:   b.imageDesktop ?? null,
+    bgTablet:    b.imageTablet  ?? null,
+    bgMobile:    b.imageMobile  ?? null,
     accentColor: b.accentColor  ?? '#8B6B47',
     dark:        b.darkTheme    ?? false,
   }
@@ -153,11 +158,7 @@ function HeroCarousel() {
         <motion.div
           key={`slide-${slide.id}`}
           className="absolute inset-0 flex items-center"
-          style={{
-            background: slide.bgImage
-              ? `url(${slide.bgImage}) center/cover no-repeat`
-              : slide.bg,
-          }}
+          style={{ background: slide.bg }}
           custom={direction}
           variants={slideVariants}
           initial="enter"
@@ -165,15 +166,29 @@ function HeroCarousel() {
           exit="exit"
           transition={SLIDE_TRANSITION}
         >
-          {/* ── Top scrim — shields the transparent navbar zone from slide content ── */}
+          {/* ── Responsive background image via <picture> ── */}
+          {(slide.bgDesktop || slide.bgTablet || slide.bgMobile) && (
+            <picture className="pointer-events-none absolute inset-0">
+              {slide.bgMobile  && <source media="(max-width: 767px)"                        srcSet={slide.bgMobile} />}
+              {slide.bgTablet  && <source media="(min-width: 768px) and (max-width: 1023px)" srcSet={slide.bgTablet} />}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={slide.bgDesktop ?? slide.bgTablet ?? slide.bgMobile ?? ''}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            </picture>
+          )}
+
+          {/* ── Top scrim — shields navbar zone ── */}
           <div
             className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-44"
             style={{
-              background: slide.bgImage
+              background: (slide.bgDesktop || slide.bgTablet || slide.bgMobile)
                 ? 'linear-gradient(180deg, rgba(0,0,0,0.32) 0%, transparent 100%)'
                 : slide.dark
-                  ? `linear-gradient(180deg, rgba(24,15,9,0.75) 0%, transparent 100%)`
-                  : `linear-gradient(180deg, rgba(250,247,242,0.90) 0%, transparent 100%)`,
+                  ? 'linear-gradient(180deg, rgba(24,15,9,0.75) 0%, transparent 100%)'
+                  : 'linear-gradient(180deg, rgba(250,247,242,0.90) 0%, transparent 100%)',
             }}
           />
 
@@ -183,48 +198,62 @@ function HeroCarousel() {
             style={{ background: `${slide.accentColor}10` }}
           />
 
-          {/* Content — centered left column, fixed padding clears 2-row navbar (~92px) */}
+          {/* Content */}
           <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-20 pt-36 md:px-12">
             <div className="max-w-xl">
 
-              {/* Eyebrow */}
-              <p className="mb-6 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.45em]"
-                style={{ color: slide.accentColor }}>
-                <span className="h-px w-10 flex-shrink-0" style={{ background: `${slide.accentColor}60` }} />
-                {slide.eyebrow}
-              </p>
+              {/* Eyebrow — only if set */}
+              {slide.eyebrow && (
+                <p className="mb-6 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.45em]"
+                  style={{ color: slide.accentColor }}>
+                  <span className="h-px w-10 flex-shrink-0" style={{ background: `${slide.accentColor}60` }} />
+                  {slide.eyebrow}
+                </p>
+              )}
 
-              {/* Headline */}
-              <h1 className={`font-display text-[clamp(2.8rem,7vw,6rem)] font-bold leading-[1.02] tracking-tight ${tc}`}>
-                {slide.titleLine1}
-                <br />
-                <em className="not-italic" style={{ color: slide.accentColor }}>
-                  {slide.titleLine2}
-                </em>
-              </h1>
+              {/* Headline — only if at least one line is set */}
+              {(slide.titleLine1 || slide.titleLine2) && (
+                <h1 className={`font-display text-[clamp(2.8rem,7vw,6rem)] font-bold leading-[1.02] tracking-tight ${tc}`}>
+                  {slide.titleLine1}
+                  {slide.titleLine1 && slide.titleLine2 && <br />}
+                  {slide.titleLine2 && (
+                    <em className="not-italic" style={{ color: slide.accentColor }}>
+                      {slide.titleLine2}
+                    </em>
+                  )}
+                </h1>
+              )}
 
-              {/* Sub */}
-              <p className={`mt-6 max-w-sm text-[15px] leading-relaxed ${mc}`}>
-                {slide.sub}
-              </p>
+              {/* Subtitle — only if set */}
+              {slide.sub && (
+                <p className={`mt-6 max-w-sm text-[15px] leading-relaxed ${mc}`}>
+                  {slide.sub}
+                </p>
+              )}
 
-              {/* CTAs */}
-              <div className="mt-9 flex flex-wrap items-center gap-3">
-                <Link
-                  href={slide.cta.href}
-                  className="group inline-flex items-center gap-2.5 px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition-all duration-300 hover:gap-4"
-                  style={{ backgroundColor: slide.accentColor }}
-                >
-                  {slide.cta.label}
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-                <Link
-                  href={slide.ctaAlt.href}
-                  className={`inline-flex items-center gap-2 border px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] transition-all duration-300 hover:bg-white/10 ${bc} ${tc}`}
-                >
-                  {slide.ctaAlt.label}
-                </Link>
-              </div>
+              {/* CTAs — only render buttons that have both label + href */}
+              {(slide.cta.label || slide.ctaAlt.label) && (
+                <div className="mt-9 flex flex-wrap items-center gap-3">
+                  {slide.cta.label && slide.cta.href && (
+                    <Link
+                      href={slide.cta.href}
+                      className="group inline-flex items-center gap-2.5 px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition-all duration-300 hover:gap-4"
+                      style={{ backgroundColor: slide.accentColor }}
+                    >
+                      {slide.cta.label}
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                    </Link>
+                  )}
+                  {slide.ctaAlt.label && slide.ctaAlt.href && (
+                    <Link
+                      href={slide.ctaAlt.href}
+                      className={`inline-flex items-center gap-2 border px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] transition-all duration-300 hover:bg-white/10 ${bc} ${tc}`}
+                    >
+                      {slide.ctaAlt.label}
+                    </Link>
+                  )}
+                </div>
+              )}
 
               {/* Trust strip */}
               <div className={`mt-12 flex flex-wrap items-center gap-8 border-t pt-7 ${bc}`}>

@@ -360,12 +360,7 @@ export default function BannersPage() {
       const next = await bannersApi.create({
         sortOrder:   banners.length,
         isActive:    false,
-        eyebrow:     'New slide',
-        titleLine1:  'Your Headline',
-        titleLine2:  'Goes Here',
         accentColor: '#8B6B47',
-        ctaLabel:    'Shop Now',
-        ctaHref:     '/products',
       })
       setBanners((prev) => [...prev, next])
       toast.success('New slide created — expand it below to configure')
