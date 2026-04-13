@@ -315,7 +315,7 @@ export function Navbar() {
                 'backdrop-blur-md border',
                 scrolled
                   ? 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
-                  : 'bg-white/[0.10] border-white/[0.18] text-white/80 hover:bg-white/[0.20] hover:border-white/[0.30] hover:text-white'
+                  : 'bg-white/[0.65] border-black/[0.07] text-fg-2 hover:bg-white/[0.85] hover:border-black/[0.12] hover:text-fg-1'
               )}
             >
               {link.label}
