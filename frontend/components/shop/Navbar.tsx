@@ -92,16 +92,14 @@ export function Navbar() {
   return (
     <>
       {/* ═══════════════ HEADER ═══════════════ */}
-      <header
-        className={cn(
-          'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
-          scrolled
-            ? 'bg-white/80 shadow-[0_1px_0_0_rgba(0,0,0,0.06)]'
-            : 'bg-transparent'
-        )}
-      >
-        {/* ── Row 1 : Logo | Search | Icons ── */}
-        <div className="mx-auto flex h-14 max-w-7xl items-center px-4 md:px-8 gap-3 md:gap-5">
+      <header className="fixed top-0 left-0 right-0 z-50">
+        {/* ── Row 1 : Logo | Search | Icons — background lives here only ── */}
+        <div
+          className={cn(
+            'mx-auto flex h-14 max-w-7xl items-center px-4 md:px-8 gap-3 md:gap-5 transition-all duration-500',
+            scrolled && 'bg-white/80 shadow-[0_1px_0_0_rgba(0,0,0,0.06)] rounded-b-xl backdrop-blur-sm'
+          )}
+        >
 
           {/* Mobile hamburger */}
           <button
@@ -318,13 +316,8 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* ── Row 2 : Nav links — each in its own glassmorphism pill ── */}
-        <div
-          className={cn(
-            'hidden md:flex justify-center items-center gap-2 py-2 transition-all duration-500',
-            scrolled ? 'border-t border-border/40' : 'border-t border-white/10'
-          )}
-        >
+        {/* ── Row 2 : Nav links — float freely, no background ── */}
+        <div className="hidden md:flex justify-center items-center gap-2 py-2">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
