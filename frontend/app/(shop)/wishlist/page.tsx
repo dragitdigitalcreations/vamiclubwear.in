@@ -116,7 +116,7 @@ function WishlistCard({
   return (
     <div className="group relative block">
       {/* ── Image ── */}
-      <div className="relative overflow-hidden rounded-[10px] bg-surface-elevated aspect-[3/4]">
+      <div className="relative overflow-hidden rounded-[4px] bg-surface-elevated aspect-[4/7]">
         {imageUrl ? (
           <Image
             src={imageUrl}

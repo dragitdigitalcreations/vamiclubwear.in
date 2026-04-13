@@ -394,7 +394,7 @@ function ProductGrid({ products, loading, cols = 4 }: { products: Product[]; loa
       {loading
         ? Array.from({ length: cols === 4 ? 8 : cols }).map((_, i) => (
             <div key={i}>
-              <div className="skeleton aspect-[3/4] w-full rounded-[10px]" />
+              <div className="skeleton aspect-[4/7] w-full rounded-[4px]" />
               <div className="mt-3 space-y-2">
                 <div className="skeleton h-4 w-3/4 rounded" />
                 <div className="skeleton h-4 w-1/4 rounded" />
@@ -565,9 +565,9 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
   return (
     <div
       ref={containerRef}
-      className="group relative flex-shrink-0 w-[240px] sm:w-[270px] md:w-[300px] overflow-hidden rounded-[10px] bg-surface-elevated shadow-card hover:shadow-card-hover transition-shadow duration-300 snap-start"
+      className="group relative flex-shrink-0 w-[240px] sm:w-[270px] md:w-[300px] overflow-hidden rounded-[4px] bg-surface-elevated shadow-card hover:shadow-card-hover transition-shadow duration-300 snap-start"
     >
-      <div className="relative aspect-[3/4] overflow-hidden">
+      <div className="relative aspect-[4/7] overflow-hidden">
         {!loaded && <div className="absolute inset-0 skeleton" />}
         <video
           ref={videoRef}
@@ -645,7 +645,7 @@ function VideoShowcase() {
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex-shrink-0 w-[240px] sm:w-[270px] md:w-[300px] snap-start">
-                <div className="skeleton aspect-[3/4] w-full rounded-[10px]" />
+                <div className="skeleton aspect-[4/7] w-full rounded-[4px]" />
               </div>
             ))
           : items.map((item) => <VideoCard key={item.id} item={item} />)

@@ -96,7 +96,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
       onMouseLeave={() => setHovered(false)}
     >
       {/* ── Image container ── */}
-      <div className="relative overflow-hidden rounded-[10px] bg-surface-elevated aspect-[3/4]">
+      <div className="relative overflow-hidden rounded-[4px] bg-surface-elevated aspect-[4/7]">
 
         {/* Main image */}
         {imageUrl ? (
@@ -198,7 +198,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 export function ProductCardSkeleton() {
   return (
     <div>
-      <div className="skeleton aspect-[3/4] w-full rounded-[10px]" />
+      <div className="skeleton aspect-[4/7] w-full rounded-[4px]" />
       <div className="mt-3 space-y-2">
         <div className="skeleton h-4 w-3/4 rounded" />
         <div className="skeleton h-4 w-1/4 rounded" />
