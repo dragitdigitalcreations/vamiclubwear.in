@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { ArrowRight, ChevronLeft, ChevronRight, Truck, RotateCcw, Zap, ShieldCheck } from 'lucide-react'
-import { productsApi } from '@/lib/api'
+import { productsApi, bannersApi } from '@/lib/api'
+import type { HeroBanner } from '@/lib/api'
 import { ProductCard } from '@/components/shop/ProductCard'
 import type { Product } from '@/types/product'
 
@@ -27,7 +28,41 @@ const COLLECTIONS = [
 const MARQUEE_WORDS = ['Fusion', 'Bridal', 'Modest', 'Couture', 'Heritage', 'Craft', 'Elegance', 'Kerala']
 
 // ─── Hero Carousel ─────────────────────────────────────────────────────────────
-const STATIC_SLIDES = [
+
+interface SlideData {
+  id:         string | number
+  eyebrow:    string
+  titleLine1: string
+  titleLine2: string
+  sub:        string
+  cta:        { label: string; href: string }
+  ctaAlt:     { label: string; href: string }
+  bg:         string
+  bgImage?:   string | null  // if set, used as background-image over `bg`
+  accentColor:string
+  dark:       boolean
+}
+
+// Map a DB HeroBanner → SlideData for the carousel
+function bannerToSlide(b: HeroBanner): SlideData {
+  return {
+    id:          b.id,
+    eyebrow:     b.eyebrow     ?? '',
+    titleLine1:  b.titleLine1  ?? '',
+    titleLine2:  b.titleLine2  ?? '',
+    sub:         b.subtitle    ?? '',
+    cta:         { label: b.ctaLabel    ?? 'Shop Now',  href: b.ctaHref    ?? '/products' },
+    ctaAlt:      { label: b.ctaAltLabel ?? 'View All',  href: b.ctaAltHref ?? '/products' },
+    bg: b.darkTheme
+      ? 'linear-gradient(135deg, #180F09 0%, #2C1A10 50%, #0E0806 100%)'
+      : 'linear-gradient(135deg, #FAF7F2 0%, #FAFAF8 50%, #F5F1EC 100%)',
+    bgImage:     b.imageDesktop ?? null,
+    accentColor: b.accentColor  ?? '#8B6B47',
+    dark:        b.darkTheme    ?? false,
+  }
+}
+
+const STATIC_SLIDES: SlideData[] = [
   {
     id:          1,
     eyebrow:     'New Season — Spring 2025',
@@ -78,7 +113,17 @@ const SLIDE_TRANSITION = { duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, nu
 function HeroCarousel() {
   const [current,   setCurrent]   = useState(0)
   const [direction, setDirection] = useState(1)
+  const [slides,    setSlides]    = useState<SlideData[]>(STATIC_SLIDES)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
+
+  // Fetch live banners; fall back to static slides if DB is empty or offline
+  useEffect(() => {
+    bannersApi.list()
+      .then((banners) => {
+        if (banners.length > 0) setSlides(banners.map(bannerToSlide))
+      })
+      .catch(() => { /* keep static slides */ })
+  }, [])
 
   const go = useCallback((nextIdx: number, dir: number) => {
     clearTimeout(timerRef.current)
@@ -86,15 +131,15 @@ function HeroCarousel() {
     setCurrent(nextIdx)
   }, [])
 
-  // Auto-advance every 5.5 s
+  // Auto-advance
   useEffect(() => {
     timerRef.current = setTimeout(() => {
-      go((current + 1) % STATIC_SLIDES.length, 1)
+      go((current + 1) % slides.length, 1)
     }, 7000)
     return () => clearTimeout(timerRef.current)
-  }, [current, go])
+  }, [current, slides.length, go])
 
-  const slide = STATIC_SLIDES[current]
+  const slide = slides[current] ?? STATIC_SLIDES[0]
   const tc  = slide.dark ? 'text-white'      : 'text-on-background'
   const mc  = slide.dark ? 'text-white/55'   : 'text-muted'
   const bc  = slide.dark ? 'border-white/20' : 'border-border'
@@ -108,7 +153,11 @@ function HeroCarousel() {
         <motion.div
           key={`slide-${slide.id}`}
           className="absolute inset-0 flex items-center"
-          style={{ background: slide.bg }}
+          style={{
+            background: slide.bgImage
+              ? `url(${slide.bgImage}) center/cover no-repeat`
+              : slide.bg,
+          }}
           custom={direction}
           variants={slideVariants}
           initial="enter"
@@ -185,7 +234,7 @@ function HeroCarousel() {
 
       {/* ── Prev / Next arrows — fixed position over slides ── */}
       <button
-        onClick={() => go((current - 1 + STATIC_SLIDES.length) % STATIC_SLIDES.length, -1)}
+        onClick={() => go((current - 1 + slides.length) % slides.length, -1)}
         className={`absolute left-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border transition-all duration-200 hover:scale-105 ${
           slide.dark
             ? 'border-white/25 text-white/70 hover:bg-white/15'
@@ -196,7 +245,7 @@ function HeroCarousel() {
         <ChevronLeft className="h-4 w-4" />
       </button>
       <button
-        onClick={() => go((current + 1) % STATIC_SLIDES.length, 1)}
+        onClick={() => go((current + 1) % slides.length, 1)}
         className={`absolute right-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border transition-all duration-200 hover:scale-105 ${
           slide.dark
             ? 'border-white/25 text-white/70 hover:bg-white/15'
@@ -209,7 +258,7 @@ function HeroCarousel() {
 
       {/* ── Dot indicators — fixed at bottom-center ── */}
       <div className="absolute bottom-7 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
-        {STATIC_SLIDES.map((s, i) => (
+        {slides.map((s, i) => (
           <button
             key={s.id}
             onClick={() => go(i, i > current ? 1 : -1)}
@@ -572,7 +621,7 @@ function VideoShowcase() {
   if (!loading && items.length === 0) return null
 
   return (
-    <section className="py-20 overflow-hidden">
+    <section className="py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}
@@ -595,8 +644,12 @@ function VideoShowcase() {
         </motion.div>
       </div>
 
-      <div ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-4 pb-3 md:px-8">
+      {/* Scroll track — full viewport width, padding mirrors the max-w-7xl gutter */}
+      <div
+        ref={scrollRef}
+        className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-3"
+        style={{ paddingLeft: 'max(1rem, calc((100vw - 80rem) / 2 + 1rem))', paddingRight: '1rem' }}
+      >
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex-shrink-0 w-[240px] sm:w-[270px] md:w-[300px] snap-start">
@@ -605,6 +658,8 @@ function VideoShowcase() {
             ))
           : items.map((item) => <VideoCard key={item.id} item={item} />)
         }
+        {/* trailing spacer so last card gets breathing room */}
+        <div className="flex-shrink-0 w-4 md:w-8" aria-hidden="true" />
       </div>
     </section>
   )
