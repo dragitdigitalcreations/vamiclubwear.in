@@ -29,19 +29,18 @@ export const useCartStore = create<CartState>()(
       addItem: (item) => {
         set((state) => {
           const existing = state.items.find((i) => i.variantId === item.variantId)
+          const max = typeof item.stock === 'number' ? item.stock : Infinity
           if (existing) {
+            const newQty = Math.min(existing.quantity + 1, max)
             return {
+              isOpen: true,
               items: state.items.map((i) =>
-                i.variantId === item.variantId
-                  ? { ...i, quantity: i.quantity + 1 }
-                  : i
+                i.variantId === item.variantId ? { ...i, quantity: newQty } : i
               ),
             }
           }
-          return { items: [...state.items, { ...item, quantity: 1 }] }
+          return { isOpen: true, items: [...state.items, { ...item, quantity: 1 }] }
         })
-        // Auto-open cart drawer on add
-        set({ isOpen: true })
       },
 
       removeItem: (variantId) =>
@@ -52,11 +51,11 @@ export const useCartStore = create<CartState>()(
       updateQuantity: (variantId, delta) =>
         set((state) => ({
           items: state.items
-            .map((i) =>
-              i.variantId === variantId
-                ? { ...i, quantity: Math.max(1, i.quantity + delta) }
-                : i
-            )
+            .map((i) => {
+              if (i.variantId !== variantId) return i
+              const max = typeof i.stock === 'number' ? i.stock : Infinity
+              return { ...i, quantity: Math.min(Math.max(1, i.quantity + delta), max) }
+            })
             .filter((i) => i.quantity > 0),
         })),
 

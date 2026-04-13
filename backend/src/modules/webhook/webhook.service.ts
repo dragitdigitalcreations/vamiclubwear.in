@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma'
-import { PosWebhookInput } from './webhook.schema'
+import { PosWebhookInput, DelhiveryWebhookInput } from './webhook.schema'
+import { mapDelhiveryStatus } from '../shipping/delhivery.service'
 import { NotFoundError } from '../../utils/errors'
 
 export const webhookService = {
@@ -87,6 +88,76 @@ export const webhookService = {
         data: { status: 'FAILED', errorMessage: message },
       })
       throw err  // re-throw so the controller returns 5xx/4xx
+    }
+  },
+
+  /**
+   * Processes a Delhivery SCANPUSH event:
+   *   1. Log the raw payload (always)
+   *   2. Look up the Order by AWB number
+   *   3. Map Delhivery status string → our ShippingStatus enum
+   *   4. Update Order.shippingStatus if the mapped value is non-null
+   *   5. Update log status
+   */
+  async processDelhiveryWebhook(input: DelhiveryWebhookInput, rawPayload: unknown) {
+    const log = await prisma.webhookLog.create({
+      data: {
+        source:  'DELHIVERY',
+        payload: rawPayload as object,
+        status:  'PENDING',
+      },
+    })
+
+    try {
+      const AWB    = input.Shipment.AWB
+      const Status = input.Shipment.Status.Status
+
+      // Find order by AWB
+      const order = await prisma.order.findFirst({
+        where: { awbNumber: AWB },
+        select: { id: true, shippingStatus: true },
+      })
+
+      if (!order) {
+        // Delhivery can push for shipments we created before the order was matched.
+        // Log as SKIPPED — don't fail so Delhivery doesn't retry indefinitely.
+        await prisma.webhookLog.update({
+          where: { id: log.id },
+          data: { status: 'SKIPPED', processedAt: new Date() },
+        })
+        return { status: 'skipped', reason: `No order found for AWB ${AWB}` }
+      }
+
+      const mappedStatus = mapDelhiveryStatus(Status)
+
+      if (!mappedStatus) {
+        // Status we don't act on (e.g. "Pickup Scheduled") — log and skip
+        await prisma.webhookLog.update({
+          where: { id: log.id },
+          data: { status: 'SKIPPED', processedAt: new Date() },
+        })
+        return { status: 'skipped', reason: `Unrecognised status "${Status}" — no action taken` }
+      }
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data:  { shippingStatus: mappedStatus },
+      })
+
+      await prisma.webhookLog.update({
+        where: { id: log.id },
+        data:  { status: 'SUCCESS', processedAt: new Date() },
+      })
+
+      return { status: 'success', awb: AWB, shippingStatus: mappedStatus }
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      await prisma.webhookLog.update({
+        where: { id: log.id },
+        data: { status: 'FAILED', errorMessage: message },
+      })
+      throw err
     }
   },
 }

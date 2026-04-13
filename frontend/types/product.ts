@@ -94,4 +94,6 @@ export interface CartItem {
   price: number
   quantity: number
   imageUrl: string | null
+  stock?: number          // available stock at time of add — used to cap qty in cart
+  categoryName?: string  // shown on cart cards
 }

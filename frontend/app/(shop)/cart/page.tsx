@@ -565,7 +565,8 @@ export default function CartPage() {
               <div className="flex flex-col items-center gap-1 flex-shrink-0">
                 <button
                   onClick={() => updateQuantity(item.variantId, 1)}
-                  className="flex h-8 w-8 items-center justify-center rounded-md bg-on-background text-white text-sm font-bold transition-opacity hover:opacity-80"
+                  disabled={typeof item.stock === 'number' && item.quantity >= item.stock}
+                  className="flex h-8 w-8 items-center justify-center rounded-md bg-on-background text-white text-sm font-bold transition-opacity hover:opacity-80 disabled:opacity-25 disabled:cursor-not-allowed"
                   aria-label="Increase quantity"
                 >
                   <Plus className="h-3.5 w-3.5" />

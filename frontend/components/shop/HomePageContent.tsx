@@ -642,8 +642,8 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
         />
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-10 pb-10 pt-16">
           <p className="mb-1 text-[9px] font-medium uppercase tracking-[0.3em] text-white/55">Vami Clubwear</p>
-          <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2">{item.name}</h3>
-          <p className="mt-1 text-xs font-semibold text-primary-light">
+          <h3 className="text-xs font-medium text-white/75 leading-snug line-clamp-2">{item.name}</h3>
+          <p className="mt-1.5 text-base font-bold text-white">
             ₹{displayPrice.toLocaleString('en-IN')}
           </p>
           <Link

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, Heart } from 'lucide-react'
-import { Product, getPrimaryImage } from '@/types/product'
+import { Product, getPrimaryImage, getVariantsByColor, getAvailableStock } from '@/types/product'
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
 import { cloudinaryUrl } from '@/lib/cloudinary'
@@ -57,20 +57,26 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
     .filter((v) => v.isActive)
     .sort((a, b) => a.price - b.price)[0]
 
+  const colors = getVariantsByColor(product.variants)
+  const variantStock = defaultVariant ? getAvailableStock(defaultVariant) : undefined
+
   function handleQuickAdd(e: React.MouseEvent) {
     e.preventDefault()
     if (!defaultVariant) return
     addItem({
-      variantId:   defaultVariant.id,
-      productId:   product.id,
-      productName: product.name,
-      productSlug: product.slug,
-      sku:         defaultVariant.sku,
-      size:        defaultVariant.size,
-      color:       defaultVariant.color,
-      colorHex:    defaultVariant.colorHex,
-      price:       Number(defaultVariant.price),
+      variantId:    defaultVariant.id,
+      productId:    product.id,
+      productName:  product.name,
+      productSlug:  product.slug,
+      sku:          defaultVariant.sku,
+      size:         defaultVariant.size,
+      color:        defaultVariant.color,
+      colorHex:     defaultVariant.colorHex,
+      price:        Number(defaultVariant.price),
       imageUrl,
+      categoryName: product.category.name,
+      // Only pass stock if inventory data is present; undefined = no cap (listing pages)
+      stock:        variantStock && variantStock > 0 ? variantStock : undefined,
     })
     setAddedPulse(true)
     setTimeout(() => setAddedPulse(false), 1200)
@@ -185,6 +191,29 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         <h3 className="text-sm font-medium leading-snug text-on-background line-clamp-1 transition-colors duration-200 group-hover:text-muted">
           {product.name}
         </h3>
+
+        {/* Category name — low opacity, between name and price */}
+        <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted/50 line-clamp-1">
+          {product.category.name}
+        </p>
+
+        {/* Color swatches — matches admin VariantBuilder swatch style */}
+        {colors.length > 0 && (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1">
+            {colors.slice(0, 5).map((c) => (
+              <span
+                key={c.color}
+                title={c.color}
+                className="h-3 w-3 rounded-full border border-border/60 flex-shrink-0"
+                style={{ backgroundColor: c.colorHex ?? '#888888' }}
+              />
+            ))}
+            {colors.length > 5 && (
+              <span className="text-[10px] text-muted/50 leading-none">+{colors.length - 5}</span>
+            )}
+          </div>
+        )}
+
         <PriceDisplay
           actualPrice={defaultVariant ? Number(defaultVariant.price) : Number(product.basePrice)}
           basePrice={Number(product.basePrice)}

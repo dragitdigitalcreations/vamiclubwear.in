@@ -374,16 +374,18 @@ export function ProductDetailClient({ product }: { product: Product }) {
                   ?? product.media.find((m) => m.type === 'IMAGE')?.url
                   ?? null
     addItem({
-      variantId:   variant.id,
-      productId:   product.id,
-      productName: product.name,
-      productSlug: product.slug,
-      sku:         variant.sku,
-      size:        variant.size,
-      color:       variant.color,
-      colorHex:    variant.colorHex,
-      price:       Number(variant.price),
+      variantId:    variant.id,
+      productId:    product.id,
+      productName:  product.name,
+      productSlug:  product.slug,
+      sku:          variant.sku,
+      size:         variant.size,
+      color:        variant.color,
+      colorHex:     variant.colorHex,
+      price:        Number(variant.price),
       imageUrl,
+      stock:        stock > 0 ? stock : undefined,
+      categoryName: product.category.name,
     })
     setAdded(true)
     toast.success(`${product.name} added to your bag`)
