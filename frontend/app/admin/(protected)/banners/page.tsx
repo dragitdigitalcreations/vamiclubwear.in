@@ -188,46 +188,19 @@ function BannerRow({
             </div>
           </div>
 
-          {/* Text content */}
+          {/* Accent colour */}
           <div>
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">
-              Slide Copy
+              Accent Colour
             </p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs text-muted">Eyebrow label</label>
-                <input className={inputCls} value={draft.eyebrow ?? ''} onChange={field('eyebrow')} placeholder="e.g. New Season — Spring 2025" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-muted">Accent colour (hex)</label>
-                <div className="flex gap-2">
-                  <input
-                    type="color"
-                    value={draft.accentColor ?? '#8B6B47'}
-                    onChange={(e) => setDraft((d) => ({ ...d, accentColor: e.target.value }))}
-                    className="h-9 w-12 cursor-pointer rounded-[8px] border border-border bg-surface-elevated p-1"
-                  />
-                  <input className={`${inputCls} flex-1`} value={draft.accentColor ?? '#8B6B47'} onChange={field('accentColor')} placeholder="#8B6B47" />
-                </div>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-muted">Headline — Line 1</label>
-                <input className={inputCls} value={draft.titleLine1 ?? ''} onChange={field('titleLine1')} placeholder="Where Heritage" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-muted">Headline — Line 2 (accent)</label>
-                <input className={inputCls} value={draft.titleLine2 ?? ''} onChange={field('titleLine2')} placeholder="Meets Modernity" />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs text-muted">Subtitle text</label>
-                <textarea
-                  rows={2}
-                  className={`${inputCls} resize-none`}
-                  value={draft.subtitle ?? ''}
-                  onChange={field('subtitle')}
-                  placeholder="One-liner describing this collection…"
-                />
-              </div>
+            <div className="flex gap-2 max-w-xs">
+              <input
+                type="color"
+                value={draft.accentColor ?? '#8B6B47'}
+                onChange={(e) => setDraft((d) => ({ ...d, accentColor: e.target.value }))}
+                className="h-9 w-12 cursor-pointer rounded-[8px] border border-border bg-surface-elevated p-1"
+              />
+              <input className={`${inputCls} flex-1`} value={draft.accentColor ?? '#8B6B47'} onChange={field('accentColor')} placeholder="#8B6B47" />
             </div>
           </div>
 

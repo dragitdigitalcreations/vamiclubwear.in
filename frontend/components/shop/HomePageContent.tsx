@@ -198,78 +198,31 @@ function HeroCarousel() {
             style={{ background: `${slide.accentColor}10` }}
           />
 
-          {/* Content */}
-          <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-20 pt-36 md:px-12">
-            <div className="max-w-xl">
-
-              {/* Eyebrow — only if set */}
-              {slide.eyebrow && (
-                <p className="mb-6 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.45em]"
-                  style={{ color: slide.accentColor }}>
-                  <span className="h-px w-10 flex-shrink-0" style={{ background: `${slide.accentColor}60` }} />
-                  {slide.eyebrow}
-                </p>
-              )}
-
-              {/* Headline — only if at least one line is set */}
-              {(slide.titleLine1 || slide.titleLine2) && (
-                <h1 className={`font-display text-[clamp(2.8rem,7vw,6rem)] font-bold leading-[1.02] tracking-tight ${tc}`}>
-                  {slide.titleLine1}
-                  {slide.titleLine1 && slide.titleLine2 && <br />}
-                  {slide.titleLine2 && (
-                    <em className="not-italic" style={{ color: slide.accentColor }}>
-                      {slide.titleLine2}
-                    </em>
-                  )}
-                </h1>
-              )}
-
-              {/* Subtitle — only if set */}
-              {slide.sub && (
-                <p className={`mt-6 max-w-sm text-[15px] leading-relaxed ${mc}`}>
-                  {slide.sub}
-                </p>
-              )}
-
-              {/* CTAs — only render buttons that have both label + href */}
-              {(slide.cta.label || slide.ctaAlt.label) && (
-                <div className="mt-9 flex flex-wrap items-center gap-3">
-                  {slide.cta.label && slide.cta.href && (
-                    <Link
-                      href={slide.cta.href}
-                      className="group inline-flex items-center gap-2.5 px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition-all duration-300 hover:gap-4"
-                      style={{ backgroundColor: slide.accentColor }}
-                    >
-                      {slide.cta.label}
-                      <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                    </Link>
-                  )}
-                  {slide.ctaAlt.label && slide.ctaAlt.href && (
-                    <Link
-                      href={slide.ctaAlt.href}
-                      className={`inline-flex items-center gap-2 border px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] transition-all duration-300 hover:bg-white/10 ${bc} ${tc}`}
-                    >
-                      {slide.ctaAlt.label}
-                    </Link>
-                  )}
-                </div>
-              )}
-
-              {/* Trust strip */}
-              <div className={`mt-12 flex flex-wrap items-center gap-8 border-t pt-7 ${bc}`}>
-                {[
-                  { label: 'Free shipping', sub: 'orders ₹2500+' },
-                  { label: 'Handcrafted',   sub: 'Manjeri, Kerala' },
-                  { label: 'Easy returns',  sub: '7-day policy' },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <p className={`text-[11px] font-semibold uppercase tracking-wider ${tc}`}>{item.label}</p>
-                    <p className={`mt-0.5 text-[11px] ${mc}`}>{item.sub}</p>
-                  </div>
-                ))}
+          {/* CTA buttons — anchored bottom-left, only if set */}
+          {(slide.cta.label || slide.ctaAlt.label) && (
+            <div className="absolute bottom-16 left-0 right-0 z-10 mx-auto w-full max-w-7xl px-6 md:px-12">
+              <div className="flex flex-wrap items-center gap-3">
+                {slide.cta.label && slide.cta.href && (
+                  <Link
+                    href={slide.cta.href}
+                    className="group inline-flex items-center gap-2.5 px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition-all duration-300 hover:gap-4"
+                    style={{ backgroundColor: slide.accentColor }}
+                  >
+                    {slide.cta.label}
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </Link>
+                )}
+                {slide.ctaAlt.label && slide.ctaAlt.href && (
+                  <Link
+                    href={slide.ctaAlt.href}
+                    className={`inline-flex items-center gap-2 border px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] transition-all duration-300 hover:bg-white/10 ${bc} ${tc}`}
+                  >
+                    {slide.ctaAlt.label}
+                  </Link>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </motion.div>
       </AnimatePresence>
 
