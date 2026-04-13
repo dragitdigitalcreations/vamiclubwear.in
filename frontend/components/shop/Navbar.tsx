@@ -258,9 +258,9 @@ export function Navbar() {
           <div className="flex-1 md:hidden" />
 
           {/* ── Icons group ── */}
-          <div className="flex items-center gap-0 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
 
-            {/* Mobile search */}
+            {/* Mobile search — outside pill, mobile only */}
             <button
               className="md:hidden p-2 text-muted hover:text-on-background transition-colors"
               aria-label="Search"
@@ -269,42 +269,52 @@ export function Navbar() {
               <Search className="h-4 w-4" />
             </button>
 
-            {/* Wishlist — links to /wishlist page */}
-            <Link
-              href="/wishlist"
-              className="relative p-2 text-muted hover:text-on-background transition-colors"
-              aria-label={`Wishlist (${wishlistCount})`}
-            >
-              <Heart className={`h-4 w-4 transition-colors ${wishlistCount > 0 ? 'text-primary-light fill-primary-light' : ''}`} />
-              {wishlistCount > 0 && (
-                <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
-                  {wishlistCount > 9 ? '9+' : wishlistCount}
-                </span>
+            {/* Wishlist + Profile + Cart — frosted pill matching the logo capsule */}
+            <div
+              className={cn(
+                'flex items-center transition-all duration-300',
+                scrolled
+                  ? 'rounded-none bg-transparent shadow-none'
+                  : 'rounded-full bg-white/75 px-2 py-1 shadow-[0_1px_12px_rgba(0,0,0,0.10)] backdrop-blur-md ring-1 ring-black/[0.05]'
               )}
-            </Link>
-
-            {/* Profile */}
-            <button
-              onClick={() => setProfileOpen(true)}
-              className="p-2 text-muted hover:text-on-background transition-colors"
-              aria-label="My Profile"
             >
-              <User className="h-4 w-4" />
-            </button>
+              {/* Wishlist */}
+              <Link
+                href="/wishlist"
+                className="relative p-2 text-muted hover:text-on-background transition-colors"
+                aria-label={`Wishlist (${wishlistCount})`}
+              >
+                <Heart className={`h-4 w-4 transition-colors ${wishlistCount > 0 ? 'text-primary-light fill-primary-light' : ''}`} />
+                {wishlistCount > 0 && (
+                  <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                    {wishlistCount > 9 ? '9+' : wishlistCount}
+                  </span>
+                )}
+              </Link>
 
-            {/* Cart */}
-            <button
-              onClick={toggleCart}
-              className="relative p-2 text-muted hover:text-on-background transition-colors"
-              aria-label={`Cart (${totalItems})`}
-            >
-              <ShoppingBag className="h-4 w-4" />
-              {totalItems > 0 && (
-                <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
-                  {totalItems > 9 ? '9+' : totalItems}
-                </span>
-              )}
-            </button>
+              {/* Profile */}
+              <button
+                onClick={() => setProfileOpen(true)}
+                className="p-2 text-muted hover:text-on-background transition-colors"
+                aria-label="My Profile"
+              >
+                <User className="h-4 w-4" />
+              </button>
+
+              {/* Cart */}
+              <button
+                onClick={toggleCart}
+                className="relative p-2 text-muted hover:text-on-background transition-colors"
+                aria-label={`Cart (${totalItems})`}
+              >
+                <ShoppingBag className="h-4 w-4" />
+                {totalItems > 0 && (
+                  <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                    {totalItems > 9 ? '9+' : totalItems}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
