@@ -320,7 +320,7 @@ export function Navbar() {
             href="/"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              'bg-black/75 border-black/40 text-white hover:bg-black/90'
+              'bg-white/10 backdrop-blur-md border-white/25 text-white hover:bg-white/20'
             )}
           >
             Home
@@ -331,7 +331,7 @@ export function Navbar() {
             href="/products"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              'bg-black/75 border-black/40 text-white hover:bg-black/90'
+              'bg-white/10 backdrop-blur-md border-white/25 text-white hover:bg-white/20'
             )}
           >
             Explore
@@ -341,12 +341,7 @@ export function Navbar() {
           <div ref={catDropRef} className="relative">
             <button
               onClick={() => setCatDropOpen((o) => !o)}
-              className={cn(
-                'flex items-center gap-1 whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-                onBrand
-                  ? 'bg-[#AE3535] border-[#8B2828]/50 text-white hover:bg-[#8B2828]'
-                  : 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
-              )}
+              className="flex items-center gap-1 whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border bg-white/10 backdrop-blur-md border-white/25 text-white hover:bg-white/20"
             >
               Category
               <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', catDropOpen && 'rotate-180')} />
@@ -381,7 +376,7 @@ export function Navbar() {
             href="/products?category=big-size"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              'bg-black/75 border-black/40 text-white hover:bg-black/90'
+              'bg-white/10 backdrop-blur-md border-white/25 text-white hover:bg-white/20'
             )}
           >
             Big Size
