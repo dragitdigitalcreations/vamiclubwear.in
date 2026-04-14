@@ -62,19 +62,23 @@ export function Navbar() {
   // Close dropdowns on route change
   useEffect(() => { setFilterOpen(false); setCatDropOpen(false) }, [pathname])
 
-  // Sample the background colour at the Row-2 position and set darkBg
+  // Sample the background colour beneath the nav and set darkBg.
+  // We sample at a Y well into the page content so the navbar itself never contaminates the result.
   useEffect(() => {
     let rafId = 0
+    const headerEl = typeof document !== 'undefined' ? document.querySelector('header') : null
+
     const sample = () => {
       const x = window.innerWidth / 2
-      const y = 88 // just below both nav rows
+      // Sample 120 px below the top — reliably past both nav rows, into actual page content
+      const y = 120
       const els = document.elementsFromPoint(x, y)
       for (const el of els) {
         const node = el as HTMLElement
-        const cs = window.getComputedStyle(node)
-        if (cs.position === 'fixed' || cs.position === 'sticky') continue
+        // Skip anything that is (or lives inside) the fixed header
+        if (headerEl && (node === headerEl || headerEl.contains(node))) continue
         if (node === document.documentElement || node === document.body) continue
-        const bg = cs.backgroundColor
+        const bg = window.getComputedStyle(node).backgroundColor
         if (!bg || bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') continue
         const m = bg.match(/[\d.]+/g)
         if (m && m.length >= 3) {
@@ -84,6 +88,7 @@ export function Navbar() {
         }
       }
     }
+
     const onScroll = () => {
       cancelAnimationFrame(rafId)
       rafId = requestAnimationFrame(sample)
@@ -355,8 +360,8 @@ export function Navbar() {
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
               darkBg
-                ? 'bg-white/20 backdrop-blur-md border-white/25 text-white hover:bg-white/35'
-                : 'bg-black/[0.08] backdrop-blur-md border-black/[0.10] text-fg-1 hover:bg-black/[0.14]'
+                ? 'bg-white/15 backdrop-blur-md border-white/30 text-white/70 hover:bg-white/25 hover:text-white'
+                : 'bg-black/50 backdrop-blur-md border-black/20 text-white hover:bg-black/65'
             )}
           >
             Home
@@ -368,8 +373,8 @@ export function Navbar() {
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
               darkBg
-                ? 'bg-white/20 backdrop-blur-md border-white/25 text-white hover:bg-white/35'
-                : 'bg-black/[0.08] backdrop-blur-md border-black/[0.10] text-fg-1 hover:bg-black/[0.14]'
+                ? 'bg-white/15 backdrop-blur-md border-white/30 text-white/70 hover:bg-white/25 hover:text-white'
+                : 'bg-black/50 backdrop-blur-md border-black/20 text-white hover:bg-black/65'
             )}
           >
             Explore
@@ -420,8 +425,8 @@ export function Navbar() {
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
               darkBg
-                ? 'bg-white/20 backdrop-blur-md border-white/25 text-white hover:bg-white/35'
-                : 'bg-black/[0.08] backdrop-blur-md border-black/[0.10] text-fg-1 hover:bg-black/[0.14]'
+                ? 'bg-white/15 backdrop-blur-md border-white/30 text-white/70 hover:bg-white/25 hover:text-white'
+                : 'bg-black/50 backdrop-blur-md border-black/20 text-white hover:bg-black/65'
             )}
           >
             Big Size
