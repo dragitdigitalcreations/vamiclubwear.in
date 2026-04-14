@@ -47,10 +47,6 @@ export function Navbar() {
   const [catDropOpen, setCatDropOpen] = useState(false)
   const catDropRef = useRef<HTMLDivElement>(null)
 
-  // ── Adaptive background detection ──
-  // Samples the pixel colour directly beneath Row 2 to decide pill style
-  const [darkBg, setDarkBg] = useState(false)
-
   const searchInputRef = useRef<HTMLInputElement>(null)
   const router         = useRouter()
   const pathname       = usePathname()
@@ -62,41 +58,6 @@ export function Navbar() {
   // Close dropdowns on route change
   useEffect(() => { setFilterOpen(false); setCatDropOpen(false) }, [pathname])
 
-  // Sample the background colour beneath the nav and set darkBg.
-  // We sample at a Y well into the page content so the navbar itself never contaminates the result.
-  useEffect(() => {
-    let rafId = 0
-    const headerEl = typeof document !== 'undefined' ? document.querySelector('header') : null
-
-    const sample = () => {
-      const x = window.innerWidth / 2
-      // Sample 120 px below the top — reliably past both nav rows, into actual page content
-      const y = 120
-      const els = document.elementsFromPoint(x, y)
-      for (const el of els) {
-        const node = el as HTMLElement
-        // Skip anything that is (or lives inside) the fixed header
-        if (headerEl && (node === headerEl || headerEl.contains(node))) continue
-        if (node === document.documentElement || node === document.body) continue
-        const bg = window.getComputedStyle(node).backgroundColor
-        if (!bg || bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') continue
-        const m = bg.match(/[\d.]+/g)
-        if (m && m.length >= 3) {
-          const lum = (0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2]) / 255
-          setDarkBg(lum < 0.5)
-          return
-        }
-      }
-    }
-
-    const onScroll = () => {
-      cancelAnimationFrame(rafId)
-      rafId = requestAnimationFrame(sample)
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    sample()
-    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(rafId) }
-  }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -359,9 +320,7 @@ export function Navbar() {
             href="/"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              darkBg
-                ? 'bg-white/15 backdrop-blur-md border-white/30 text-white/70 hover:bg-white/25 hover:text-white'
-                : 'bg-black/50 backdrop-blur-md border-black/20 text-white hover:bg-black/65'
+              'bg-black/75 border-black/40 text-white hover:bg-black/90'
             )}
           >
             Home
@@ -372,9 +331,7 @@ export function Navbar() {
             href="/products"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              darkBg
-                ? 'bg-white/15 backdrop-blur-md border-white/30 text-white/70 hover:bg-white/25 hover:text-white'
-                : 'bg-black/50 backdrop-blur-md border-black/20 text-white hover:bg-black/65'
+              'bg-black/75 border-black/40 text-white hover:bg-black/90'
             )}
           >
             Explore
@@ -424,9 +381,7 @@ export function Navbar() {
             href="/products?category=big-size"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              darkBg
-                ? 'bg-white/15 backdrop-blur-md border-white/30 text-white/70 hover:bg-white/25 hover:text-white'
-                : 'bg-black/50 backdrop-blur-md border-black/20 text-white hover:bg-black/65'
+              'bg-black/75 border-black/40 text-white hover:bg-black/90'
             )}
           >
             Big Size
