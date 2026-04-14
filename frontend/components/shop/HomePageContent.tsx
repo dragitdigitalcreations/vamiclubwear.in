@@ -631,7 +631,7 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
       ref={containerRef}
       className="group relative flex-shrink-0 w-[240px] sm:w-[270px] md:w-[300px] overflow-hidden rounded-[4px] bg-surface-elevated shadow-card hover:shadow-card-hover transition-shadow duration-300 snap-start"
     >
-      <div className="relative aspect-[4/7] overflow-hidden">
+      <div className="relative aspect-[9/16] overflow-hidden">
         {!loaded && <div className="absolute inset-0 skeleton" />}
         <video
           ref={videoRef}
@@ -708,7 +708,7 @@ function VideoShowcase() {
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex-shrink-0 w-[240px] sm:w-[270px] md:w-[300px] snap-start">
-                <div className="skeleton aspect-[4/7] w-full rounded-[4px]" />
+                <div className="skeleton aspect-[9/16] w-full rounded-[4px]" />
               </div>
             ))
           : items.map((item) => <VideoCard key={item.id} item={item} />)

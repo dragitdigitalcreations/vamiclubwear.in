@@ -47,6 +47,10 @@ export function Navbar() {
   const [catDropOpen, setCatDropOpen] = useState(false)
   const catDropRef = useRef<HTMLDivElement>(null)
 
+  // ── Adaptive background detection ──
+  // Samples the pixel colour directly beneath Row 2 to decide pill style
+  const [darkBg, setDarkBg] = useState(false)
+
   const searchInputRef = useRef<HTMLInputElement>(null)
   const router         = useRouter()
   const pathname       = usePathname()
@@ -57,6 +61,37 @@ export function Navbar() {
 
   // Close dropdowns on route change
   useEffect(() => { setFilterOpen(false); setCatDropOpen(false) }, [pathname])
+
+  // Sample the background colour at the Row-2 position and set darkBg
+  useEffect(() => {
+    let rafId = 0
+    const sample = () => {
+      const x = window.innerWidth / 2
+      const y = 88 // just below both nav rows
+      const els = document.elementsFromPoint(x, y)
+      for (const el of els) {
+        const node = el as HTMLElement
+        const cs = window.getComputedStyle(node)
+        if (cs.position === 'fixed' || cs.position === 'sticky') continue
+        if (node === document.documentElement || node === document.body) continue
+        const bg = cs.backgroundColor
+        if (!bg || bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') continue
+        const m = bg.match(/[\d.]+/g)
+        if (m && m.length >= 3) {
+          const lum = (0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2]) / 255
+          setDarkBg(lum < 0.5)
+          return
+        }
+      }
+    }
+    const onScroll = () => {
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(sample)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    sample()
+    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(rafId) }
+  }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -319,9 +354,9 @@ export function Navbar() {
             href="/"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              onBrand
-                ? 'bg-[#AE3535] border-[#8B2828]/50 text-white hover:bg-[#8B2828]'
-                : 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
+              darkBg
+                ? 'bg-white/20 backdrop-blur-md border-white/25 text-white hover:bg-white/35'
+                : 'bg-black/[0.08] backdrop-blur-md border-black/[0.10] text-fg-1 hover:bg-black/[0.14]'
             )}
           >
             Home
@@ -332,9 +367,9 @@ export function Navbar() {
             href="/products"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              onBrand
-                ? 'bg-[#AE3535] border-[#8B2828]/50 text-white hover:bg-[#8B2828]'
-                : 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
+              darkBg
+                ? 'bg-white/20 backdrop-blur-md border-white/25 text-white hover:bg-white/35'
+                : 'bg-black/[0.08] backdrop-blur-md border-black/[0.10] text-fg-1 hover:bg-black/[0.14]'
             )}
           >
             Explore
@@ -384,9 +419,9 @@ export function Navbar() {
             href="/products?category=big-size"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              onBrand
-                ? 'bg-[#AE3535] border-[#8B2828]/50 text-white hover:bg-[#8B2828]'
-                : 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
+              darkBg
+                ? 'bg-white/20 backdrop-blur-md border-white/25 text-white hover:bg-white/35'
+                : 'bg-black/[0.08] backdrop-blur-md border-black/[0.10] text-fg-1 hover:bg-black/[0.14]'
             )}
           >
             Big Size
