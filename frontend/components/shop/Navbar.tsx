@@ -11,6 +11,9 @@ import { useWishlistStore, selectWishlistCount } from '@/stores/wishlistStore'
 import { ProfileDrawer } from '@/components/shop/ProfileDrawer'
 import { VamiLogo } from '@/components/shop/VamiLogo'
 
+const BRAND = '#AE3535'
+const BRAND_DARK = '#8B2828'
+
 const SORT_OPTIONS = [
   { value: 'newest',     label: 'Newest' },
   { value: 'price-asc',  label: 'Price ↑' },
@@ -62,25 +65,21 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Click-outside to close filter dropdown
+  // Click-outside — filter dropdown
   useEffect(() => {
     if (!filterOpen) return
     function handleOutside(e: MouseEvent) {
-      if (filterBtnRef.current && !filterBtnRef.current.contains(e.target as Node)) {
-        setFilterOpen(false)
-      }
+      if (filterBtnRef.current && !filterBtnRef.current.contains(e.target as Node)) setFilterOpen(false)
     }
     document.addEventListener('mousedown', handleOutside)
     return () => document.removeEventListener('mousedown', handleOutside)
   }, [filterOpen])
 
-  // Click-outside to close category dropdown
+  // Click-outside — category dropdown
   useEffect(() => {
     if (!catDropOpen) return
     function handleOutside(e: MouseEvent) {
-      if (catDropRef.current && !catDropRef.current.contains(e.target as Node)) {
-        setCatDropOpen(false)
-      }
+      if (catDropRef.current && !catDropRef.current.contains(e.target as Node)) setCatDropOpen(false)
     }
     document.addEventListener('mousedown', handleOutside)
     return () => document.removeEventListener('mousedown', handleOutside)
@@ -102,74 +101,80 @@ export function Navbar() {
     setFilterOpen(false)
   }
 
+  // ── Derived style helpers ──────────────────────────────────────────────────
+  // At top: solid brand colour. On scroll: frosted white.
+  const onBrand = !scrolled
+
   return (
     <>
       {/* ═══════════════ HEADER ═══════════════ */}
       <header className="fixed top-0 left-0 right-0 z-50">
-        {/* ── Row 1 : Logo | Search | Icons — background lives here only ── */}
+
+        {/* ── Row 1 : Logo | Search | Icons ── */}
         <div
-          className={cn(
-            'mx-auto flex h-14 max-w-7xl items-center px-4 md:px-8 gap-3 md:gap-5 transition-all duration-500',
-            scrolled && 'bg-white/80 shadow-[0_1px_0_0_rgba(0,0,0,0.06)] rounded-b-xl backdrop-blur-sm'
-          )}
+          className="mx-auto flex h-14 max-w-7xl items-center px-4 md:px-8 gap-3 md:gap-5 transition-all duration-500"
+          style={scrolled
+            ? { background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', boxShadow: '0 1px 0 0 rgba(0,0,0,0.06)', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }
+            : { backgroundColor: BRAND }}
         >
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden p-2 -ml-2 text-on-background flex-shrink-0"
+            className={cn('md:hidden p-2 -ml-2 flex-shrink-0 transition-colors', onBrand ? 'text-white' : 'text-on-background')}
             onClick={() => setMobileOpen((o) => !o)}
             aria-label="Toggle menu"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
-          {/* Logo — frosted pill when transparent so it's legible over any hero */}
-          <Link
-            href="/"
-            aria-label="Vami Clubwear — Home"
-            className={cn(
-              'flex-shrink-0 transition-all duration-300',
-              scrolled
-                ? 'rounded-none bg-transparent p-0 shadow-none'
-                : 'rounded-full bg-white/75 px-3 py-1.5 shadow-[0_1px_12px_rgba(0,0,0,0.10)] backdrop-blur-md ring-1 ring-black/[0.05]'
-            )}
-          >
+          {/* Logo — no capsule; gold logo reads on both red and white */}
+          <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
             <VamiLogo size="md" />
           </Link>
 
           {/* Search bar — desktop */}
           <form
             onSubmit={handleSearchSubmit}
-            className="hidden md:flex flex-1 max-w-md mx-auto items-center gap-2 h-9 rounded-full border border-border bg-surface-elevated px-3 transition-all duration-200 focus-within:border-ring focus-within:bg-white focus-within:shadow-sm"
+            className={cn(
+              'hidden md:flex flex-1 max-w-md mx-auto items-center gap-2 h-9 rounded-full px-3 transition-all duration-200 border',
+              onBrand
+                ? 'border-white/25 bg-white/15 focus-within:border-white/50 focus-within:bg-white/20'
+                : 'border-border bg-surface-elevated focus-within:border-ring focus-within:bg-white focus-within:shadow-sm'
+            )}
           >
-            <Search className="h-3.5 w-3.5 flex-shrink-0 text-muted" />
+            <Search className={cn('h-3.5 w-3.5 flex-shrink-0', onBrand ? 'text-white/70' : 'text-muted')} />
             <input
               ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search styles, fabrics…"
-              className="flex-1 bg-transparent text-xs text-on-background placeholder:text-muted outline-none min-w-0"
+              className={cn(
+                'flex-1 bg-transparent text-xs outline-none min-w-0',
+                onBrand ? 'text-white placeholder:text-white/55' : 'text-on-background placeholder:text-muted'
+              )}
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="flex-shrink-0 text-muted hover:text-on-background transition-colors"
+                className={cn('flex-shrink-0 transition-colors', onBrand ? 'text-white/70 hover:text-white' : 'text-muted hover:text-on-background')}
               >
                 <X className="h-3 w-3" />
               </button>
             )}
 
-            {/* ── Filter dropdown trigger ── */}
-            <span className="h-4 w-px bg-border flex-shrink-0" />
+            {/* Filter dropdown trigger */}
+            <span className={cn('h-4 w-px flex-shrink-0', onBrand ? 'bg-white/30' : 'bg-border')} />
             <div ref={filterBtnRef} className="relative flex-shrink-0">
               <button
                 type="button"
                 onClick={() => setFilterOpen((o) => !o)}
                 className={cn(
                   'flex items-center justify-center transition-colors',
-                  filterOpen ? 'text-on-background' : 'text-muted hover:text-on-background'
+                  onBrand
+                    ? (filterOpen ? 'text-white' : 'text-white/70 hover:text-white')
+                    : (filterOpen ? 'text-on-background' : 'text-muted hover:text-on-background')
                 )}
                 aria-label="Filter products"
                 aria-expanded={filterOpen}
@@ -177,7 +182,7 @@ export function Navbar() {
                 <SlidersHorizontal className="h-3.5 w-3.5" />
               </button>
 
-              {/* ── Dropdown panel ── */}
+              {/* Dropdown panel — always white bg */}
               <AnimatePresence>
                 {filterOpen && (
                   <motion.div
@@ -187,19 +192,13 @@ export function Navbar() {
                     transition={{ duration: 0.15, ease: 'easeOut' }}
                     className="absolute right-0 top-[calc(100%+12px)] z-50 w-64 rounded-xl border border-border bg-white shadow-z4 overflow-hidden"
                   >
-                    {/* Header */}
                     <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
                       <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted">Filters</span>
-                      <button
-                        onClick={() => setFilterOpen(false)}
-                        className="text-muted hover:text-on-background transition-colors"
-                      >
+                      <button onClick={() => setFilterOpen(false)} className="text-muted hover:text-on-background transition-colors">
                         <X className="h-3.5 w-3.5" />
                       </button>
                     </div>
-
                     <div className="p-4 space-y-4">
-                      {/* Sort */}
                       <div>
                         <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-muted">Sort by</p>
                         <div className="flex flex-wrap gap-1.5">
@@ -209,9 +208,7 @@ export function Navbar() {
                               onClick={() => setDropSort(opt.value)}
                               className={cn(
                                 'inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-medium transition-all duration-150',
-                                dropSort === opt.value
-                                  ? 'bg-on-background text-white'
-                                  : 'bg-surface-elevated text-fg-2 hover:bg-surface-overlay'
+                                dropSort === opt.value ? 'bg-on-background text-white' : 'bg-surface-elevated text-fg-2 hover:bg-surface-overlay'
                               )}
                             >
                               {dropSort === opt.value && <Check className="h-2.5 w-2.5" />}
@@ -220,8 +217,6 @@ export function Navbar() {
                           ))}
                         </div>
                       </div>
-
-                      {/* Category */}
                       <div>
                         <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-muted">Category</p>
                         <div className="flex flex-wrap gap-1.5">
@@ -231,9 +226,7 @@ export function Navbar() {
                               onClick={() => setDropCategory(cat.slug)}
                               className={cn(
                                 'inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-medium transition-all duration-150',
-                                dropCategory === cat.slug
-                                  ? 'bg-brand text-white'
-                                  : 'bg-surface-elevated text-fg-2 hover:bg-surface-overlay'
+                                dropCategory === cat.slug ? 'bg-brand text-white' : 'bg-surface-elevated text-fg-2 hover:bg-surface-overlay'
                               )}
                             >
                               {dropCategory === cat.slug && <Check className="h-2.5 w-2.5" />}
@@ -243,8 +236,6 @@ export function Navbar() {
                         </div>
                       </div>
                     </div>
-
-                    {/* Footer */}
                     <div className="border-t border-border p-3 flex gap-2">
                       <button
                         onClick={() => { setDropCategory(''); setDropSort('newest') }}
@@ -271,33 +262,25 @@ export function Navbar() {
           {/* ── Icons group ── */}
           <div className="flex items-center gap-2 flex-shrink-0">
 
-            {/* Mobile search — outside pill, mobile only */}
+            {/* Mobile search */}
             <button
-              className="md:hidden p-2 text-muted hover:text-on-background transition-colors"
+              className={cn('md:hidden p-2 transition-colors', onBrand ? 'text-white hover:text-white/80' : 'text-muted hover:text-on-background')}
               aria-label="Search"
               onClick={() => router.push('/search')}
             >
               <Search className="h-4 w-4" />
             </button>
 
-            {/* Wishlist + Profile + Cart — frosted pill matching the logo capsule */}
-            <div
-              className={cn(
-                'flex items-center transition-all duration-300',
-                scrolled
-                  ? 'rounded-none bg-transparent shadow-none'
-                  : 'rounded-full bg-white/75 px-2 py-1 shadow-[0_1px_12px_rgba(0,0,0,0.10)] backdrop-blur-md ring-1 ring-black/[0.05]'
-              )}
-            >
+            <div className="flex items-center">
               {/* Wishlist */}
               <Link
                 href="/wishlist"
-                className="relative p-2 text-muted hover:text-on-background transition-colors"
+                className={cn('relative p-2 transition-colors', onBrand ? 'text-white hover:text-white/80' : 'text-muted hover:text-on-background')}
                 aria-label={`Wishlist (${wishlistCount})`}
               >
-                <Heart className={`h-4 w-4 transition-colors ${wishlistCount > 0 ? 'text-primary-light fill-primary-light' : ''}`} />
+                <Heart className={cn('h-4 w-4 transition-colors', wishlistCount > 0 && !onBrand ? 'text-primary-light fill-primary-light' : '')} />
                 {wishlistCount > 0 && (
-                  <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                  <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold" style={{ color: BRAND }}>
                     {wishlistCount > 9 ? '9+' : wishlistCount}
                   </span>
                 )}
@@ -306,7 +289,7 @@ export function Navbar() {
               {/* Profile */}
               <button
                 onClick={() => setProfileOpen(true)}
-                className="p-2 text-muted hover:text-on-background transition-colors"
+                className={cn('p-2 transition-colors', onBrand ? 'text-white hover:text-white/80' : 'text-muted hover:text-on-background')}
                 aria-label="My Profile"
               >
                 <User className="h-4 w-4" />
@@ -315,12 +298,12 @@ export function Navbar() {
               {/* Cart */}
               <button
                 onClick={toggleCart}
-                className="relative p-2 text-muted hover:text-on-background transition-colors"
+                className={cn('relative p-2 transition-colors', onBrand ? 'text-white hover:text-white/80' : 'text-muted hover:text-on-background')}
                 aria-label={`Cart (${totalItems})`}
               >
                 <ShoppingBag className="h-4 w-4" />
                 {totalItems > 0 && (
-                  <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                  <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold" style={{ color: BRAND }}>
                     {totalItems > 9 ? '9+' : totalItems}
                   </span>
                 )}
@@ -329,17 +312,18 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* ── Row 2 : Nav links — float freely, no background ── */}
+        {/* ── Row 2 : Nav links ── */}
         <div className="hidden md:flex justify-center items-center gap-2 py-2">
+
           {/* HOME */}
           <Link
             href="/"
-            className={cn(
-              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 backdrop-blur-md border',
-              scrolled
-                ? 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
-                : 'bg-white/[0.65] border-black/[0.07] text-fg-2 hover:bg-white/[0.85] hover:border-black/[0.12] hover:text-fg-1'
-            )}
+            className="whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border"
+            style={onBrand
+              ? { backgroundColor: BRAND, borderColor: `${BRAND_DARK}80`, color: '#fff' }
+              : { backgroundColor: 'rgba(0,0,0,0.04)', borderColor: 'rgba(0,0,0,0.07)', color: 'var(--fg-3)' }}
+            onMouseEnter={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND_DARK }}
+            onMouseLeave={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND }}
           >
             Home
           </Link>
@@ -347,12 +331,12 @@ export function Navbar() {
           {/* EXPLORE */}
           <Link
             href="/products"
-            className={cn(
-              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 backdrop-blur-md border',
-              scrolled
-                ? 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
-                : 'bg-white/[0.65] border-black/[0.07] text-fg-2 hover:bg-white/[0.85] hover:border-black/[0.12] hover:text-fg-1'
-            )}
+            className="whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border"
+            style={onBrand
+              ? { backgroundColor: BRAND, borderColor: `${BRAND_DARK}80`, color: '#fff' }
+              : { backgroundColor: 'rgba(0,0,0,0.04)', borderColor: 'rgba(0,0,0,0.07)', color: 'var(--fg-3)' }}
+            onMouseEnter={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND_DARK }}
+            onMouseLeave={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND }}
           >
             Explore
           </Link>
@@ -361,12 +345,12 @@ export function Navbar() {
           <div ref={catDropRef} className="relative">
             <button
               onClick={() => setCatDropOpen((o) => !o)}
-              className={cn(
-                'flex items-center gap-1 whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 backdrop-blur-md border',
-                scrolled
-                  ? 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
-                  : 'bg-white/[0.65] border-black/[0.07] text-fg-2 hover:bg-white/[0.85] hover:border-black/[0.12] hover:text-fg-1'
-              )}
+              className="flex items-center gap-1 whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border"
+              style={onBrand
+                ? { backgroundColor: BRAND, borderColor: `${BRAND_DARK}80`, color: '#fff' }
+                : { backgroundColor: 'rgba(0,0,0,0.04)', borderColor: 'rgba(0,0,0,0.07)', color: 'var(--fg-3)' }}
+              onMouseEnter={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND_DARK }}
+              onMouseLeave={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND }}
             >
               Category
               <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', catDropOpen && 'rotate-180')} />
@@ -399,12 +383,12 @@ export function Navbar() {
           {/* BIG SIZE */}
           <Link
             href="/products?category=big-size"
-            className={cn(
-              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 backdrop-blur-md border',
-              scrolled
-                ? 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
-                : 'bg-white/[0.65] border-black/[0.07] text-fg-2 hover:bg-white/[0.85] hover:border-black/[0.12] hover:text-fg-1'
-            )}
+            className="whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border"
+            style={onBrand
+              ? { backgroundColor: BRAND, borderColor: `${BRAND_DARK}80`, color: '#fff' }
+              : { backgroundColor: 'rgba(0,0,0,0.04)', borderColor: 'rgba(0,0,0,0.07)', color: 'var(--fg-3)' }}
+            onMouseEnter={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND_DARK }}
+            onMouseLeave={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND }}
           >
             Big Size
           </Link>
@@ -437,7 +421,6 @@ export function Navbar() {
             </form>
 
             <nav className="flex flex-col px-6 pt-1">
-              {/* HOME */}
               <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0 }}>
                 <Link href="/" onClick={() => setMobileOpen(false)}
                   className="block border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
@@ -445,7 +428,6 @@ export function Navbar() {
                 </Link>
               </motion.div>
 
-              {/* EXPLORE */}
               <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.06 }}>
                 <Link href="/products" onClick={() => setMobileOpen(false)}
                   className="block border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
@@ -453,7 +435,6 @@ export function Navbar() {
                 </Link>
               </motion.div>
 
-              {/* CATEGORY — expandable */}
               <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.12 }}>
                 <button
                   onClick={() => setCatDropOpen((o) => !o)}
@@ -488,7 +469,6 @@ export function Navbar() {
                 </AnimatePresence>
               </motion.div>
 
-              {/* BIG SIZE */}
               <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.18 }}>
                 <Link href="/products?category=big-size" onClick={() => setMobileOpen(false)}
                   className="block border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
@@ -496,7 +476,6 @@ export function Navbar() {
                 </Link>
               </motion.div>
 
-              {/* WISHLIST */}
               <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.24 }}>
                 <Link href="/wishlist" onClick={() => setMobileOpen(false)}
                   className="flex w-full items-center gap-2 border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
@@ -510,7 +489,6 @@ export function Navbar() {
                 </Link>
               </motion.div>
 
-              {/* PROFILE */}
               <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.30 }}>
                 <button
                   onClick={() => { setMobileOpen(false); setProfileOpen(true) }}
