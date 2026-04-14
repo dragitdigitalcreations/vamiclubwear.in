@@ -45,7 +45,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-12 md:grid-cols-5">
 
           {/* Col 1–2 — Brand */}
-          <div className="md:col-span-2 flex flex-col items-center text-center gap-6">
+          <div className="md:col-span-2 flex flex-col items-center justify-center text-center gap-6">
             <Link href="/" aria-label="Vami Clubwear — Home">
               <VamiLogo height={72} />
             </Link>
@@ -65,18 +65,18 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-elevated text-muted transition-colors hover:border-border-strong hover:text-on-background"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-elevated transition-colors hover:border-border-strong"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" style={{ stroke: '#E1306C' }}><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="#E1306C" stroke="none"/></svg>
               </a>
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-elevated text-muted transition-colors hover:border-border-strong hover:text-on-background"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-elevated transition-colors hover:border-border-strong"
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessageCircle className="h-4 w-4" style={{ color: '#25D366' }} />
               </a>
             </div>
           </div>
