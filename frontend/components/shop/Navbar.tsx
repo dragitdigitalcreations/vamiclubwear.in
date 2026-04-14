@@ -12,7 +12,6 @@ import { ProfileDrawer } from '@/components/shop/ProfileDrawer'
 import { VamiLogo } from '@/components/shop/VamiLogo'
 
 const BRAND = '#AE3535'
-const BRAND_DARK = '#8B2828'
 
 const SORT_OPTIONS = [
   { value: 'newest',     label: 'Newest' },
@@ -318,12 +317,12 @@ export function Navbar() {
           {/* HOME */}
           <Link
             href="/"
-            className="whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border"
-            style={onBrand
-              ? { backgroundColor: BRAND, borderColor: `${BRAND_DARK}80`, color: '#fff' }
-              : { backgroundColor: 'rgba(0,0,0,0.04)', borderColor: 'rgba(0,0,0,0.07)', color: 'var(--fg-3)' }}
-            onMouseEnter={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND_DARK }}
-            onMouseLeave={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND }}
+            className={cn(
+              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
+              onBrand
+                ? 'bg-[#AE3535] border-[#8B2828]/50 text-white hover:bg-[#8B2828]'
+                : 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
+            )}
           >
             Home
           </Link>
@@ -331,12 +330,12 @@ export function Navbar() {
           {/* EXPLORE */}
           <Link
             href="/products"
-            className="whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border"
-            style={onBrand
-              ? { backgroundColor: BRAND, borderColor: `${BRAND_DARK}80`, color: '#fff' }
-              : { backgroundColor: 'rgba(0,0,0,0.04)', borderColor: 'rgba(0,0,0,0.07)', color: 'var(--fg-3)' }}
-            onMouseEnter={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND_DARK }}
-            onMouseLeave={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND }}
+            className={cn(
+              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
+              onBrand
+                ? 'bg-[#AE3535] border-[#8B2828]/50 text-white hover:bg-[#8B2828]'
+                : 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
+            )}
           >
             Explore
           </Link>
@@ -345,12 +344,12 @@ export function Navbar() {
           <div ref={catDropRef} className="relative">
             <button
               onClick={() => setCatDropOpen((o) => !o)}
-              className="flex items-center gap-1 whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border"
-              style={onBrand
-                ? { backgroundColor: BRAND, borderColor: `${BRAND_DARK}80`, color: '#fff' }
-                : { backgroundColor: 'rgba(0,0,0,0.04)', borderColor: 'rgba(0,0,0,0.07)', color: 'var(--fg-3)' }}
-              onMouseEnter={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND_DARK }}
-              onMouseLeave={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND }}
+              className={cn(
+                'flex items-center gap-1 whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
+                onBrand
+                  ? 'bg-[#AE3535] border-[#8B2828]/50 text-white hover:bg-[#8B2828]'
+                  : 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
+              )}
             >
               Category
               <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', catDropOpen && 'rotate-180')} />
@@ -383,12 +382,12 @@ export function Navbar() {
           {/* BIG SIZE */}
           <Link
             href="/products?category=big-size"
-            className="whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border"
-            style={onBrand
-              ? { backgroundColor: BRAND, borderColor: `${BRAND_DARK}80`, color: '#fff' }
-              : { backgroundColor: 'rgba(0,0,0,0.04)', borderColor: 'rgba(0,0,0,0.07)', color: 'var(--fg-3)' }}
-            onMouseEnter={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND_DARK }}
-            onMouseLeave={(e) => { if (onBrand) (e.currentTarget as HTMLElement).style.backgroundColor = BRAND }}
+            className={cn(
+              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
+              onBrand
+                ? 'bg-[#AE3535] border-[#8B2828]/50 text-white hover:bg-[#8B2828]'
+                : 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
+            )}
           >
             Big Size
           </Link>
