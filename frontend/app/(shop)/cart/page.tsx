@@ -255,18 +255,18 @@ function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutModalProps) {
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/70"
+            className="fixed inset-0 z-[59] bg-black/70"
             onClick={onClose}
           />
           <motion.div
             key="panel"
             initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-x-4 bottom-0 top-14 z-50 mx-auto max-w-lg flex flex-col bg-surface md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full"
+            className="fixed inset-x-4 bottom-0 top-14 z-[60] mx-auto max-w-lg overflow-hidden flex flex-col bg-surface md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full"
           >
-            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+            <form onSubmit={handleSubmit} className="h-full flex flex-col">
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-surface">
+              <div className="shrink-0 flex items-center justify-between border-b border-border px-6 py-4 bg-surface">
                 <h2 className="font-display text-lg font-semibold text-on-background">Checkout</h2>
                 <button type="button" onClick={onClose} className="text-muted hover:text-on-background"><X className="h-5 w-5" /></button>
               </div>
@@ -407,7 +407,7 @@ function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutModalProps) {
               </div>
 
               {/* Footer */}
-              <div className="border-t border-border px-6 py-4 bg-surface">
+              <div className="shrink-0 border-t border-border px-6 py-4 bg-surface">
                 <button
                   type="submit"
                   disabled={submitting}
