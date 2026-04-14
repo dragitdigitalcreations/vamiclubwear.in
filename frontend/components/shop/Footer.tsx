@@ -4,7 +4,8 @@ import { VamiLogo } from '@/components/shop/VamiLogo'
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '919XXXXXXXXX'
 const WHATSAPP_MSG    = 'Hi Vami Clubwear! I have a query.'
-const IG_HANDLE       = '@vamiclubwear'
+const IG_HANDLE       = '@vami_clubwear_manjeri'
+const IG_URL          = 'https://www.instagram.com/vami_clubwear_manjeri/'
 
 const COLLECTIONS = [
   { href: '/products',                          label: 'All Collections' },
@@ -44,7 +45,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-12 md:grid-cols-5">
 
           {/* Col 1–2 — Brand */}
-          <div className="md:col-span-2 flex flex-col gap-6">
+          <div className="md:col-span-2 flex flex-col items-center text-center gap-6">
             <Link href="/" aria-label="Vami Clubwear — Home">
               <VamiLogo height={72} />
             </Link>
@@ -58,13 +59,13 @@ export function Footer() {
             >
               vamiclubwear@gmail.com
             </a>
-            <div className="flex items-center gap-4 pt-1">
+            <div className="flex items-center gap-3 pt-1">
               <a
-                href="https://instagram.com/vamiclubwear"
+                href={IG_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="text-muted transition-colors hover:text-on-background"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-elevated text-muted transition-colors hover:border-border-strong hover:text-on-background"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>
               </a>
@@ -73,7 +74,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
-                className="text-muted transition-colors hover:text-on-background"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-elevated text-muted transition-colors hover:border-border-strong hover:text-on-background"
               >
                 <MessageCircle className="h-4 w-4" />
               </a>
@@ -157,7 +158,7 @@ export function Footer() {
               <span className="font-semibold uppercase tracking-widest">Chat on WhatsApp</span>
             </a>
             <a
-              href="https://instagram.com/vamiclubwear"
+              href={IG_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-xs text-muted transition-colors hover:text-on-background"
