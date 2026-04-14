@@ -65,6 +65,12 @@ function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutModalProps) {
 
   const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001')
 
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [isOpen])
+
   // Pre-fill from saved address when modal opens
   useEffect(() => {
     if (!isOpen) return
@@ -256,16 +262,16 @@ function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutModalProps) {
             key="panel"
             initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-x-4 bottom-0 top-14 z-50 mx-auto max-w-lg bg-surface md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full"
+            className="fixed inset-x-4 bottom-0 top-14 z-50 mx-auto max-w-lg flex flex-col bg-surface md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full"
           >
-            <form onSubmit={handleSubmit} className="flex flex-col h-full">
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
               {/* Header */}
               <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-surface">
                 <h2 className="font-display text-lg font-semibold text-on-background">Checkout</h2>
                 <button type="button" onClick={onClose} className="text-muted hover:text-on-background"><X className="h-5 w-5" /></button>
               </div>
 
-              <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-6">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 py-5 space-y-6">
 
                 {/* Order summary */}
                 <div className="bg-surface-elevated p-4 space-y-2">
