@@ -320,7 +320,7 @@ export function Navbar() {
             href="/"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              'bg-white/10 backdrop-blur-md border-white/25 text-white hover:bg-white/20'
+              'bg-black/60 backdrop-blur-md border border-white/20 shadow-[0_0_0_1px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.18)] text-white hover:bg-black/75 hover:border-white/35'
             )}
           >
             Home
@@ -331,7 +331,7 @@ export function Navbar() {
             href="/products"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              'bg-white/10 backdrop-blur-md border-white/25 text-white hover:bg-white/20'
+              'bg-black/60 backdrop-blur-md border border-white/20 shadow-[0_0_0_1px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.18)] text-white hover:bg-black/75 hover:border-white/35'
             )}
           >
             Explore
@@ -341,7 +341,7 @@ export function Navbar() {
           <div ref={catDropRef} className="relative">
             <button
               onClick={() => setCatDropOpen((o) => !o)}
-              className="flex items-center gap-1 whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border bg-white/10 backdrop-blur-md border-white/25 text-white hover:bg-white/20"
+              className="flex items-center gap-1 whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 bg-black/60 backdrop-blur-md border border-white/20 shadow-[0_0_0_1px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.18)] text-white hover:bg-black/75 hover:border-white/35"
             >
               Category
               <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', catDropOpen && 'rotate-180')} />
@@ -376,7 +376,7 @@ export function Navbar() {
             href="/products?category=big-size"
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              'bg-white/10 backdrop-blur-md border-white/25 text-white hover:bg-white/20'
+              'bg-black/60 backdrop-blur-md border border-white/20 shadow-[0_0_0_1px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.18)] text-white hover:bg-black/75 hover:border-white/35'
             )}
           >
             Big Size
