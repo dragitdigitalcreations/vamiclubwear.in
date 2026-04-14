@@ -114,7 +114,7 @@ export function Navbar() {
           className="mx-auto flex h-14 max-w-7xl items-center px-4 md:px-8 gap-3 md:gap-5 transition-all duration-500"
           style={scrolled
             ? { background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', boxShadow: '0 1px 0 0 rgba(0,0,0,0.06)', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }
-            : { backgroundColor: BRAND }}
+            : { backgroundColor: BRAND, borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}
         >
 
           {/* Mobile hamburger */}
