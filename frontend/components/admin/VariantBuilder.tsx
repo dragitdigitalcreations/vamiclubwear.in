@@ -261,7 +261,7 @@ const BLANK_VARIANT: VariantFormRow = {
 }
 
 export function VariantBuilder({ productSlug, basePrice: _basePrice }: { productSlug: string; basePrice: number }) {
-  const { control, formState: { errors } } = useFormContext<FormValues>()
+  const { control, getValues, formState: { errors } } = useFormContext<FormValues>()
   const { fields, append, remove } = useFieldArray({ control, name: 'variants' })
 
   return (
@@ -301,7 +301,11 @@ export function VariantBuilder({ productSlug, basePrice: _basePrice }: { product
         type="button"
         variant="outline"
         className="w-full gap-2"
-        onClick={() => append({ ...BLANK_VARIANT })}
+        onClick={() => {
+          const all = getValues('variants')
+          const last = all.length > 0 ? all[all.length - 1] : null
+          append(last ? { ...last, sku: '' } : { ...BLANK_VARIANT })
+        }}
       >
         <Plus className="h-4 w-4" />
         Add Variant

@@ -7,11 +7,16 @@ const WHATSAPP_MSG    = 'Hi Vami Clubwear! I have a query.'
 const IG_HANDLE       = '@vamiclubwear'
 
 const COLLECTIONS = [
-  { href: '/products',                                   label: 'All Collections'  },
-  { href: '/products?category=indo-western-fusion',      label: 'Fusion Wear'      },
-  { href: '/products?category=bridal-collection',        label: 'Bridal Collection' },
-  { href: '/products?category=modest-wear',              label: 'Modest Fashion'   },
-  { href: '/products?category=dupattas-drapes',          label: 'Dupattas'         },
+  { href: '/products',                          label: 'All Collections' },
+  { href: '/products?category=anarkali',        label: 'Anarkali'        },
+  { href: '/products?category=salwar',          label: 'Salwar'          },
+  { href: '/products?category=sharara-set',     label: 'Sharara Set'     },
+  { href: '/products?category=churidar-bit',    label: 'Churidar Bit'    },
+  { href: '/products?category=cotton-salwar',   label: 'Cotton Salwar'   },
+  { href: '/products?category=western-wear',    label: 'Western Wear'    },
+  { href: '/products?category=pants',           label: 'Pants'           },
+  { href: '/products?category=duppatta',        label: 'Duppatta'        },
+  { href: '/products?category=big-size',        label: 'Big Size'        },
 ]
 
 const INFO_LINKS = [

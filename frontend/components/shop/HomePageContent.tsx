@@ -20,13 +20,13 @@ const fadeUp = {
 
 // ─── Collections ──────────────────────────────────────────────────────────────
 const COLLECTIONS = [
-  { slug: 'fusion',    label: 'Fusion Wear',    sub: 'East meets West',    gradient: 'from-[#3D2B1F] to-[#1a1008]', accent: '#C4956A' },
-  { slug: 'bridal',    label: 'Bridal',         sub: 'Your finest moment', gradient: 'from-[#2B1B2E] to-[#0d0710]', accent: '#D4A5C9' },
-  { slug: 'modest',    label: 'Modest Fashion', sub: 'Elegance redefined', gradient: 'from-[#1A2B2B] to-[#081515]', accent: '#7EC8C8' },
-  { slug: 'dupattas',  label: 'Dupattas',       sub: 'The art of draping', gradient: 'from-[#2B2010] to-[#0f0a00]', accent: '#E8C97A' },
+  { slug: 'anarkali',    label: 'Anarkali',      sub: 'Classic & contemporary', gradient: 'from-[#3D2B1F] to-[#1a1008]', accent: '#C4956A' },
+  { slug: 'sharara-set', label: 'Sharara Set',   sub: 'Elegant all occasions',  gradient: 'from-[#2B1B2E] to-[#0d0710]', accent: '#D4A5C9' },
+  { slug: 'western-wear',label: 'Western Wear',  sub: 'Indo-Western fusion',    gradient: 'from-[#1A2B2B] to-[#081515]', accent: '#7EC8C8' },
+  { slug: 'duppatta',    label: 'Duppatta',      sub: 'The art of draping',     gradient: 'from-[#2B2010] to-[#0f0a00]', accent: '#E8C97A' },
 ]
 
-const MARQUEE_WORDS = ['Fusion', 'Bridal', 'Modest', 'Couture', 'Heritage', 'Craft', 'Elegance', 'Kerala']
+const MARQUEE_WORDS = ['Anarkali', 'Salwar', 'Sharara', 'Couture', 'Heritage', 'Craft', 'Elegance', 'Kerala']
 
 // ─── Hero Carousel ─────────────────────────────────────────────────────────────
 
@@ -75,32 +75,32 @@ const STATIC_SLIDES: SlideData[] = [
     titleLine1:  'Where Heritage',
     titleLine2:  'Meets Modernity',
     sub:         'Premium Indo-Western couture, thoughtfully crafted in Manjeri, Kerala.',
-    cta:         { label: 'Shop Now',    href: '/products' },
-    ctaAlt:      { label: 'Bridal Edit', href: '/products?category=bridal' },
+    cta:         { label: 'Shop Now',     href: '/products' },
+    ctaAlt:      { label: 'Explore All',  href: '/products' },
     bg:          'linear-gradient(135deg, #FAF7F2 0%, #FAFAF8 50%, #F5F1EC 100%)',
     accentColor: '#8B6B47',
     dark:        false,
   },
   {
     id:          2,
-    eyebrow:     'Bridal Collection 2025',
-    titleLine1:  'Your Finest',
-    titleLine2:  'Moment',
-    sub:         'Bespoke bridal couture crafted for the most precious chapter of your story.',
-    cta:         { label: 'Explore Bridal', href: '/products?category=bridal' },
-    ctaAlt:      { label: 'Get in Touch',   href: '/contact' },
+    eyebrow:     'Anarkali Collection',
+    titleLine1:  'Classic Grace,',
+    titleLine2:  'Modern Soul',
+    sub:         'Flowing anarkali suits for every occasion — from festive to everyday elegance.',
+    cta:         { label: 'Shop Anarkali', href: '/products?category=anarkali' },
+    ctaAlt:      { label: 'View All',      href: '/products' },
     bg:          'linear-gradient(135deg, #180F09 0%, #2C1A10 50%, #0E0806 100%)',
     accentColor: '#D4956A',
     dark:        true,
   },
   {
     id:          3,
-    eyebrow:     'Fusion Wear',
+    eyebrow:     'Western Wear',
     titleLine1:  'East Meets',
     titleLine2:  'West',
     sub:         'Contemporary silhouettes rooted in Indo-Western tradition. Wear both worlds.',
-    cta:         { label: 'Shop Fusion', href: '/products?category=fusion' },
-    ctaAlt:      { label: 'View All',    href: '/products' },
+    cta:         { label: 'Shop Western', href: '/products?category=western-wear' },
+    ctaAlt:      { label: 'View All',     href: '/products' },
     bg:          'linear-gradient(135deg, #EEE8E0 0%, #EAE2D8 50%, #E2D8CE 100%)',
     accentColor: '#6B4A31',
     dark:        false,

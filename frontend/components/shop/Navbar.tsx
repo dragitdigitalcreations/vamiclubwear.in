@@ -3,20 +3,13 @@
 import Link from 'next/link'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { ShoppingBag, Menu, X, Search, User, Heart, SlidersHorizontal, Check } from 'lucide-react'
+import { ShoppingBag, Menu, X, Search, User, Heart, SlidersHorizontal, Check, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useCartStore, selectTotalItems } from '@/stores/cartStore'
 import { useWishlistStore, selectWishlistCount } from '@/stores/wishlistStore'
 import { ProfileDrawer } from '@/components/shop/ProfileDrawer'
 import { VamiLogo } from '@/components/shop/VamiLogo'
-
-const NAV_LINKS = [
-  { href: '/products',                 label: 'All Collections' },
-  { href: '/products?category=fusion', label: 'Fusion Wear' },
-  { href: '/products?category=bridal', label: 'Bridal' },
-  { href: '/products?category=modest', label: 'Modest Fashion' },
-]
 
 const SORT_OPTIONS = [
   { value: 'newest',     label: 'Newest' },
@@ -25,11 +18,15 @@ const SORT_OPTIONS = [
 ]
 
 const CATEGORIES = [
-  { slug: '',                    label: 'All' },
-  { slug: 'indo-western-fusion', label: 'Fusion' },
-  { slug: 'bridal-collection',   label: 'Bridal' },
-  { slug: 'modest-wear',         label: 'Modest' },
-  { slug: 'dupattas-drapes',     label: 'Dupattas' },
+  { slug: '',              label: 'All' },
+  { slug: 'anarkali',      label: 'Anarkali' },
+  { slug: 'salwar',        label: 'Salwar' },
+  { slug: 'sharara-set',   label: 'Sharara Set' },
+  { slug: 'churidar-bit',  label: 'Churidar Bit' },
+  { slug: 'cotton-salwar', label: 'Cotton Salwar' },
+  { slug: 'western-wear',  label: 'Western Wear' },
+  { slug: 'pants',         label: 'Pants' },
+  { slug: 'duppatta',      label: 'Duppatta' },
 ]
 
 export function Navbar() {
@@ -44,6 +41,10 @@ export function Navbar() {
   const [dropSort,      setDropSort]      = useState('newest')
   const filterBtnRef = useRef<HTMLDivElement>(null)
 
+  // ── Category nav dropdown ──
+  const [catDropOpen, setCatDropOpen] = useState(false)
+  const catDropRef = useRef<HTMLDivElement>(null)
+
   const searchInputRef = useRef<HTMLInputElement>(null)
   const router         = useRouter()
   const pathname       = usePathname()
@@ -52,8 +53,8 @@ export function Navbar() {
   const totalItems     = useCartStore(selectTotalItems)
   const wishlistCount  = useWishlistStore(selectWishlistCount)
 
-  // Close filter dropdown on route change
-  useEffect(() => { setFilterOpen(false) }, [pathname])
+  // Close dropdowns on route change
+  useEffect(() => { setFilterOpen(false); setCatDropOpen(false) }, [pathname])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -72,6 +73,18 @@ export function Navbar() {
     document.addEventListener('mousedown', handleOutside)
     return () => document.removeEventListener('mousedown', handleOutside)
   }, [filterOpen])
+
+  // Click-outside to close category dropdown
+  useEffect(() => {
+    if (!catDropOpen) return
+    function handleOutside(e: MouseEvent) {
+      if (catDropRef.current && !catDropRef.current.contains(e.target as Node)) {
+        setCatDropOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [catDropOpen])
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -318,21 +331,83 @@ export function Navbar() {
 
         {/* ── Row 2 : Nav links — float freely, no background ── */}
         <div className="hidden md:flex justify-center items-center gap-2 py-2">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
+          {/* HOME */}
+          <Link
+            href="/"
+            className={cn(
+              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 backdrop-blur-md border',
+              scrolled
+                ? 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
+                : 'bg-white/[0.65] border-black/[0.07] text-fg-2 hover:bg-white/[0.85] hover:border-black/[0.12] hover:text-fg-1'
+            )}
+          >
+            Home
+          </Link>
+
+          {/* EXPLORE */}
+          <Link
+            href="/products"
+            className={cn(
+              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 backdrop-blur-md border',
+              scrolled
+                ? 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
+                : 'bg-white/[0.65] border-black/[0.07] text-fg-2 hover:bg-white/[0.85] hover:border-black/[0.12] hover:text-fg-1'
+            )}
+          >
+            Explore
+          </Link>
+
+          {/* CATEGORY — dropdown */}
+          <div ref={catDropRef} className="relative">
+            <button
+              onClick={() => setCatDropOpen((o) => !o)}
               className={cn(
-                'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200',
-                'backdrop-blur-md border',
+                'flex items-center gap-1 whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 backdrop-blur-md border',
                 scrolled
                   ? 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
                   : 'bg-white/[0.65] border-black/[0.07] text-fg-2 hover:bg-white/[0.85] hover:border-black/[0.12] hover:text-fg-1'
               )}
             >
-              {link.label}
-            </Link>
-          ))}
+              Category
+              <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', catDropOpen && 'rotate-180')} />
+            </button>
+
+            <AnimatePresence>
+              {catDropOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute left-0 top-[calc(100%+8px)] z-50 w-48 rounded-xl border border-border bg-white shadow-z4 overflow-hidden py-1"
+                >
+                  {CATEGORIES.filter((c) => c.slug !== '').map((cat) => (
+                    <Link
+                      key={cat.slug}
+                      href={`/products?category=${cat.slug}`}
+                      onClick={() => setCatDropOpen(false)}
+                      className="block px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-fg-2 hover:bg-surface-elevated hover:text-fg-1 transition-colors"
+                    >
+                      {cat.label}
+                    </Link>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* BIG SIZE */}
+          <Link
+            href="/products?category=big-size"
+            className={cn(
+              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 backdrop-blur-md border',
+              scrolled
+                ? 'bg-black/[0.04] border-black/[0.07] text-fg-3 hover:bg-black/[0.08] hover:border-black/[0.12] hover:text-fg-1'
+                : 'bg-white/[0.65] border-black/[0.07] text-fg-2 hover:bg-white/[0.85] hover:border-black/[0.12] hover:text-fg-1'
+            )}
+          >
+            Big Size
+          </Link>
         </div>
       </header>
 
@@ -362,32 +437,69 @@ export function Navbar() {
             </form>
 
             <nav className="flex flex-col px-6 pt-1">
-              {NAV_LINKS.map((link, i) => (
-                <motion.div
-                  key={link.href}
-                  initial={{ opacity: 0, x: -16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.06 }}
+              {/* HOME */}
+              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0 }}>
+                <Link href="/" onClick={() => setMobileOpen(false)}
+                  className="block border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
+                  Home
+                </Link>
+              </motion.div>
+
+              {/* EXPLORE */}
+              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.06 }}>
+                <Link href="/products" onClick={() => setMobileOpen(false)}
+                  className="block border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
+                  Explore
+                </Link>
+              </motion.div>
+
+              {/* CATEGORY — expandable */}
+              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.12 }}>
+                <button
+                  onClick={() => setCatDropOpen((o) => !o)}
+                  className="flex w-full items-center justify-between border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors"
                 >
-                  <Link
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="block border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </motion.div>
-              ))}
-              <motion.div
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: NAV_LINKS.length * 0.06 }}
-              >
-                <Link
-                  href="/wishlist"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex w-full items-center gap-2 border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors"
-                >
+                  Category
+                  <ChevronDown className={cn('h-4 w-4 transition-transform duration-200', catDropOpen && 'rotate-180')} />
+                </button>
+                <AnimatePresence>
+                  {catDropOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-4 pb-2 border-b border-border">
+                        {CATEGORIES.filter((c) => c.slug !== '').map((cat) => (
+                          <Link
+                            key={cat.slug}
+                            href={`/products?category=${cat.slug}`}
+                            onClick={() => { setMobileOpen(false); setCatDropOpen(false) }}
+                            className="block py-2.5 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors"
+                          >
+                            {cat.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* BIG SIZE */}
+              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.18 }}>
+                <Link href="/products?category=big-size" onClick={() => setMobileOpen(false)}
+                  className="block border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
+                  Big Size
+                </Link>
+              </motion.div>
+
+              {/* WISHLIST */}
+              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.24 }}>
+                <Link href="/wishlist" onClick={() => setMobileOpen(false)}
+                  className="flex w-full items-center gap-2 border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
                   <Heart className="h-4 w-4" />
                   Wishlist
                   {wishlistCount > 0 && (
@@ -397,11 +509,9 @@ export function Navbar() {
                   )}
                 </Link>
               </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: (NAV_LINKS.length + 1) * 0.06 }}
-              >
+
+              {/* PROFILE */}
+              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.30 }}>
                 <button
                   onClick={() => { setMobileOpen(false); setProfileOpen(true) }}
                   className="flex w-full items-center gap-2 border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors"
