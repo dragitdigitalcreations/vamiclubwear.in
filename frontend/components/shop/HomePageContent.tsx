@@ -629,7 +629,7 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
   return (
     <div
       ref={containerRef}
-      className="group relative overflow-hidden rounded-[4px] bg-surface-elevated shadow-card hover:shadow-card-hover transition-shadow duration-300"
+      className="group relative flex-shrink-0 w-[44vw] sm:w-[30vw] md:w-[21vw] lg:w-[18vw] overflow-hidden rounded-[4px] bg-surface-elevated shadow-card hover:shadow-card-hover transition-shadow duration-300 snap-start"
     >
       <div className="relative aspect-[9/16] overflow-hidden">
         {!loaded && <div className="absolute inset-0 skeleton" />}
@@ -661,12 +661,17 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
 function VideoShowcase() {
   const [items,   setItems]   = useState<ShowcaseItem[]>([])
   const [loading, setLoading] = useState(true)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     productsApi.getShowcaseVideos()
       .then((data: any) => setItems(data))
       .catch(() => setItems([]))
       .finally(() => setLoading(false))
+  }, [])
+
+  const scroll = useCallback((dir: 'left' | 'right') => {
+    scrollRef.current?.scrollBy({ left: dir === 'right' ? 320 : -320, behavior: 'smooth' })
   }, [])
 
   if (!loading && items.length === 0) return null
@@ -676,20 +681,38 @@ function VideoShowcase() {
       <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10">
         <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}
-          className="mb-10">
-          <p className="mb-1 t-micro">In Motion</p>
-          <h2 className="t-h1">Shop the Look</h2>
-          <p className="mt-2 text-[12px] text-muted">Hover each piece to preview it in motion</p>
+          className="mb-10 flex items-end justify-between">
+          <div>
+            <p className="mb-1 t-micro">In Motion</p>
+            <h2 className="t-h1">Shop the Look</h2>
+            <p className="mt-2 text-[12px] text-muted">Scroll to preview each piece in motion</p>
+          </div>
+          {items.length > 4 && (
+            <div className="hidden md:flex items-center gap-2">
+              <button onClick={() => scroll('left')}
+                className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border text-muted hover:border-on-background hover:text-on-background hover:bg-surface-elevated transition-all duration-200"
+                aria-label="Scroll left"><ChevronLeft className="h-4 w-4" /></button>
+              <button onClick={() => scroll('right')}
+                className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border text-muted hover:border-on-background hover:text-on-background hover:bg-surface-elevated transition-all duration-200"
+                aria-label="Scroll right"><ChevronRight className="h-4 w-4" /></button>
+            </div>
+          )}
         </motion.div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4">
-          {loading
-            ? Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="skeleton aspect-[9/16] w-full rounded-[4px]" />
-              ))
-            : items.map((item) => <VideoCard key={item.id} item={item} />)
-          }
-        </div>
+      {/* Single-row horizontal scroll — shows ~5 on desktop, ~2 on mobile */}
+      <div
+        ref={scrollRef}
+        className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory px-4 sm:px-6 md:px-8 lg:px-10 pb-2"
+      >
+        {loading
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-[44vw] sm:w-[30vw] md:w-[21vw] lg:w-[18vw] snap-start">
+                <div className="skeleton aspect-[9/16] w-full rounded-[4px]" />
+              </div>
+            ))
+          : items.map((item) => <VideoCard key={item.id} item={item} />)
+        }
       </div>
     </section>
   )
