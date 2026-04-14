@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useCartStore, selectTotalItems } from '@/stores/cartStore'
 import { useWishlistStore, selectWishlistCount } from '@/stores/wishlistStore'
-import { ProfileDrawer } from '@/components/shop/ProfileDrawer'
 import { VamiLogo } from '@/components/shop/VamiLogo'
 
 const BRAND = '#AE3535'
@@ -32,10 +31,9 @@ const CATEGORIES = [
 ]
 
 export function Navbar() {
-  const [scrolled,     setScrolled]     = useState(false)
-  const [mobileOpen,   setMobileOpen]   = useState(false)
-  const [profileOpen,  setProfileOpen]  = useState(false)
-  const [searchQuery,  setSearchQuery]  = useState('')
+  const [scrolled,    setScrolled]    = useState(false)
+  const [mobileOpen,  setMobileOpen]  = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // ── Filter dropdown state ──
   const [filterOpen,    setFilterOpen]    = useState(false)
@@ -51,8 +49,7 @@ export function Navbar() {
   const router         = useRouter()
   const pathname       = usePathname()
 
-  const { toggleCart } = useCartStore()
-  const totalItems     = useCartStore(selectTotalItems)
+  const totalItems = useCartStore(selectTotalItems)
   const wishlistCount  = useWishlistStore(selectWishlistCount)
 
   // Close dropdowns on route change
@@ -287,17 +284,17 @@ export function Navbar() {
               </Link>
 
               {/* Profile */}
-              <button
-                onClick={() => setProfileOpen(true)}
+              <Link
+                href="/profile"
                 className={cn('p-2 transition-colors', onBrand ? 'text-white hover:text-white/80' : 'text-muted hover:text-on-background')}
                 aria-label="My Profile"
               >
                 <User className="h-4 w-4" />
-              </button>
+              </Link>
 
               {/* Cart */}
-              <button
-                onClick={toggleCart}
+              <Link
+                href="/cart"
                 className={cn('relative p-2 transition-colors', onBrand ? 'text-white hover:text-white/80' : 'text-muted hover:text-on-background')}
                 aria-label={`Cart (${totalItems})`}
               >
@@ -307,7 +304,7 @@ export function Navbar() {
                     {totalItems > 9 ? '9+' : totalItems}
                   </span>
                 )}
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -479,13 +476,14 @@ export function Navbar() {
               </motion.div>
 
               <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.30 }}>
-                <button
-                  onClick={() => { setMobileOpen(false); setProfileOpen(true) }}
+                <Link
+                  href="/profile"
+                  onClick={() => setMobileOpen(false)}
                   className="flex w-full items-center gap-2 border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors"
                 >
                   <User className="h-4 w-4" />
-                  My Orders / Profile
-                </button>
+                  My Profile
+                </Link>
               </motion.div>
             </nav>
           </motion.div>
@@ -503,8 +501,6 @@ export function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Profile drawer */}
-      <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} />
     </>
   )
 }
