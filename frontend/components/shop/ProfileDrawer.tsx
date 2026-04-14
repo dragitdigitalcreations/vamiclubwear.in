@@ -369,7 +369,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
             </div>
 
             {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto">
 
               {/* ── My Orders section ──────────────────────────────── */}
               <div className="border-b border-border px-5 py-5">
