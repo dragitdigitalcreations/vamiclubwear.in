@@ -37,7 +37,7 @@ export function Footer() {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MSG)}`
 
   return (
-    <footer className="border-t border-border bg-surface mt-24">
+    <footer className="border-t border-border bg-surface mt-12">
       <div className="mx-auto w-full px-6 py-16 md:py-20">
 
         {/* ── Main grid (5-col, logo spans 2) ── */}
@@ -167,7 +167,7 @@ export function Footer() {
             </a>
           </div>
 
-          <p className="text-xs text-muted">Crafted by Dragit</p>
+          <p className="text-xs text-muted">Crafted by <span className="font-bold text-fg-1 uppercase">Dragit</span></p>
 
         </div>
       </div>
