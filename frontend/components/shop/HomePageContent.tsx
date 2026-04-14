@@ -22,7 +22,7 @@ const fadeUp = {
 const COLLECTIONS = [
   { slug: 'anarkali',    label: 'Anarkali',      sub: 'Classic & contemporary', gradient: 'from-[#3D2B1F] to-[#1a1008]', accent: '#C4956A' },
   { slug: 'sharara-set', label: 'Sharara Set',   sub: 'Elegant all occasions',  gradient: 'from-[#2B1B2E] to-[#0d0710]', accent: '#D4A5C9' },
-  { slug: 'western-wear',label: 'Western Wear',  sub: 'Indo-Western fusion',    gradient: 'from-[#1A2B2B] to-[#081515]', accent: '#7EC8C8' },
+  { slug: 'modest-wear', label: 'Modest Wear',   sub: 'Elegance redefined',     gradient: 'from-[#1A2B2B] to-[#081515]', accent: '#7EC8C8' },
   { slug: 'duppatta',    label: 'Duppatta',      sub: 'The art of draping',     gradient: 'from-[#2B2010] to-[#0f0a00]', accent: '#E8C97A' },
 ]
 
@@ -99,7 +99,7 @@ const STATIC_SLIDES: SlideData[] = [
     titleLine1:  'East Meets',
     titleLine2:  'West',
     sub:         'Contemporary silhouettes rooted in Indo-Western tradition. Wear both worlds.',
-    cta:         { label: 'Shop Western', href: '/products?category=western-wear' },
+    cta:         { label: 'Shop Modest',  href: '/products?category=modest-wear' },
     ctaAlt:      { label: 'View All',     href: '/products' },
     bg:          'linear-gradient(135deg, #EEE8E0 0%, #EAE2D8 50%, #E2D8CE 100%)',
     accentColor: '#6B4A31',

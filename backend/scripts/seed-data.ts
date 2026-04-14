@@ -19,7 +19,7 @@ const CATEGORIES = [
   { name: 'Sharara Set',    slug: 'sharara-set',     description: 'Elegant sharara sets for all occasions' },
   { name: 'Churidar Bit',   slug: 'churidar-bit',    description: 'Classic churidar sets' },
   { name: 'Cotton Salwar',  slug: 'cotton-salwar',   description: 'Comfortable everyday cotton salwar collections' },
-  { name: 'Western Wear',   slug: 'western-wear',    description: 'Indo-Western and western fusion styles' },
+  { name: 'Modest Wear',    slug: 'modest-wear',     description: 'Elegant modest fashion for every occasion' },
   { name: 'Pants',          slug: 'pants',           description: 'Stylish pants and palazzo collections' },
   { name: 'Duppatta',       slug: 'duppatta',        description: 'Statement dupattas and drapes' },
   { name: 'Big Size',       slug: 'big-size',        description: 'Premium fashion in extended sizes XL–3XL' },
@@ -74,7 +74,7 @@ const PRODUCTS = [
     description: 'A-line georgette kurta with thread embroidery on the yoke. Pairs beautifully with palazzo trousers.',
     basePrice:   2800,
     isFeatured:  true,
-    category:    'western-wear',
+    category:    'modest-wear',
     variants: [
       { sku: 'VCW-EGKU-BEG-XS-GORG', size: 'XS', color: 'Beige', colorHex: '#F5F0DC', fabric: 'Georgette', price: 2800, stock: 6 },
       { sku: 'VCW-EGKU-BEG-S-GORG',  size: 'S',  color: 'Beige', colorHex: '#F5F0DC', fabric: 'Georgette', price: 2800, stock: 7 },

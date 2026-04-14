@@ -138,7 +138,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         {/* ── Badges top-left ── */}
         <div className="absolute left-2.5 top-2.5 z-10 flex flex-col gap-1">
           {isNew && (
-            <span className="rounded-sm bg-on-background px-2 py-[3px] text-[9px] font-bold uppercase tracking-widest text-white">
+            <span className="rounded-sm bg-white/20 backdrop-blur-md border border-white/30 px-2 py-[3px] text-[9px] font-bold uppercase tracking-widest text-white shadow-sm">
               New
             </span>
           )}

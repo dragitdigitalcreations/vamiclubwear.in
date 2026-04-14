@@ -9,6 +9,18 @@ import { productsApi } from '@/lib/api'
 import { toast } from '@/stores/toastStore'
 
 
+const CATEGORY_LABELS: Record<string, string> = {
+  'anarkali':      'Anarkali',
+  'salwar':        'Salwar',
+  'sharara-set':   'Sharara Set',
+  'churidar-bit':  'Churidar Bit',
+  'cotton-salwar': 'Cotton Salwar',
+  'modest-wear':   'Modest Wear',
+  'pants':         'Pants',
+  'duppatta':      'Duppatta',
+  'big-size':      'Big Size',
+}
+
 const fadeUp = {
   hidden:  { opacity: 0, y: 24 },
   visible: (i = 0) => ({
@@ -77,6 +89,11 @@ function ProductsContent() {
             <div>
               <p className="mb-1 t-micro">Vami</p>
               <h1 className="t-h1">Collections</h1>
+              {categorySlug && CATEGORY_LABELS[categorySlug] && (
+                <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                  {CATEGORY_LABELS[categorySlug]}
+                </p>
+              )}
             </div>
             {total > 0 && !loading && (
               <p className="mb-1 text-sm text-muted">{total} pieces</p>

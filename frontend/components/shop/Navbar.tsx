@@ -24,7 +24,7 @@ const CATEGORIES = [
   { slug: 'sharara-set',   label: 'Sharara Set' },
   { slug: 'churidar-bit',  label: 'Churidar Bit' },
   { slug: 'cotton-salwar', label: 'Cotton Salwar' },
-  { slug: 'western-wear',  label: 'Western Wear' },
+  { slug: 'modest-wear',   label: 'Modest Wear'  },
   { slug: 'pants',         label: 'Pants' },
   { slug: 'duppatta',      label: 'Duppatta' },
 ]
