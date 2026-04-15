@@ -3,504 +3,368 @@
 import Link from 'next/link'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { ShoppingBag, Menu, X, Search, User, Heart, SlidersHorizontal, Check, ChevronDown } from 'lucide-react'
+import { ShoppingBag, Menu, X, Search, User, Heart, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useCartStore, selectTotalItems } from '@/stores/cartStore'
 import { useWishlistStore, selectWishlistCount } from '@/stores/wishlistStore'
 import { VamiLogo } from '@/components/shop/VamiLogo'
 
-const BRAND = '#AE3535'
-
-const SORT_OPTIONS = [
-  { value: 'newest',     label: 'Newest' },
-  { value: 'price-asc',  label: 'Price ↑' },
-  { value: 'price-desc', label: 'Price ↓' },
-]
-
 const CATEGORIES = [
-  { slug: '',              label: 'All' },
-  { slug: 'anarkali',      label: 'Anarkali' },
-  { slug: 'salwar',        label: 'Salwar' },
-  { slug: 'sharara-set',   label: 'Sharara Set' },
-  { slug: 'churidar-bit',  label: 'Churidar Bit' },
+  { slug: 'anarkali',      label: 'Anarkali'      },
+  { slug: 'salwar',        label: 'Salwar'        },
+  { slug: 'sharara-set',   label: 'Sharara Set'   },
+  { slug: 'churidar-bit',  label: 'Churidar Bit'  },
   { slug: 'cotton-salwar', label: 'Cotton Salwar' },
-  { slug: 'modest-wear',   label: 'Modest Wear'  },
-  { slug: 'pants',         label: 'Pants' },
-  { slug: 'duppatta',      label: 'Duppatta' },
+  { slug: 'modest-wear',   label: 'Modest Wear'   },
+  { slug: 'pants',         label: 'Pants'         },
+  { slug: 'duppatta',      label: 'Duppatta'      },
 ]
 
 export function Navbar() {
   const [scrolled,    setScrolled]    = useState(false)
   const [mobileOpen,  setMobileOpen]  = useState(false)
+  const [catDropOpen, setCatDropOpen] = useState(false)
+  const [searchOpen,  setSearchOpen]  = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  // ── Filter dropdown state ──
-  const [filterOpen,    setFilterOpen]    = useState(false)
-  const [dropCategory,  setDropCategory]  = useState('')
-  const [dropSort,      setDropSort]      = useState('newest')
-  const filterBtnRef = useRef<HTMLDivElement>(null)
-
-  // ── Category nav dropdown ──
-  const [catDropOpen, setCatDropOpen] = useState(false)
-  const catDropRef = useRef<HTMLDivElement>(null)
-
+  const catDropRef    = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const router         = useRouter()
-  const pathname       = usePathname()
+  const router   = useRouter()
+  const pathname = usePathname()
 
-  const totalItems = useCartStore(selectTotalItems)
-  const wishlistCount  = useWishlistStore(selectWishlistCount)
+  const totalItems    = useCartStore(selectTotalItems)
+  const wishlistCount = useWishlistStore(selectWishlistCount)
 
-  // Close dropdowns on route change
-  useEffect(() => { setFilterOpen(false); setCatDropOpen(false) }, [pathname])
-
-
+  // Scroll detection
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
+    const onScroll = () => setScrolled(window.scrollY > 60)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Click-outside — filter dropdown
+  // Close on route change
   useEffect(() => {
-    if (!filterOpen) return
-    function handleOutside(e: MouseEvent) {
-      if (filterBtnRef.current && !filterBtnRef.current.contains(e.target as Node)) setFilterOpen(false)
-    }
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
-  }, [filterOpen])
+    setCatDropOpen(false)
+    setMobileOpen(false)
+    setSearchOpen(false)
+  }, [pathname])
 
-  // Click-outside — category dropdown
+  // Click outside — category dropdown
   useEffect(() => {
     if (!catDropOpen) return
-    function handleOutside(e: MouseEvent) {
-      if (catDropRef.current && !catDropRef.current.contains(e.target as Node)) setCatDropOpen(false)
+    const fn = (e: MouseEvent) => {
+      if (catDropRef.current && !catDropRef.current.contains(e.target as Node))
+        setCatDropOpen(false)
     }
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
+    document.addEventListener('mousedown', fn)
+    return () => document.removeEventListener('mousedown', fn)
   }, [catDropOpen])
 
-  function handleSearchSubmit(e: React.FormEvent) {
+  // Focus search input when panel opens
+  useEffect(() => {
+    if (searchOpen) setTimeout(() => searchInputRef.current?.focus(), 50)
+  }, [searchOpen])
+
+  function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     if (!searchQuery.trim()) return
     router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
     setSearchQuery('')
-    searchInputRef.current?.blur()
+    setSearchOpen(false)
   }
 
-  function applyFilter() {
-    const p = new URLSearchParams()
-    if (dropCategory) p.set('category', dropCategory)
-    if (dropSort !== 'newest') p.set('sort', dropSort)
-    router.push(`/products${p.toString() ? `?${p}` : ''}`)
-    setFilterOpen(false)
+  function handleMobileSearch(e: React.FormEvent) {
+    e.preventDefault()
+    if (!searchQuery.trim()) return
+    router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+    setSearchQuery('')
+    setMobileOpen(false)
   }
 
-  // ── Derived style helpers ──────────────────────────────────────────────────
-  // At top: solid brand colour. On scroll: frosted white.
-  const onBrand = !scrolled
+  // ── Shared nav-link style ──
+  const navLinkCls = [
+    'relative py-1 text-[11px] font-semibold uppercase tracking-[0.2em]',
+    'text-fg-2 hover:text-fg-1 transition-colors duration-200',
+    "after:content-[''] after:absolute after:bottom-0 after:left-0",
+    'after:h-px after:w-0 after:bg-brand',
+    'after:transition-[width] after:duration-300 hover:after:w-full',
+  ].join(' ')
+
+  // ── Header background style ──
+  const headerStyle = scrolled
+    ? { backgroundColor: 'rgba(250,248,245,0.97)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', boxShadow: '0 1px 0 0 rgba(0,0,0,0.06)' }
+    : { backgroundColor: 'transparent' }
 
   return (
     <>
-      {/* ═══════════════ HEADER ═══════════════ */}
-      <header className="fixed top-0 left-0 right-0 z-50">
+      {/* ══════════════════════ HEADER ══════════════════════ */}
+      <header
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
+        style={headerStyle}
+      >
+        {/* ── Main row — 3-column grid ── */}
+        <div className="mx-auto grid max-w-[1320px] grid-cols-[1fr_auto_1fr] h-16 items-center gap-4 px-4 md:px-8">
 
-        {/* ── Row 1 : Logo | Search | Icons ── */}
-        <div
-          className="mx-auto flex h-14 max-w-7xl items-center px-4 md:px-8 gap-3 md:gap-5 transition-all duration-500"
-          style={scrolled
-            ? { background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', boxShadow: '0 1px 0 0 rgba(0,0,0,0.06)', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }
-            : { backgroundColor: BRAND, borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}
-        >
+          {/* ── Zone 1: Logo + mobile hamburger ── */}
+          <div className="flex items-center gap-3">
+            <button
+              className="md:hidden p-1.5 -ml-1.5 text-fg-3 hover:text-fg-1 transition-colors"
+              onClick={() => setMobileOpen(o => !o)}
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+            <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
+              <VamiLogo size="md" />
+            </Link>
+          </div>
 
-          {/* Mobile hamburger */}
-          <button
-            className={cn('md:hidden p-2 -ml-2 flex-shrink-0 transition-colors', onBrand ? 'text-white' : 'text-on-background')}
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          {/* ── Zone 2: Nav links (desktop center) ── */}
+          <nav className="hidden md:flex items-center gap-8">
+            <Link href="/" className={navLinkCls}>Home</Link>
+            <Link href="/products" className={navLinkCls}>Explore</Link>
 
-          {/* Logo — no capsule; gold logo reads on both red and white */}
-          <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
-            <VamiLogo size="md" />
-          </Link>
-
-          {/* Search bar — desktop */}
-          <form
-            onSubmit={handleSearchSubmit}
-            className={cn(
-              'hidden md:flex flex-1 max-w-md mx-auto items-center gap-2 h-9 rounded-full px-3 transition-all duration-200 border',
-              onBrand
-                ? 'border-white/25 bg-white/15 focus-within:border-white/50 focus-within:bg-white/20'
-                : 'border-border bg-surface-elevated focus-within:border-ring focus-within:bg-white focus-within:shadow-sm'
-            )}
-          >
-            <Search className={cn('h-3.5 w-3.5 flex-shrink-0', onBrand ? 'text-white/70' : 'text-muted')} />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search styles, fabrics…"
-              className={cn(
-                'flex-1 bg-transparent text-xs outline-none min-w-0',
-                onBrand ? 'text-white placeholder:text-white/55' : 'text-on-background placeholder:text-muted'
-              )}
-            />
-            {searchQuery && (
+            {/* Category dropdown */}
+            <div ref={catDropRef} className="relative">
               <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className={cn('flex-shrink-0 transition-colors', onBrand ? 'text-white/70 hover:text-white' : 'text-muted hover:text-on-background')}
+                onClick={() => setCatDropOpen(o => !o)}
+                className={cn(navLinkCls, 'flex items-center gap-1')}
               >
-                <X className="h-3 w-3" />
-              </button>
-            )}
-
-            {/* Filter dropdown trigger */}
-            <span className={cn('h-4 w-px flex-shrink-0', onBrand ? 'bg-white/30' : 'bg-border')} />
-            <div ref={filterBtnRef} className="relative flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => setFilterOpen((o) => !o)}
-                className={cn(
-                  'flex items-center justify-center transition-colors',
-                  onBrand
-                    ? (filterOpen ? 'text-white' : 'text-white/70 hover:text-white')
-                    : (filterOpen ? 'text-on-background' : 'text-muted hover:text-on-background')
-                )}
-                aria-label="Filter products"
-                aria-expanded={filterOpen}
-              >
-                <SlidersHorizontal className="h-3.5 w-3.5" />
+                Collections
+                <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', catDropOpen && 'rotate-180')} />
               </button>
 
-              {/* Dropdown panel — always white bg */}
               <AnimatePresence>
-                {filterOpen && (
+                {catDropOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 4, scale: 0.97 }}
                     transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute right-0 top-[calc(100%+12px)] z-50 w-64 rounded-xl border border-border bg-white shadow-z4 overflow-hidden"
+                    className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+14px)] w-48 bg-[#FAF8F5] border border-border shadow-z4 overflow-hidden py-2"
                   >
-                    <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted">Filters</span>
-                      <button onClick={() => setFilterOpen(false)} className="text-muted hover:text-on-background transition-colors">
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    <div className="p-4 space-y-4">
-                      <div>
-                        <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-muted">Sort by</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {SORT_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.value}
-                              onClick={() => setDropSort(opt.value)}
-                              className={cn(
-                                'inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-medium transition-all duration-150',
-                                dropSort === opt.value ? 'bg-on-background text-white' : 'bg-surface-elevated text-fg-2 hover:bg-surface-overlay'
-                              )}
-                            >
-                              {dropSort === opt.value && <Check className="h-2.5 w-2.5" />}
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-muted">Category</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {CATEGORIES.map((cat) => (
-                            <button
-                              key={cat.slug}
-                              onClick={() => setDropCategory(cat.slug)}
-                              className={cn(
-                                'inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-medium transition-all duration-150',
-                                dropCategory === cat.slug ? 'bg-brand text-white' : 'bg-surface-elevated text-fg-2 hover:bg-surface-overlay'
-                              )}
-                            >
-                              {dropCategory === cat.slug && <Check className="h-2.5 w-2.5" />}
-                              {cat.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="border-t border-border p-3 flex gap-2">
-                      <button
-                        onClick={() => { setDropCategory(''); setDropSort('newest') }}
-                        className="flex-1 rounded-lg py-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-fg-3 hover:text-fg-1 transition-colors"
+                    {CATEGORIES.map(cat => (
+                      <Link
+                        key={cat.slug}
+                        href={`/products?category=${cat.slug}`}
+                        onClick={() => setCatDropOpen(false)}
+                        className="block px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-fg-2 hover:bg-surface-raised hover:text-fg-1 transition-colors duration-150"
                       >
-                        Clear
-                      </button>
-                      <button
-                        onClick={applyFilter}
-                        className="flex-[2] rounded-lg bg-on-background py-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-white hover:bg-black transition-colors"
-                      >
-                        View Results
-                      </button>
-                    </div>
+                        {cat.label}
+                      </Link>
+                    ))}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-          </form>
 
-          {/* Mobile: push icons right */}
-          <div className="flex-1 md:hidden" />
+            <Link href="/products?category=big-size" className={navLinkCls}>Big Size</Link>
+          </nav>
 
-          {/* ── Icons group ── */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* ── Zone 3: Action icons ── */}
+          <div className="flex items-center justify-end gap-0">
 
-            {/* Mobile search */}
+            {/* Search */}
             <button
-              className={cn('md:hidden p-2 transition-colors', onBrand ? 'text-white hover:text-white/80' : 'text-muted hover:text-on-background')}
+              onClick={() => setSearchOpen(o => !o)}
+              className="p-2.5 text-fg-3 hover:text-fg-1 transition-colors duration-200"
               aria-label="Search"
-              onClick={() => router.push('/search')}
             >
-              <Search className="h-4 w-4" />
+              <Search className="h-[18px] w-[18px]" />
             </button>
 
-            <div className="flex items-center">
-              {/* Wishlist */}
-              <Link
-                href="/wishlist"
-                className={cn('relative p-2 transition-colors', onBrand ? 'text-white hover:text-white/80' : 'text-muted hover:text-on-background')}
-                aria-label={`Wishlist (${wishlistCount})`}
-              >
-                <Heart className={cn('h-4 w-4 transition-colors', wishlistCount > 0 && !onBrand ? 'text-primary-light fill-primary-light' : '')} />
-                {wishlistCount > 0 && (
-                  <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold" style={{ color: BRAND }}>
-                    {wishlistCount > 9 ? '9+' : wishlistCount}
-                  </span>
-                )}
-              </Link>
-
-              {/* Profile */}
-              <Link
-                href="/profile"
-                className={cn('p-2 transition-colors', onBrand ? 'text-white hover:text-white/80' : 'text-muted hover:text-on-background')}
-                aria-label="My Profile"
-              >
-                <User className="h-4 w-4" />
-              </Link>
-
-              {/* Cart */}
-              <Link
-                href="/cart"
-                className={cn('relative p-2 transition-colors', onBrand ? 'text-white hover:text-white/80' : 'text-muted hover:text-on-background')}
-                aria-label={`Cart (${totalItems})`}
-              >
-                <ShoppingBag className="h-4 w-4" />
-                {totalItems > 0 && (
-                  <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold" style={{ color: BRAND }}>
-                    {totalItems > 9 ? '9+' : totalItems}
-                  </span>
-                )}
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Row 2 : Nav links ── */}
-        <div className="hidden md:flex justify-center items-center gap-2 py-2">
-
-          {/* HOME */}
-          <Link
-            href="/"
-            className={cn(
-              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              'bg-black/60 backdrop-blur-md border border-white/20 shadow-[0_0_0_1px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.18)] text-white hover:bg-black/75 hover:border-white/35'
-            )}
-          >
-            Home
-          </Link>
-
-          {/* EXPLORE */}
-          <Link
-            href="/products"
-            className={cn(
-              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              'bg-black/60 backdrop-blur-md border border-white/20 shadow-[0_0_0_1px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.18)] text-white hover:bg-black/75 hover:border-white/35'
-            )}
-          >
-            Explore
-          </Link>
-
-          {/* CATEGORY — dropdown */}
-          <div ref={catDropRef} className="relative">
-            <button
-              onClick={() => setCatDropOpen((o) => !o)}
-              className="flex items-center gap-1 whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 bg-black/60 backdrop-blur-md border border-white/20 shadow-[0_0_0_1px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.18)] text-white hover:bg-black/75 hover:border-white/35"
+            {/* Wishlist */}
+            <Link
+              href="/wishlist"
+              className="relative p-2.5 text-fg-3 hover:text-fg-1 transition-colors duration-200"
+              aria-label={`Wishlist (${wishlistCount})`}
             >
-              Category
-              <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', catDropOpen && 'rotate-180')} />
-            </button>
-
-            <AnimatePresence>
-              {catDropOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                  transition={{ duration: 0.15, ease: 'easeOut' }}
-                  className="absolute left-0 top-[calc(100%+8px)] z-50 w-48 rounded-xl border border-border bg-white shadow-z4 overflow-hidden py-1"
-                >
-                  {CATEGORIES.filter((c) => c.slug !== '').map((cat) => (
-                    <Link
-                      key={cat.slug}
-                      href={`/products?category=${cat.slug}`}
-                      onClick={() => setCatDropOpen(false)}
-                      className="block px-4 py-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-fg-2 hover:bg-surface-elevated hover:text-fg-1 transition-colors"
-                    >
-                      {cat.label}
-                    </Link>
-                  ))}
-                </motion.div>
+              <Heart className={cn('h-[18px] w-[18px] transition-colors', wishlistCount > 0 && 'fill-brand stroke-brand')} />
+              {wishlistCount > 0 && (
+                <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand text-[8px] font-bold text-white">
+                  {wishlistCount > 9 ? '9+' : wishlistCount}
+                </span>
               )}
-            </AnimatePresence>
-          </div>
+            </Link>
 
-          {/* BIG SIZE */}
-          <Link
-            href="/products?category=big-size"
-            className={cn(
-              'whitespace-nowrap rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] transition-all duration-200 border',
-              'bg-black/60 backdrop-blur-md border border-white/20 shadow-[0_0_0_1px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.18)] text-white hover:bg-black/75 hover:border-white/35'
-            )}
-          >
-            Big Size
-          </Link>
+            {/* Profile */}
+            <Link
+              href="/profile"
+              className="p-2.5 text-fg-3 hover:text-fg-1 transition-colors duration-200"
+              aria-label="My Profile"
+            >
+              <User className="h-[18px] w-[18px]" />
+            </Link>
+
+            {/* Cart */}
+            <Link
+              href="/cart"
+              className="relative p-2.5 text-fg-3 hover:text-fg-1 transition-colors duration-200"
+              aria-label={`Cart (${totalItems})`}
+            >
+              <ShoppingBag className="h-[18px] w-[18px]" />
+              {totalItems > 0 && (
+                <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-fg-1 text-[8px] font-bold text-white">
+                  {totalItems > 9 ? '9+' : totalItems}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
+
+        {/* ── Search panel — slides down ── */}
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+              className="overflow-hidden border-t border-border bg-[#FAF8F5]"
+            >
+              <form
+                onSubmit={handleSearch}
+                className="mx-auto flex max-w-[1320px] items-center gap-4 px-4 md:px-8 py-4"
+              >
+                <Search className="h-4 w-4 flex-shrink-0 text-fg-4" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search styles, fabrics, collections…"
+                  className="flex-1 bg-transparent text-sm text-fg-1 placeholder:text-fg-4 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => { setSearchOpen(false); setSearchQuery('') }}
+                  className="flex-shrink-0 p-1 text-fg-4 hover:text-fg-1 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      {/* ═══════════════ MOBILE DRAWER ═══════════════ */}
+      {/* ══════════════════════ MOBILE DRAWER ══════════════════════ */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: '-100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '-100%' }}
-            transition={{ duration: 0.28, ease: 'easeInOut' }}
-            className="fixed inset-y-0 left-0 z-40 w-72 bg-surface pt-16 shadow-2xl"
-          >
-            {/* Mobile search */}
-            <form
-              onSubmit={handleSearchSubmit}
-              className="mx-4 mt-4 mb-3 flex items-center gap-2 h-10 rounded-full border border-border bg-surface-elevated px-4"
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 bg-black/40 md:hidden"
+              onClick={() => setMobileOpen(false)}
+            />
+
+            {/* Drawer panel */}
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              className="fixed inset-y-0 left-0 z-50 w-72 bg-[#FAF8F5] shadow-z5 flex flex-col md:hidden"
             >
-              <Search className="h-3.5 w-3.5 flex-shrink-0 text-muted" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search…"
-                className="flex-1 bg-transparent text-xs text-on-background placeholder:text-muted outline-none"
-              />
-            </form>
-
-            <nav className="flex flex-col px-6 pt-1">
-              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0 }}>
-                <Link href="/" onClick={() => setMobileOpen(false)}
-                  className="block border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
-                  Home
+              {/* Drawer header */}
+              <div className="flex items-center justify-between border-b border-border px-5 py-4 flex-shrink-0">
+                <Link href="/" onClick={() => setMobileOpen(false)}>
+                  <VamiLogo size="sm" />
                 </Link>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.06 }}>
-                <Link href="/products" onClick={() => setMobileOpen(false)}
-                  className="block border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
-                  Explore
-                </Link>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.12 }}>
                 <button
-                  onClick={() => setCatDropOpen((o) => !o)}
-                  className="flex w-full items-center justify-between border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors"
+                  onClick={() => setMobileOpen(false)}
+                  className="p-1.5 text-fg-3 hover:text-fg-1 transition-colors"
                 >
-                  Category
-                  <ChevronDown className={cn('h-4 w-4 transition-transform duration-200', catDropOpen && 'rotate-180')} />
+                  <X className="h-5 w-5" />
                 </button>
-                <AnimatePresence>
-                  {catDropOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="pl-4 pb-2 border-b border-border">
-                        {CATEGORIES.filter((c) => c.slug !== '').map((cat) => (
-                          <Link
-                            key={cat.slug}
-                            href={`/products?category=${cat.slug}`}
-                            onClick={() => { setMobileOpen(false); setCatDropOpen(false) }}
-                            className="block py-2.5 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors"
-                          >
-                            {cat.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+              </div>
 
-              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.18 }}>
-                <Link href="/products?category=big-size" onClick={() => setMobileOpen(false)}
-                  className="block border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
+              {/* Mobile search */}
+              <div className="flex-shrink-0 px-4 pt-4 pb-3">
+                <form
+                  onSubmit={handleMobileSearch}
+                  className="flex items-center gap-2 h-10 border border-border bg-surface-raised rounded-lg px-3"
+                >
+                  <Search className="h-3.5 w-3.5 flex-shrink-0 text-fg-4" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Search…"
+                    className="flex-1 bg-transparent text-xs text-fg-1 placeholder:text-fg-4 outline-none"
+                  />
+                </form>
+              </div>
+
+              {/* Mobile nav links */}
+              <nav className="flex-1 overflow-y-auto px-5 pb-6">
+                {[
+                  { href: '/',        label: 'Home'       },
+                  { href: '/products',label: 'Explore'    },
+                  { href: '/wishlist',label: 'Wishlist'   },
+                  { href: '/profile', label: 'My Profile' },
+                  { href: '/cart',    label: 'My Bag'     },
+                ].map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setMobileOpen(false)}
+                    className="block border-b border-border py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-2 hover:text-fg-1 transition-colors"
+                  >
+                    {label}
+                  </Link>
+                ))}
+
+                {/* Collections expand */}
+                <div>
+                  <button
+                    onClick={() => setCatDropOpen(o => !o)}
+                    className="flex w-full items-center justify-between border-b border-border py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-2 hover:text-fg-1 transition-colors"
+                  >
+                    Collections
+                    <ChevronDown className={cn('h-4 w-4 transition-transform duration-200', catDropOpen && 'rotate-180')} />
+                  </button>
+                  <AnimatePresence>
+                    {catDropOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pl-4 py-2 border-b border-border space-y-0.5">
+                          {CATEGORIES.map(cat => (
+                            <Link
+                              key={cat.slug}
+                              href={`/products?category=${cat.slug}`}
+                              onClick={() => { setMobileOpen(false); setCatDropOpen(false) }}
+                              className="block py-2.5 text-[10px] font-medium uppercase tracking-[0.15em] text-fg-3 hover:text-fg-1 transition-colors"
+                            >
+                              {cat.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <Link
+                  href="/products?category=big-size"
+                  onClick={() => setMobileOpen(false)}
+                  className="block border-b border-border py-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-2 hover:text-fg-1 transition-colors"
+                >
                   Big Size
                 </Link>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.24 }}>
-                <Link href="/wishlist" onClick={() => setMobileOpen(false)}
-                  className="flex w-full items-center gap-2 border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors">
-                  <Heart className="h-4 w-4" />
-                  Wishlist
-                  {wishlistCount > 0 && (
-                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-surface-elevated text-[10px] font-bold text-on-background">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </Link>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.30 }}>
-                <Link
-                  href="/profile"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex w-full items-center gap-2 border-b border-border py-4 text-sm font-medium uppercase tracking-widest text-on-surface hover:text-on-background transition-colors"
-                >
-                  <User className="h-4 w-4" />
-                  My Profile
-                </Link>
-              </motion.div>
-            </nav>
-          </motion.div>
+              </nav>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
-
-      {/* Mobile backdrop */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-30 bg-black/50 md:hidden"
-            onClick={() => setMobileOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-
     </>
   )
 }

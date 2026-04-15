@@ -20,10 +20,10 @@ const fadeUp = {
 
 // ─── Collections ──────────────────────────────────────────────────────────────
 const COLLECTIONS = [
-  { slug: 'anarkali',    label: 'Anarkali',      sub: 'Classic & contemporary', gradient: 'from-[#3D2B1F] to-[#1a1008]', accent: '#C4956A' },
-  { slug: 'sharara-set', label: 'Sharara Set',   sub: 'Elegant all occasions',  gradient: 'from-[#2B1B2E] to-[#0d0710]', accent: '#D4A5C9' },
-  { slug: 'modest-wear', label: 'Modest Wear',   sub: 'Elegance redefined',     gradient: 'from-[#1A2B2B] to-[#081515]', accent: '#7EC8C8' },
-  { slug: 'duppatta',    label: 'Duppatta',      sub: 'The art of draping',     gradient: 'from-[#2B2010] to-[#0f0a00]', accent: '#E8C97A' },
+  { slug: 'anarkali',    label: 'Anarkali',      sub: 'Classic & contemporary', gradient: 'from-[#EDE8E1] to-[#DDD4C8]', accent: '#8B6B47' },
+  { slug: 'sharara-set', label: 'Sharara Set',   sub: 'Elegant all occasions',  gradient: 'from-[#E8E1D8] to-[#D6CBBC]', accent: '#6B4A31' },
+  { slug: 'modest-wear', label: 'Modest Wear',   sub: 'Elegance redefined',     gradient: 'from-[#EAE4DA] to-[#D8D0C4]', accent: '#5C4033' },
+  { slug: 'duppatta',    label: 'Duppatta',      sub: 'The art of draping',     gradient: 'from-[#E6DFD5] to-[#D4C8BB]', accent: '#9B7B5B' },
 ]
 
 const MARQUEE_WORDS = ['Anarkali', 'Salwar', 'Sharara', 'Couture', 'Heritage', 'Craft', 'Elegance', 'Kerala']
@@ -288,7 +288,7 @@ function HeroCarousel() {
 function MarqueeStrip() {
   const repeated = [...MARQUEE_WORDS, ...MARQUEE_WORDS, ...MARQUEE_WORDS]
   return (
-    <div className="overflow-hidden border-y border-border bg-surface-elevated py-3">
+    <div className="overflow-hidden border-y border-border/60 bg-[#EDE8E1] py-3">
       <motion.div
         animate={{ x: ['0%', '-33.33%'] }}
         transition={{ duration: 32, repeat: Infinity, ease: 'linear' }}
@@ -422,24 +422,31 @@ function CollectionsGrid() {
             variants={fadeUp} initial="hidden" whileInView="visible"
             viewport={{ once: true, margin: '-50px' }} custom={i * 0.3}>
             <Link href={`/products?category=${col.slug}`}
-              className="group relative flex h-[380px] flex-col justify-end overflow-hidden rounded-[10px]">
-              <div className={`absolute inset-0 bg-gradient-to-br ${col.gradient} transition-transform duration-700 ease-out group-hover:scale-[1.03]`} />
+              className="group relative flex h-[380px] flex-col justify-end overflow-hidden border border-border/60">
+              {/* Background gradient */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${col.gradient} transition-transform duration-700 ease-out group-hover:scale-[1.04]`} />
+              {/* Decorative circle */}
               <motion.div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border opacity-[0.12]"
-                style={{ borderColor: col.accent, width: 200, height: 200 }}
-                animate={{ scale: [1, 1.07, 1], rotate: [0, 8, 0] }}
-                transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
+                className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+                style={{ borderColor: `${col.accent}30`, width: 180, height: 180 }}
+                animate={{ scale: [1, 1.06, 1], rotate: [0, 6, 0] }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+              {/* Bottom fade to cream */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#D8CFC4]/80 via-transparent to-transparent" />
+              {/* Content */}
               <div className="relative z-10 p-7">
-                <p className="mb-1 text-[9px] font-medium uppercase tracking-[0.15em]" style={{ color: col.accent }}>
+                <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.18em]"
+                  style={{ color: col.accent }}>
                   {col.sub}
                 </p>
-                <h3 className="font-display text-[20px] font-bold text-white">{col.label}</h3>
-                <span className="mt-4 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em]"
-                  style={{ color: col.accent }}>
+                <h3 className="font-display text-[22px] font-bold text-fg-1">{col.label}</h3>
+                <span
+                  className="mt-4 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all duration-300 group-hover:gap-3"
+                  style={{ color: col.accent }}
+                >
                   Explore
-                  <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1.5" />
+                  <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
               </div>
             </Link>
