@@ -181,91 +181,91 @@ function ThisJustIn() {
   }, [])
 
   const scroll = useCallback((dir: 'left' | 'right') => {
-    scrollRef.current?.scrollBy({ left: dir === 'right' ? 340 : -340, behavior: 'smooth' })
+    // Scroll by ~5 card widths (full visible set) on desktop
+    const w = scrollRef.current?.clientWidth ?? 500
+    scrollRef.current?.scrollBy({ left: dir === 'right' ? w : -w, behavior: 'smooth' })
   }, [])
 
-  return (
-    <section className="py-14 md:py-20" style={{ backgroundColor: '#FCE4EB' }}>
-      <div className="mx-auto max-w-[1400px] px-8 md:px-12">
+  // Card width = (container - 2 arrows - gaps) / 5 on desktop
+  // Wix reference: 1324px container, 5 cards → ~255px each
+  const CARD_W    = 'w-[44vw] sm:w-[30vw] md:w-[calc(20%-10px)] lg:w-[calc(20%-10px)]'
+  const IMG_H     = 'h-[220px] sm:h-[260px] md:h-[300px]'
 
-        {/* Header */}
+  return (
+    <section className="py-8 md:py-10" style={{ backgroundColor: '#FCE4EB' }}>
+      <div className="mx-auto max-w-[1400px] px-6 md:px-10">
+
+        {/* Header — compact */}
         <motion.div
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }}
-          className="mb-10"
+          className="mb-6"
         >
           <h2
             className="text-fg-1 uppercase leading-none"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
               fontWeight: 800,
-              fontSize: 'clamp(38px, 5.5vw, 64px)',
+              fontSize: 'clamp(34px, 4.5vw, 56px)',
               letterSpacing: '-0.025em',
             }}
           >
             This Just In
           </h2>
-          <p
-            className="mt-3 text-fg-3 leading-relaxed"
-            style={{ fontSize: '13px', maxWidth: '170px' }}
-          >
+          <p className="mt-2 text-fg-3 text-[12px] leading-relaxed max-w-[160px]">
             Shop the best brands from our new arrivals
           </p>
         </motion.div>
 
-        {/* Horizontal scroll + arrows */}
+        {/* Scroll strip — arrows sit on left/right edges of the strip */}
         <div className="relative">
 
           {/* Left arrow */}
           <button
             onClick={() => scroll('left')}
-            className="absolute -left-5 top-[42%] z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-sm hover:shadow-md transition-all duration-200"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow hover:shadow-md transition-all duration-200"
             aria-label="Scroll left"
           >
-            <ChevronLeft className="h-4 w-4 text-fg-2" />
+            <ChevronLeft className="h-3.5 w-3.5 text-fg-2" />
           </button>
 
-          {/* Card row */}
+          {/* Card row — 5 cards fill the full width on desktop, scroll on mobile */}
           <div
             ref={scrollRef}
-            className="flex gap-3 overflow-x-auto pb-1 no-scrollbar snap-x snap-mandatory"
+            className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory"
+            style={{ gap: '2px' }}
           >
             {loading
-              ? Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 w-[140px] md:w-[160px] snap-start">
-                    <div className="skeleton aspect-[3/4] w-full rounded-sm" />
-                    <div className="mt-2.5 space-y-1.5 px-1">
-                      <div className="skeleton h-3 w-3/4 rounded" />
-                      <div className="skeleton h-3 w-1/3 rounded" />
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className={`flex-shrink-0 ${CARD_W} snap-start`}>
+                    <div className={`skeleton w-full ${IMG_H}`} />
+                    <div className="mt-2 space-y-1.5 px-1">
+                      <div className="skeleton h-2.5 w-3/4 rounded" />
+                      <div className="skeleton h-2.5 w-1/3 rounded" />
                     </div>
                   </div>
                 ))
               : products.map((product, i) => {
                   const imgUrl = getPrimaryImage(product)
                   return (
-                    <motion.div
-                      key={product.id}
-                      variants={fadeUp} initial="hidden" whileInView="visible"
-                      viewport={{ once: true, margin: '-20px' }} custom={i * 0.06}
-                      className="flex-shrink-0 w-[140px] md:w-[160px] snap-start"
-                    >
+                    <div key={product.id} className={`flex-shrink-0 ${CARD_W} snap-start`}>
                       <Link
                         href={`/products/${product.slug}`}
-                        className="group block overflow-hidden bg-white hover:shadow-lg transition-shadow duration-300"
+                        className="group block overflow-hidden bg-white hover:shadow-md transition-shadow duration-300"
                       >
-                        {/* Image */}
-                        <div className="relative aspect-[3/4] overflow-hidden bg-white">
+                        {/* Fixed-height image — matches Wix strip height */}
+                        <div className={`relative w-full ${IMG_H} overflow-hidden bg-white`}>
                           {imgUrl ? (
                             <Image
                               src={imgUrl}
                               alt={product.name}
                               fill
                               className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                              sizes="160px"
+                              sizes="(max-width:640px) 44vw, (max-width:768px) 30vw, 20vw"
                             />
                           ) : (
-                            <div className="flex h-full items-center justify-center">
-                              <div className="h-10 w-10 rounded-full bg-surface-elevated" />
+                            <div className="flex h-full items-center justify-center bg-[#F5F1EC]">
+                              <div className="h-10 w-10 rounded-full bg-[#EDE8E1]" />
                             </div>
                           )}
                         </div>
@@ -277,7 +277,7 @@ function ThisJustIn() {
                           </p>
                         </div>
                       </Link>
-                    </motion.div>
+                    </div>
                   )
                 })}
           </div>
@@ -285,18 +285,18 @@ function ThisJustIn() {
           {/* Right arrow */}
           <button
             onClick={() => scroll('right')}
-            className="absolute -right-5 top-[42%] z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-sm hover:shadow-md transition-all duration-200"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow hover:shadow-md transition-all duration-200"
             aria-label="Scroll right"
           >
-            <ChevronRight className="h-4 w-4 text-fg-2" />
+            <ChevronRight className="h-3.5 w-3.5 text-fg-2" />
           </button>
         </div>
 
-        {/* CTA — transparent outlined pill */}
-        <div className="mt-10 flex justify-center">
+        {/* CTA — single transparent outlined pill, centered */}
+        <div className="mt-7 flex justify-center">
           <Link
             href="/products"
-            className="rounded-full border border-fg-1 bg-transparent px-12 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
+            className="rounded-full border border-fg-1 bg-transparent px-12 py-2.5 text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
           >
             Shop Now
           </Link>
