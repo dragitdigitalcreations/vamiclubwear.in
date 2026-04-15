@@ -171,8 +171,7 @@ function HomeCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="group flex flex-col overflow-hidden bg-white hover:shadow-md transition-shadow duration-300"
-      style={{ width: '232px', height: '310px', flexShrink: 0 }}
+      className="group flex flex-col w-full h-full overflow-hidden bg-white hover:shadow-md transition-shadow duration-300"
     >
       <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ flex: 1 }}>
         {imgUrl ? (
@@ -199,9 +198,9 @@ function HomeCard({ product }: { product: Product }) {
 
 function HomeCardSkeleton() {
   return (
-    <div style={{ width: '232px', height: '310px', flexShrink: 0 }}>
-      <div className="skeleton w-full" style={{ height: '248px' }} />
-      <div className="mt-2 space-y-1.5 px-3">
+    <div className="w-full h-full flex flex-col">
+      <div className="skeleton flex-1 w-full" />
+      <div className="flex-shrink-0 mt-2 space-y-1.5 px-3" style={{ height: '62px' }}>
         <div className="skeleton h-2.5 w-3/4 rounded" />
         <div className="skeleton h-2.5 w-1/3 rounded" />
       </div>
@@ -272,14 +271,22 @@ function ThisJustIn() {
             <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
           </button>
 
-          {/* Scrollable card strip */}
+          {/* Scrollable card strip — cards sized so 5 fill the visible strip width */}
           <div
             ref={scrollRef}
             className="flex flex-1 gap-3 overflow-x-auto no-scrollbar h-full"
           >
             {loading
-              ? Array.from({ length: 5 }).map((_, i) => <HomeCardSkeleton key={i} />)
-              : products.map((product) => <HomeCard key={product.id} product={product} />)}
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 48px) / 5)' }}>
+                    <HomeCardSkeleton />
+                  </div>
+                ))
+              : products.map((product) => (
+                  <div key={product.id} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 48px) / 5)' }}>
+                    <HomeCard product={product} />
+                  </div>
+                ))}
           </div>
 
           {/* Right arrow */}
@@ -322,13 +329,16 @@ function CategorySection() {
   return (
     <section
       style={{ backgroundColor: '#ADAEF1', height: '810px' }}
-      className="flex flex-col overflow-hidden"
+      className="flex flex-col justify-center overflow-hidden"
     >
-      {/* ── ZONE 1: Header — no horizontal padding so text aligns with card strip left ── */}
-      <div className="mx-auto w-full max-w-[1242px] pt-10 pb-7 flex-shrink-0">
+      {/* Centered content block — max 1242px, horizontally centered */}
+      <div className="mx-auto w-full max-w-[1242px]">
+
+        {/* Header — left-aligned to card container edge */}
         <motion.div
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }}
+          className="pb-7"
         >
           <h2
             className="text-fg-1 uppercase leading-none"
@@ -345,20 +355,23 @@ function CategorySection() {
             Explore our curated collections
           </p>
         </motion.div>
-      </div>
 
-      {/* ── ZONE 2: Card strip — 1242px × 310px, 4 cards ── */}
-      <div
-        className="mx-auto w-full max-w-[1242px] flex-shrink-0"
-        style={{ height: '310px' }}
-      >
-        <div className="flex h-full gap-3 overflow-x-auto no-scrollbar">
+        {/* Card strip — 4 cards fill full 1242px width */}
+        <div className="flex gap-3 overflow-x-auto no-scrollbar" style={{ height: '310px' }}>
           {loading
-            ? Array.from({ length: 4 }).map((_, i) => <HomeCardSkeleton key={i} />)
-            : products.map((product) => <HomeCard key={product.id} product={product} />)}
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 36px) / 4)' }}>
+                  <HomeCardSkeleton />
+                </div>
+              ))
+            : products.map((product) => (
+                <div key={product.id} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 36px) / 4)' }}>
+                  <HomeCard product={product} />
+                </div>
+              ))}
         </div>
-      </div>
 
+      </div>
     </section>
   )
 }
@@ -546,10 +559,18 @@ function FeaturedProducts() {
           View All <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </motion.div>
-      <div className="flex overflow-x-auto no-scrollbar gap-3">
+      <div className="flex overflow-x-auto no-scrollbar gap-3" style={{ height: '310px' }}>
         {loading
-          ? Array.from({ length: 4 }).map((_, i) => <HomeCardSkeleton key={i} />)
-          : products.map((product) => <HomeCard key={product.id} product={product} />)}
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 36px) / 4)' }}>
+                <HomeCardSkeleton />
+              </div>
+            ))
+          : products.map((product) => (
+              <div key={product.id} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 36px) / 4)' }}>
+                <HomeCard product={product} />
+              </div>
+            ))}
       </div>
     </section>
   )
@@ -589,10 +610,18 @@ function TrendingSection() {
           View All <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </motion.div>
-      <div className="flex overflow-x-auto no-scrollbar gap-3">
+      <div className="flex overflow-x-auto no-scrollbar gap-3" style={{ height: '310px' }}>
         {loading
-          ? Array.from({ length: 4 }).map((_, i) => <HomeCardSkeleton key={i} />)
-          : products.map((product) => <HomeCard key={product.id} product={product} />)}
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 36px) / 4)' }}>
+                <HomeCardSkeleton />
+              </div>
+            ))
+          : products.map((product) => (
+              <div key={product.id} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 36px) / 4)' }}>
+                <HomeCard product={product} />
+              </div>
+            ))}
       </div>
     </section>
   )
