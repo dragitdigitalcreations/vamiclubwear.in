@@ -6,7 +6,6 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { ArrowRight, ChevronLeft, ChevronRight, Truck, RotateCcw, Zap } from 'lucide-react'
 import { productsApi } from '@/lib/api'
-import { ProductCard } from '@/components/shop/ProductCard'
 import { getPrimaryImage } from '@/types/product'
 import type { Product } from '@/types/product'
 
@@ -166,6 +165,50 @@ function HeroSection() {
 
 
 
+// ─── Shared home card — 232 × 310 ────────────────────────────────────────────
+function HomeCard({ product }: { product: Product }) {
+  const imgUrl = getPrimaryImage(product)
+  return (
+    <Link
+      href={`/products/${product.slug}`}
+      className="group flex flex-col overflow-hidden bg-white hover:shadow-md transition-shadow duration-300"
+      style={{ width: '232px', height: '310px', flexShrink: 0 }}
+    >
+      <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ flex: 1 }}>
+        {imgUrl ? (
+          <Image
+            src={imgUrl}
+            alt={product.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            sizes="232px"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-[#F5F1EC]" />
+        )}
+      </div>
+      <div className="flex-shrink-0 px-3 py-3 text-left" style={{ height: '62px' }}>
+        <p className="truncate text-[11px] text-fg-2">{product.name}</p>
+        <p className="mt-1 text-[11px] font-semibold text-fg-1">
+          ₹{product.basePrice.toLocaleString('en-IN')}
+        </p>
+      </div>
+    </Link>
+  )
+}
+
+function HomeCardSkeleton() {
+  return (
+    <div style={{ width: '232px', height: '310px', flexShrink: 0 }}>
+      <div className="skeleton w-full" style={{ height: '248px' }} />
+      <div className="mt-2 space-y-1.5 px-3">
+        <div className="skeleton h-2.5 w-3/4 rounded" />
+        <div className="skeleton h-2.5 w-1/3 rounded" />
+      </div>
+    </div>
+  )
+}
+
 // ─── This Just In — pink horizontal product scroll ────────────────────────────
 function ThisJustIn() {
   const [products, setProducts] = useState<Product[]>([])
@@ -213,15 +256,14 @@ function ThisJustIn() {
         </motion.div>
       </div>
 
-      {/* ── ZONE 2: Card carousel — exactly 1242px × 407px, zero side padding ── */}
+      {/* ── ZONE 2: Card carousel — 1242px × 310px, zero side padding ── */}
       <div
         className="mx-auto w-full max-w-[1242px] flex-shrink-0"
-        style={{ height: '407px' }}
+        style={{ height: '310px' }}
       >
-        {/* flex row: [arrow][gap][strip fills remaining][gap][arrow] — no side padding */}
         <div className="flex items-center h-full gap-3">
 
-          {/* Left arrow — bare black vector */}
+          {/* Left arrow */}
           <button
             onClick={() => scroll('left')}
             className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
@@ -230,65 +272,17 @@ function ThisJustIn() {
             <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
           </button>
 
-          {/* Scrollable card strip — flex-1 fills between the two arrows */}
+          {/* Scrollable card strip */}
           <div
             ref={scrollRef}
-            className="flex flex-1 gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory h-full"
+            className="flex flex-1 gap-3 overflow-x-auto no-scrollbar h-full"
           >
             {loading
-              ? Array.from({ length: 5 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex-shrink-0 snap-start h-full flex flex-col"
-                    style={{ width: 'calc((100% - 48px) / 5)', minWidth: '130px' }}
-                  >
-                    <div className="skeleton flex-1 w-full" />
-                    <div className="mt-2 space-y-1.5 px-2 pb-2 flex-shrink-0">
-                      <div className="skeleton h-2.5 w-3/4 rounded" />
-                      <div className="skeleton h-2.5 w-1/3 rounded" />
-                    </div>
-                  </div>
-                ))
-              : products.map((product) => {
-                  const imgUrl = getPrimaryImage(product)
-                  return (
-                    <div
-                      key={product.id}
-                      className="flex-shrink-0 snap-start h-full"
-                      style={{ width: 'calc((100% - 48px) / 5)', minWidth: '130px' }}
-                    >
-                      <Link
-                        href={`/products/${product.slug}`}
-                        className="group flex flex-col h-full overflow-hidden bg-white hover:shadow-md transition-shadow duration-300"
-                      >
-                        {/* Image — fills all height above the info row */}
-                        <div className="relative flex-1 overflow-hidden bg-white">
-                          {imgUrl ? (
-                            <Image
-                              src={imgUrl}
-                              alt={product.name}
-                              fill
-                              className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                              sizes="(max-width:640px) 44vw, 20vw"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center bg-[#F5F1EC]" />
-                          )}
-                        </div>
-                        {/* Name + price — fixed height, left-aligned */}
-                        <div className="flex-shrink-0 px-3 py-3 text-left">
-                          <p className="truncate text-[11px] text-fg-2 text-left">{product.name}</p>
-                          <p className="mt-1 text-[11px] font-semibold text-fg-1 text-left">
-                            ₹{product.basePrice.toLocaleString('en-IN')}
-                          </p>
-                        </div>
-                      </Link>
-                    </div>
-                  )
-                })}
+              ? Array.from({ length: 5 }).map((_, i) => <HomeCardSkeleton key={i} />)
+              : products.map((product) => <HomeCard key={product.id} product={product} />)}
           </div>
 
-          {/* Right arrow — bare black vector */}
+          {/* Right arrow */}
           <button
             onClick={() => scroll('right')}
             className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
@@ -353,61 +347,15 @@ function CategorySection() {
         </motion.div>
       </div>
 
-      {/* ── ZONE 2: Card strip — 1242px × 407px, zero side padding, 4 cards ── */}
+      {/* ── ZONE 2: Card strip — 1242px × 310px, 4 cards ── */}
       <div
         className="mx-auto w-full max-w-[1242px] flex-shrink-0"
-        style={{ height: '407px' }}
+        style={{ height: '310px' }}
       >
         <div className="flex h-full gap-3">
           {loading
-            ? Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex-shrink-0 h-full flex flex-col"
-                  style={{ width: 'calc((100% - 36px) / 4)', minWidth: '130px' }}
-                >
-                  <div className="skeleton flex-1 w-full" />
-                  <div className="mt-2 space-y-1.5 px-2 pb-2 flex-shrink-0">
-                    <div className="skeleton h-2.5 w-3/4 rounded" />
-                    <div className="skeleton h-2.5 w-1/3 rounded" />
-                  </div>
-                </div>
-              ))
-            : products.map((product) => {
-                const imgUrl = getPrimaryImage(product)
-                return (
-                  <div
-                    key={product.id}
-                    className="flex-shrink-0 h-full"
-                    style={{ width: 'calc((100% - 36px) / 4)', minWidth: '130px' }}
-                  >
-                    <Link
-                      href={`/products/${product.slug}`}
-                      className="group flex flex-col h-full overflow-hidden bg-white hover:shadow-md transition-shadow duration-300"
-                    >
-                      <div className="relative flex-1 overflow-hidden bg-white">
-                        {imgUrl ? (
-                          <Image
-                            src={imgUrl}
-                            alt={product.name}
-                            fill
-                            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                            sizes="(max-width:640px) 44vw, 25vw"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center bg-[#F5F1EC]" />
-                        )}
-                      </div>
-                      <div className="flex-shrink-0 px-3 py-3 text-left">
-                        <p className="truncate text-[11px] text-fg-2 text-left">{product.name}</p>
-                        <p className="mt-1 text-[11px] font-semibold text-fg-1 text-left">
-                          ₹{product.basePrice.toLocaleString('en-IN')}
-                        </p>
-                      </div>
-                    </Link>
-                  </div>
-                )
-              })}
+            ? Array.from({ length: 4 }).map((_, i) => <HomeCardSkeleton key={i} />)
+            : products.map((product) => <HomeCard key={product.id} product={product} />)}
         </div>
       </div>
 
@@ -567,32 +515,6 @@ function CollectionsGrid() {
   )
 }
 
-// ─── Product grid section helper ──────────────────────────────────────────────
-function ProductGrid({ products, loading, cols = 4 }: { products: Product[]; loading: boolean; cols?: number }) {
-  const colClass = 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'
-  return (
-    <div className={`grid gap-3 md:gap-4 ${colClass}`}>
-      {loading
-        ? Array.from({ length: cols === 4 ? 8 : cols }).map((_, i) => (
-            <div key={i}>
-              <div className="skeleton aspect-[4/7] w-full rounded-[4px]" />
-              <div className="mt-3 space-y-2">
-                <div className="skeleton h-4 w-3/4 rounded" />
-                <div className="skeleton h-4 w-1/4 rounded" />
-              </div>
-            </div>
-          ))
-        : products.map((product, i) => (
-            <motion.div key={product.id}
-              variants={fadeUp} initial="hidden" whileInView="visible"
-              viewport={{ once: true, margin: '-30px' }} custom={i * 0.12}>
-              <ProductCard product={product} priority={i < 2} />
-            </motion.div>
-          ))}
-    </div>
-  )
-}
-
 // ─── Best Sellers ─────────────────────────────────────────────────────────────
 function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([])
@@ -612,7 +534,7 @@ function FeaturedProducts() {
   }, [])
 
   return (
-    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-10">
+    <section className="mx-auto w-full max-w-[1242px] px-5 py-10">
       <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
         className="mb-10 flex items-end justify-between">
@@ -624,7 +546,11 @@ function FeaturedProducts() {
           View All <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </motion.div>
-      <ProductGrid products={products} loading={loading} cols={4} />
+      <div className="flex flex-wrap gap-3">
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => <HomeCardSkeleton key={i} />)
+          : products.map((product) => <HomeCard key={product.id} product={product} />)}
+      </div>
     </section>
   )
 }
@@ -651,7 +577,7 @@ function TrendingSection() {
   if (!loading && products.length === 0) return null
 
   return (
-    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 pb-10">
+    <section className="mx-auto w-full max-w-[1242px] px-5 pb-10">
       <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true, margin: '-60px' }}
         className="mb-10 flex items-end justify-between">
@@ -663,7 +589,11 @@ function TrendingSection() {
           View All <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </motion.div>
-      <ProductGrid products={products} loading={loading} cols={4} />
+      <div className="flex flex-wrap gap-3">
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => <HomeCardSkeleton key={i} />)
+          : products.map((product) => <HomeCard key={product.id} product={product} />)}
+      </div>
     </section>
   )
 }
