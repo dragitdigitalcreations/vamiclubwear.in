@@ -86,8 +86,7 @@ function ScrollDownMarquee() {
 // ─── Hero Section ─────────────────────────────────────────────────────────────
 function HeroSection() {
   return (
-    // height = viewport minus navbar (96px) minus announcement bar (36px)
-    <section className="relative overflow-hidden" style={{ height: 'calc(100vh - 132px)' }}>
+    <section className="relative overflow-hidden" style={{ height: '948px' }}>
 
       {/* Background image — place /hero-bg.jpg in /public for actual photo */}
       <div
@@ -186,7 +185,7 @@ function ThisJustIn() {
   }, [])
 
   return (
-    <section className="py-8 md:py-10" style={{ backgroundColor: '#FCE4EB' }}>
+    <section style={{ backgroundColor: '#FCE4EB', minHeight: '618px' }} className="flex flex-col justify-center py-8">
       {/*
         Total width = 1324px max.
         Layout: [px-5] [←20px] [gap-3] [strip flex-1] [gap-3] [→20px] [px-5]
