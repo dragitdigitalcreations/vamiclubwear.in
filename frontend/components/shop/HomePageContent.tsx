@@ -1,11 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { ArrowRight, ChevronLeft, ChevronRight, Truck, RotateCcw, Zap } from 'lucide-react'
-import { productsApi, bannersApi } from '@/lib/api'
-import type { HeroBanner } from '@/lib/api'
+import { productsApi } from '@/lib/api'
 import { ProductCard } from '@/components/shop/ProductCard'
 import type { Product } from '@/types/product'
 
@@ -26,284 +25,145 @@ const COLLECTIONS = [
   { slug: 'duppatta',    label: 'Duppatta',      sub: 'The art of draping',     gradient: 'from-[#E6DFD5] to-[#D4C8BB]', accent: '#9B7B5B' },
 ]
 
-const MARQUEE_WORDS = ['Anarkali', 'Salwar', 'Sharara', 'Couture', 'Heritage', 'Craft', 'Elegance', 'Kerala']
-
-// ─── Hero Carousel ─────────────────────────────────────────────────────────────
-
-interface SlideData {
-  id:          string | number
-  eyebrow:     string
-  titleLine1:  string
-  titleLine2:  string
-  sub:         string
-  cta:         { label: string; href: string }
-  ctaAlt:      { label: string; href: string }
-  bg:          string
-  // Responsive image variants — each is optional; <picture> picks the right one
-  bgDesktop?:  string | null
-  bgTablet?:   string | null
-  bgMobile?:   string | null
-  accentColor: string
-  dark:        boolean
-}
-
-// Map a DB HeroBanner → SlideData — no fallback text; empty = don't render
-function bannerToSlide(b: HeroBanner): SlideData {
-  return {
-    id:          b.id,
-    eyebrow:     b.eyebrow     ?? '',
-    titleLine1:  b.titleLine1  ?? '',
-    titleLine2:  b.titleLine2  ?? '',
-    sub:         b.subtitle    ?? '',
-    cta:         { label: b.ctaLabel    ?? '', href: b.ctaHref    ?? '' },
-    ctaAlt:      { label: b.ctaAltLabel ?? '', href: b.ctaAltHref ?? '' },
-    bg: b.darkTheme
-      ? 'linear-gradient(135deg, #180F09 0%, #2C1A10 50%, #0E0806 100%)'
-      : 'linear-gradient(135deg, #FAF7F2 0%, #FAFAF8 50%, #F5F1EC 100%)',
-    bgDesktop:   b.imageDesktop ?? null,
-    bgTablet:    b.imageTablet  ?? null,
-    bgMobile:    b.imageMobile  ?? null,
-    accentColor: b.accentColor  ?? '#8B6B47',
-    dark:        b.darkTheme    ?? false,
-  }
-}
-
-const STATIC_SLIDES: SlideData[] = [
-  {
-    id:          1,
-    eyebrow:     'New Season — Spring 2025',
-    titleLine1:  'Where Heritage',
-    titleLine2:  'Meets Modernity',
-    sub:         'Premium Indo-Western couture, thoughtfully crafted in Manjeri, Kerala.',
-    cta:         { label: 'Shop Now',     href: '/products' },
-    ctaAlt:      { label: 'Explore All',  href: '/products' },
-    bg:          'linear-gradient(135deg, #FAF7F2 0%, #FAFAF8 50%, #F5F1EC 100%)',
-    accentColor: '#8B6B47',
-    dark:        false,
-  },
-  {
-    id:          2,
-    eyebrow:     'Anarkali Collection',
-    titleLine1:  'Classic Grace,',
-    titleLine2:  'Modern Soul',
-    sub:         'Flowing anarkali suits for every occasion — from festive to everyday elegance.',
-    cta:         { label: 'Shop Anarkali', href: '/products?category=anarkali' },
-    ctaAlt:      { label: 'View All',      href: '/products' },
-    bg:          'linear-gradient(135deg, #180F09 0%, #2C1A10 50%, #0E0806 100%)',
-    accentColor: '#D4956A',
-    dark:        true,
-  },
-  {
-    id:          3,
-    eyebrow:     'Western Wear',
-    titleLine1:  'East Meets',
-    titleLine2:  'West',
-    sub:         'Contemporary silhouettes rooted in Indo-Western tradition. Wear both worlds.',
-    cta:         { label: 'Shop Modest',  href: '/products?category=modest-wear' },
-    ctaAlt:      { label: 'View All',     href: '/products' },
-    bg:          'linear-gradient(135deg, #EEE8E0 0%, #EAE2D8 50%, #E2D8CE 100%)',
-    accentColor: '#6B4A31',
-    dark:        false,
-  },
-]
-
-// Slide motion — right-to-left: new slides enter from the right
-const slideVariants = {
-  enter: (dir: number) => ({ x: dir >= 0 ? '100%' : '-100%', opacity: 1 }),
-  center: { x: '0%', opacity: 1 },
-  exit:  (dir: number) => ({ x: dir >= 0 ? '-100%' : '100%', opacity: 1 }),
-}
-
-const SLIDE_TRANSITION = { duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }
-
-function HeroCarousel() {
-  const [current,   setCurrent]   = useState(0)
-  const [direction, setDirection] = useState(1)
-  const [slides,    setSlides]    = useState<SlideData[]>(STATIC_SLIDES)
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
-
-  // Fetch live banners; fall back to static slides if DB is empty or offline
-  useEffect(() => {
-    bannersApi.list()
-      .then((banners) => {
-        if (banners.length > 0) setSlides(banners.map(bannerToSlide))
-      })
-      .catch(() => { /* keep static slides */ })
-  }, [])
-
-  const go = useCallback((nextIdx: number, dir: number) => {
-    clearTimeout(timerRef.current)
-    setDirection(dir)
-    setCurrent(nextIdx)
-  }, [])
-
-  // Auto-advance
-  useEffect(() => {
-    timerRef.current = setTimeout(() => {
-      go((current + 1) % slides.length, 1)
-    }, 7000)
-    return () => clearTimeout(timerRef.current)
-  }, [current, slides.length, go])
-
-  const slide = slides[current] ?? STATIC_SLIDES[0]
-  const tc  = slide.dark ? 'text-white'      : 'text-on-background'
-  const mc  = slide.dark ? 'text-white/55'   : 'text-muted'
-  const bc  = slide.dark ? 'border-white/20' : 'border-border'
-
+// ─── Announcement Bar ─────────────────────────────────────────────────────────
+function AnnouncementBar() {
   return (
-    // Fixed-height container — height NEVER changes so no layout jump
-    <section className="relative h-[92vh] overflow-hidden select-none">
-
-      {/* ── Slide layers (absolute, full-size) ── */}
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
-          key={`slide-${slide.id}`}
-          className="absolute inset-0 flex items-center"
-          style={{ background: slide.bg }}
-          custom={direction}
-          variants={slideVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={SLIDE_TRANSITION}
-        >
-          {/* ── Responsive background image via <picture> ── */}
-          {(slide.bgDesktop || slide.bgTablet || slide.bgMobile) && (
-            <picture className="pointer-events-none absolute inset-0">
-              {slide.bgMobile  && <source media="(max-width: 767px)"                        srcSet={slide.bgMobile} />}
-              {slide.bgTablet  && <source media="(min-width: 768px) and (max-width: 1023px)" srcSet={slide.bgTablet} />}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={slide.bgDesktop ?? slide.bgTablet ?? slide.bgMobile ?? ''}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            </picture>
-          )}
-
-          {/* ── Top scrim — shields navbar zone ── */}
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-44"
-            style={{
-              background: (slide.bgDesktop || slide.bgTablet || slide.bgMobile)
-                ? 'linear-gradient(180deg, rgba(0,0,0,0.32) 0%, transparent 100%)'
-                : slide.dark
-                  ? 'linear-gradient(180deg, rgba(24,15,9,0.75) 0%, transparent 100%)'
-                  : 'linear-gradient(180deg, rgba(250,247,242,0.90) 0%, transparent 100%)',
-            }}
-          />
-
-          {/* Glow accent */}
-          <div
-            className="pointer-events-none absolute bottom-0 right-0 h-[50%] w-[40%] rounded-full blur-[160px]"
-            style={{ background: `${slide.accentColor}10` }}
-          />
-
-          {/* CTA buttons — anchored bottom-left, only if set */}
-          {(slide.cta.label || slide.ctaAlt.label) && (
-            <div className="absolute bottom-16 left-0 right-0 z-10 mx-auto w-full max-w-7xl px-6 md:px-12">
-              <div className="flex flex-wrap items-center gap-3">
-                {slide.cta.label && slide.cta.href && (
-                  <Link
-                    href={slide.cta.href}
-                    className="group inline-flex items-center gap-2.5 px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] text-white transition-all duration-300 hover:gap-4"
-                    style={{ backgroundColor: slide.accentColor }}
-                  >
-                    {slide.cta.label}
-                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                  </Link>
-                )}
-                {slide.ctaAlt.label && slide.ctaAlt.href && (
-                  <Link
-                    href={slide.ctaAlt.href}
-                    className={`inline-flex items-center gap-2 border px-10 py-3.5 text-[11px] font-semibold uppercase tracking-[0.25em] transition-all duration-300 hover:bg-white/10 ${bc} ${tc}`}
-                  >
-                    {slide.ctaAlt.label}
-                  </Link>
-                )}
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      {/* ── Prev / Next arrows — fixed position over slides ── */}
-      <button
-        onClick={() => go((current - 1 + slides.length) % slides.length, -1)}
-        className={`absolute left-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border transition-all duration-200 hover:scale-105 ${
-          slide.dark
-            ? 'border-white/25 text-white/70 hover:bg-white/15'
-            : 'border-border bg-white/80 text-muted hover:bg-white hover:text-on-background'
-        }`}
-        aria-label="Previous slide"
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </button>
-      <button
-        onClick={() => go((current + 1) % slides.length, 1)}
-        className={`absolute right-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border transition-all duration-200 hover:scale-105 ${
-          slide.dark
-            ? 'border-white/25 text-white/70 hover:bg-white/15'
-            : 'border-border bg-white/80 text-muted hover:bg-white hover:text-on-background'
-        }`}
-        aria-label="Next slide"
-      >
-        <ChevronRight className="h-4 w-4" />
-      </button>
-
-      {/* ── Dot indicators — fixed at bottom-center ── */}
-      <div className="absolute bottom-7 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
-        {slides.map((s, i) => (
-          <button
-            key={s.id}
-            onClick={() => go(i, i > current ? 1 : -1)}
-            aria-label={`Go to slide ${i + 1}`}
-            className="rounded-full transition-all duration-300"
-            style={{
-              width:           i === current ? '22px' : '6px',
-              height:          '6px',
-              backgroundColor: i === current
-                ? slide.accentColor
-                : `${slide.accentColor}40`,
-            }}
-          />
-        ))}
+    <div className="bg-[#111111] text-white" style={{ marginTop: '96px' }}>
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 md:px-10 h-9">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.22em]">
+          Get up to 50% off now
+        </p>
+        <div className="hidden sm:flex items-center gap-4">
+          <a href="#" target="_blank" rel="noreferrer" aria-label="Facebook"
+            className="text-white/60 hover:text-white transition-colors">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a href="#" target="_blank" rel="noreferrer" aria-label="Instagram"
+            className="text-white/60 hover:text-white transition-colors">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="#" target="_blank" rel="noreferrer" aria-label="X / Twitter"
+            className="text-white/60 hover:text-white transition-colors">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a href="#" target="_blank" rel="noreferrer" aria-label="Pinterest"
+            className="text-white/60 hover:text-white transition-colors">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.632-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+          </a>
+          <span className="border-l border-white/20 pl-4 text-[10px] font-medium tracking-wide text-white/50 cursor-pointer hover:text-white transition-colors">
+            Get Our Newsletter
+          </span>
+        </div>
       </div>
-
-      {/* Scroll cue */}
-      <div className="absolute bottom-7 right-8 z-20 hidden md:flex flex-col items-end gap-2">
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-          className="h-10 w-[1px]"
-          style={{ background: `linear-gradient(to bottom, ${slide.accentColor}60, transparent)` }}
-        />
-        <span className={`text-[9px] uppercase tracking-[0.3em] ${mc}`}>Scroll</span>
-      </div>
-    </section>
+    </div>
   )
 }
 
-// ─── Marquee ──────────────────────────────────────────────────────────────────
-function MarqueeStrip() {
-  const repeated = [...MARQUEE_WORDS, ...MARQUEE_WORDS, ...MARQUEE_WORDS]
+// ─── Scroll Down Marquee (scroll-velocity driven) ─────────────────────────────
+function ScrollDownMarquee() {
+  const { scrollY } = useScroll()
+  // Parallax: moves left as you scroll down, reverses on scroll up
+  const x = useTransform(scrollY, [0, 800], [0, -420], { clamp: false })
+
   return (
-    <div className="overflow-hidden border-y border-border/60 bg-[#EDE8E1] py-3">
-      <motion.div
-        animate={{ x: ['0%', '-33.33%'] }}
-        transition={{ duration: 32, repeat: Infinity, ease: 'linear' }}
-        className="flex gap-10 whitespace-nowrap"
-      >
-        {repeated.map((word, i) => (
-          <span key={i} className="flex items-center gap-10 text-[9px] font-semibold uppercase tracking-[0.2em] text-muted">
-            {word}
-            <span className="h-1 w-1 rounded-full bg-primary-light/50" />
+    <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-t border-black/10">
+      <motion.div style={{ x }} className="flex items-center whitespace-nowrap py-3.5">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <span key={i} className="flex items-center gap-4 px-8 text-[10px] font-semibold uppercase tracking-[0.28em] text-fg-3/80">
+            Scroll Down
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+            </svg>
           </span>
         ))}
       </motion.div>
     </div>
   )
 }
+
+// ─── Hero Section ─────────────────────────────────────────────────────────────
+function HeroSection() {
+  return (
+    // height = viewport minus navbar (96px) minus announcement bar (36px)
+    <section className="relative overflow-hidden" style={{ height: 'calc(100vh - 132px)' }}>
+
+      {/* Background image — place /hero-bg.jpg in /public for actual photo */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: 'url(/hero-bg.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          backgroundColor: '#EDE8E1',
+        }}
+      />
+
+      {/* Left gradient — makes text legible over the photo */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
+
+      {/* Hero text */}
+      <div className="relative z-10 flex h-full items-center px-8 md:px-16 lg:px-24">
+        <div className="max-w-[560px]">
+
+          <motion.h1
+            initial={{ opacity: 0, y: 36 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="text-fg-1 uppercase leading-[0.95]"
+            style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 200,
+              fontSize: 'clamp(46px, 5.2vw, 72px)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Calling<br />All Fashion<br />Lovers!
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+            className="mt-6 text-fg-3"
+            style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 300,
+              fontSize: '16px',
+              lineHeight: 1.7,
+            }}
+          >
+            Get up to 50% on our biggest sale yet
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.38 }}
+          >
+            <Link
+              href="/products"
+              className="group mt-8 inline-flex items-center gap-3 bg-fg-1 px-9 py-4 text-white transition-all duration-300 hover:bg-black hover:gap-5"
+              style={{
+                fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+                fontWeight: 400,
+                fontSize: '16px',
+              }}
+            >
+              Shop Now
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </motion.div>
+
+        </div>
+      </div>
+
+      {/* Scroll Down marquee — velocity driven by scroll position */}
+      <ScrollDownMarquee />
+    </section>
+  )
+}
+
+
 
 // ─── About section ────────────────────────────────────────────────────────────
 function AboutSection() {
@@ -729,8 +589,8 @@ function VideoShowcase() {
 export function HomePageContent() {
   return (
     <>
-      <HeroCarousel />
-      <MarqueeStrip />
+      <AnnouncementBar />
+      <HeroSection />
       <CollectionsGrid />
       <NewArrivalsSection />
       <FeaturedProducts />

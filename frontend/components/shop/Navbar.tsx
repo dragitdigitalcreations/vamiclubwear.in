@@ -92,10 +92,10 @@ export function Navbar() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#FAF8F5]">
 
         {/* ── ROW 1: Logo + Nav pills ── */}
-        <div className="border-b border-border">
+        <div className="border-b border-[#C8C0B8]">
           <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-5 md:px-10 h-14">
 
-            {/* Left: hamburger (mobile) + logo */}
+            {/* Left: hamburger (mobile) + logo + divider */}
             <div className="flex items-center gap-3 flex-shrink-0">
               <button
                 className="md:hidden p-1.5 -ml-1 text-fg-3 hover:text-fg-1 transition-colors"
@@ -107,6 +107,8 @@ export function Navbar() {
               <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
                 <VamiLogo size="md" />
               </Link>
+              {/* Vertical divider — desktop only, separates logo from nav pills */}
+              <div className="hidden md:block h-5 w-px bg-[#C8C0B8] ml-2" />
             </div>
 
             {/* Right: pill nav (desktop only) */}
@@ -118,7 +120,7 @@ export function Navbar() {
                   className={cn(
                     'px-5 py-[7px] rounded-full text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-200',
                     isActive(href)
-                      ? 'border border-fg-3 bg-transparent text-fg-1'
+                      ? 'border border-fg-1 bg-transparent text-fg-1'
                       : 'bg-fg-1 text-white hover:bg-[#2a2a2a]'
                   )}
                 >
@@ -133,7 +135,7 @@ export function Navbar() {
                   className={cn(
                     'flex items-center gap-1.5 px-5 py-[7px] rounded-full text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-200',
                     catDropOpen
-                      ? 'border border-fg-3 bg-transparent text-fg-1'
+                      ? 'border border-fg-1 bg-transparent text-fg-1'
                       : 'bg-fg-1 text-white hover:bg-[#2a2a2a]'
                   )}
                 >
@@ -169,7 +171,7 @@ export function Navbar() {
         </div>
 
         {/* ── ROW 2: Search icon (left) + Icons (right) ── */}
-        <div className="border-b border-border">
+        <div className="border-b border-[#C8C0B8]">
           <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 md:px-10 h-10">
 
             {/* Search icon — left */}

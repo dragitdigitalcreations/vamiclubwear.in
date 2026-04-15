@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { Poppins } from 'next/font/google'
 import '@fontsource/metropolis/300.css'
 import '@fontsource/metropolis/400.css'
 import '@fontsource/metropolis/500.css'
@@ -6,6 +7,13 @@ import '@fontsource/metropolis/600.css'
 import '@fontsource/metropolis/700.css'
 import './globals.css'
 import { Toaster } from '@/components/ui/Toaster'
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['200', '300', '400', '600'],
+  variable: '--font-poppins',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: {
@@ -46,7 +54,7 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-on-background">
+      <body className={`min-h-screen bg-background text-on-background ${poppins.variable}`}>
         {children}
         <Toaster />
       </body>
