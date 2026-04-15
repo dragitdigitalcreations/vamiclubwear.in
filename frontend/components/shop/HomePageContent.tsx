@@ -185,19 +185,16 @@ function ThisJustIn() {
   }, [])
 
   return (
-    <section style={{ backgroundColor: '#FCE4EB', minHeight: '810px' }} className="flex flex-col justify-center py-8">
-      {/*
-        Total width = 1324px max.
-        Layout: [px-5] [←20px] [gap-3] [strip flex-1] [gap-3] [→20px] [px-5]
-        Strip card width: calc((100% - 4*12px) / 5) = each card fills exactly 1/5 minus gaps
-      */}
-      <div className="mx-auto max-w-[1324px] px-5">
-
-        {/* Header */}
+    // Total section: 810px tall, pink bg, flex column
+    <section
+      style={{ backgroundColor: '#FCE4EB', height: '810px' }}
+      className="flex flex-col overflow-hidden"
+    >
+      {/* ── ZONE 1: Header text — padded from section edge ── */}
+      <div className="mx-auto w-full max-w-[1324px] px-5 pt-10 pb-7 flex-shrink-0">
         <motion.div
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }}
-          className="mb-6"
         >
           <h2
             className="text-fg-1 uppercase leading-none"
@@ -214,33 +211,39 @@ function ThisJustIn() {
             Shop the best brands from our new arrivals
           </p>
         </motion.div>
+      </div>
 
-        {/* Arrow + strip + arrow — all inline, contained in 1324px */}
-        <div className="flex items-center gap-3">
+      {/* ── ZONE 2: Card carousel — exactly 1324px × 407px ── */}
+      <div
+        className="mx-auto w-full max-w-[1324px] flex-shrink-0"
+        style={{ height: '407px' }}
+      >
+        {/* flex row: [arrow][gap][strip fills remaining][gap][arrow] */}
+        <div className="flex items-center h-full gap-3 px-3">
 
-          {/* Left arrow — bare black vector, no frame */}
+          {/* Left arrow — bare black vector */}
           <button
             onClick={() => scroll('left')}
-            className="flex-shrink-0 p-0 text-fg-1 hover:text-black transition-colors"
+            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll left"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
           </button>
 
-          {/* Card strip — fills all remaining space */}
+          {/* Scrollable card strip — flex-1 fills between the two arrows */}
           <div
             ref={scrollRef}
-            className="flex flex-1 gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory"
+            className="flex flex-1 gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory h-full"
           >
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
                   <div
                     key={i}
-                    className="flex-shrink-0 snap-start"
-                    style={{ width: 'calc((100% - 48px) / 5)', minWidth: '140px' }}
+                    className="flex-shrink-0 snap-start h-full flex flex-col"
+                    style={{ width: 'calc((100% - 48px) / 5)', minWidth: '130px' }}
                   >
-                    <div className="skeleton h-[280px] w-full" />
-                    <div className="mt-2 space-y-1.5">
+                    <div className="skeleton flex-1 w-full" />
+                    <div className="mt-2 space-y-1.5 px-2 pb-2 flex-shrink-0">
                       <div className="skeleton h-2.5 w-3/4 rounded" />
                       <div className="skeleton h-2.5 w-1/3 rounded" />
                     </div>
@@ -251,15 +254,15 @@ function ThisJustIn() {
                   return (
                     <div
                       key={product.id}
-                      className="flex-shrink-0 snap-start"
-                      style={{ width: 'calc((100% - 48px) / 5)', minWidth: '140px' }}
+                      className="flex-shrink-0 snap-start h-full"
+                      style={{ width: 'calc((100% - 48px) / 5)', minWidth: '130px' }}
                     >
                       <Link
                         href={`/products/${product.slug}`}
-                        className="group block overflow-hidden bg-white hover:shadow-md transition-shadow duration-300"
+                        className="group flex flex-col h-full overflow-hidden bg-white hover:shadow-md transition-shadow duration-300"
                       >
-                        {/* Fixed-height image area */}
-                        <div className="relative h-[240px] md:h-[280px] w-full overflow-hidden bg-white">
+                        {/* Image — fills all height above the info row */}
+                        <div className="relative flex-1 overflow-hidden bg-white">
                           {imgUrl ? (
                             <Image
                               src={imgUrl}
@@ -269,15 +272,13 @@ function ThisJustIn() {
                               sizes="(max-width:640px) 44vw, 20vw"
                             />
                           ) : (
-                            <div className="flex h-full items-center justify-center bg-[#F5F1EC]">
-                              <div className="h-10 w-10 rounded-full bg-[#EDE8E1]" />
-                            </div>
+                            <div className="flex h-full items-center justify-center bg-[#F5F1EC]" />
                           )}
                         </div>
-                        {/* Name + price */}
-                        <div className="px-3 py-2.5">
-                          <p className="truncate text-[11px] text-fg-2">{product.name}</p>
-                          <p className="mt-0.5 text-[11px] font-semibold text-fg-1">
+                        {/* Name + price — fixed height, left-aligned */}
+                        <div className="flex-shrink-0 px-3 py-3 text-left">
+                          <p className="truncate text-[11px] text-fg-2 text-left">{product.name}</p>
+                          <p className="mt-1 text-[11px] font-semibold text-fg-1 text-left">
                             ₹{product.basePrice.toLocaleString('en-IN')}
                           </p>
                         </div>
@@ -287,27 +288,27 @@ function ThisJustIn() {
                 })}
           </div>
 
-          {/* Right arrow — bare black vector, no frame */}
+          {/* Right arrow — bare black vector */}
           <button
             onClick={() => scroll('right')}
-            className="flex-shrink-0 p-0 text-fg-1 hover:text-black transition-colors"
+            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll right"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
           </button>
         </div>
-
-        {/* CTA — transparent outlined pill, 16px top/bottom padding */}
-        <div className="mt-7 flex justify-center">
-          <Link
-            href="/products"
-            className="rounded-full border border-fg-1 bg-transparent px-12 py-4 text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
-          >
-            Shop Now
-          </Link>
-        </div>
-
       </div>
+
+      {/* ── ZONE 3: Bottom padding — CTA centered in remaining space ── */}
+      <div className="flex flex-1 items-center justify-center">
+        <Link
+          href="/products"
+          className="rounded-full border border-fg-1 bg-transparent px-12 py-4 text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
+        >
+          Shop Now
+        </Link>
+      </div>
+
     </section>
   )
 }
