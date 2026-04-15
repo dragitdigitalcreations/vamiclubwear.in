@@ -11,25 +11,31 @@ const router = Router()
 // ── GET /api/admin/test-email — smoke-test SMTP config (ADMIN only) ──────────
 router.get('/test-email', async (_req: Request, res: Response) => {
   const user = process.env.SMTP_USER
-  const pass = process.env.SMTP_PASS
+  const pass = (process.env.SMTP_PASS ?? '').replace(/\s/g, '') // strip any accidental spaces
   if (!user || !pass) {
     res.status(500).json({ ok: false, error: 'SMTP_USER or SMTP_PASS not set in environment' })
     return
   }
   try {
+    // Port 587 + STARTTLS — works on Railway where 465/SSL is often blocked
     const t = nodemailer.createTransport({
-      host:   process.env.SMTP_HOST ?? 'smtp.gmail.com',
-      port:   Number(process.env.SMTP_PORT ?? 465),
-      secure: Number(process.env.SMTP_PORT ?? 465) === 465,
-      auth:   { user, pass },
+      host:           'smtp.gmail.com',
+      port:           587,
+      secure:         false,
+      requireTLS:     true,
+      connectionTimeout: 8000,
+      greetingTimeout:   8000,
+      auth: { user, pass },
     })
-    await t.verify()
-    await t.sendMail({
-      from:    `Vami Clubwear <${user}>`,
-      to:      user,
-      subject: 'Vami Clubwear — SMTP test ✓',
-      text:    'SMTP is working correctly. You will receive order, shipment and delivery emails.',
-    })
+    await Promise.race([
+      t.sendMail({
+        from:    `Vami Clubwear <${user}>`,
+        to:      user,
+        subject: 'Vami Clubwear — SMTP test ✓',
+        text:    'SMTP is working. Order, shipment and delivery emails are live.',
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout after 10s — check Railway outbound rules or credentials')), 10000)),
+    ])
     res.json({ ok: true, message: `Test email sent to ${user}` })
   } catch (err: any) {
     res.status(500).json({ ok: false, error: err.message ?? String(err) })
