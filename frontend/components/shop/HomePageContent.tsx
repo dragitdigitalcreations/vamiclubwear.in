@@ -356,16 +356,16 @@ function CategorySection() {
           </p>
         </motion.div>
 
-        {/* Card strip — 4 cards fill full 1242px width */}
-        <div className="flex gap-3 overflow-x-auto no-scrollbar" style={{ height: '310px' }}>
+        {/* Card strip — 4 cards fill full 1242px, 112px gap (100px added to base 12px) */}
+        <div className="flex overflow-x-auto no-scrollbar" style={{ height: '310px', gap: '112px' }}>
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 36px) / 4)' }}>
+                <div key={i} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 336px) / 4)' }}>
                   <HomeCardSkeleton />
                 </div>
               ))
             : products.map((product) => (
-                <div key={product.id} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 36px) / 4)' }}>
+                <div key={product.id} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 336px) / 4)' }}>
                   <HomeCard product={product} />
                 </div>
               ))}
