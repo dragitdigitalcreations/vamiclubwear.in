@@ -1,44 +1,35 @@
 /**
- * Email service using Nodemailer (Gmail App Password or any SMTP).
+ * Email service via Resend (HTTP API — works on Railway which blocks SMTP).
  *
  * Required env vars:
- *   SMTP_USER   — Gmail address  e.g.  vami.clubwear@gmail.com
- *   SMTP_PASS   — Gmail App Password (16-char, no spaces) from
- *                 Google Account → Security → 2-Step Verification → App Passwords
+ *   RESEND_API_KEY  — from resend.com dashboard
  *
  * Optional:
- *   SMTP_FROM       — "Vami Clubwear <vami.clubwear@gmail.com>"
- *   STORE_EMAIL     — admin notification recipient (defaults to SMTP_USER)
- *   SMTP_HOST       — override host (default: smtp.gmail.com)
- *   SMTP_PORT       — override port (default: 465)
+ *   RESEND_FROM     — sender address, default: orders@vamiclubwear.in
+ *                     Must match a verified domain in your Resend account.
+ *   STORE_EMAIL     — admin notification recipient, default: vamiclubwear@gmail.com
  */
 
-import nodemailer from 'nodemailer'
-import type { Transporter } from 'nodemailer'
+import { Resend } from 'resend'
 
-let _transporter: Transporter | null = null
+let _resend: Resend | null = null
 
-function getTransporter(): Transporter | null {
-  if (_transporter) return _transporter
-  const user = process.env.SMTP_USER
-  const pass = process.env.SMTP_PASS
-  if (!user || !pass) return null
-
-  _transporter = nodemailer.createTransport({
-    host:       process.env.SMTP_HOST ?? 'smtp.gmail.com',
-    port:       Number(process.env.SMTP_PORT ?? 587),
-    secure:     false,
-    requireTLS: true,
-    family:     4,   // force IPv4 — Railway has no IPv6 route to Gmail
-    auth:       { user, pass: pass.replace(/\s/g, '') },
-  } as any)
-  return _transporter
+function getResend(): Resend | null {
+  if (_resend) return _resend
+  const key = process.env.RESEND_API_KEY
+  if (!key) return null
+  _resend = new Resend(key)
+  return _resend
 }
 
-const from = () =>
-  process.env.SMTP_FROM ?? `Vami Clubwear <${process.env.SMTP_USER ?? 'noreply@vamiclubwear.in'}>`
+const from = () => process.env.RESEND_FROM ?? 'Vami Clubwear <orders@vamiclubwear.in>'
+const storeEmail = () => process.env.STORE_EMAIL ?? 'vamiclubwear@gmail.com'
 
-const storeEmail = () => process.env.STORE_EMAIL ?? process.env.SMTP_USER ?? ''
+async function send(to: string, subject: string, html: string, text: string) {
+  const r = getResend()
+  if (!r) return   // silently skip if key not configured
+  await r.emails.send({ from: from(), to, subject, html, text })
+}
 
 // ─── Shared layout ────────────────────────────────────────────────────────────
 
@@ -118,9 +109,7 @@ function buildOrderRows(items: OrderItem[]): string {
 }
 
 export async function sendOrderConfirmationToCustomer(data: OrderEmailData): Promise<void> {
-  const t = getTransporter()
-  if (!t || !data.customerEmail) return
-
+  if (!data.customerEmail) return
   const html = wrapHtml(`
     <div class="body">
       <h2>Thank you for your order${data.customerName ? `, ${data.customerName.split(' ')[0]}` : ''}!</h2>
@@ -145,21 +134,13 @@ export async function sendOrderConfirmationToCustomer(data: OrderEmailData): Pro
       </p>
     </div>
   `)
-
-  await t.sendMail({
-    from: from(),
-    to:   data.customerEmail,
-    subject: `Order Confirmed — ${data.orderNumber} | Vami Clubwear`,
-    html,
-    text: `Thank you for your order ${data.orderNumber}! Total: ₹${data.total.toLocaleString('en-IN')}. Our team will contact you shortly.`,
-  })
+  await send(data.customerEmail, `Order Confirmed — ${data.orderNumber} | Vami Clubwear`, html,
+    `Thank you for your order ${data.orderNumber}! Total: ₹${data.total.toLocaleString('en-IN')}. Our team will contact you shortly.`)
 }
 
 export async function sendOrderNotificationToStore(data: OrderEmailData): Promise<void> {
-  const t  = getTransporter()
   const to = storeEmail()
-  if (!t || !to) return
-
+  if (!to) return
   const html = wrapHtml(`
     <div class="body">
       <h2>New Order Received</h2>
@@ -180,14 +161,8 @@ export async function sendOrderNotificationToStore(data: OrderEmailData): Promis
       </table>
     </div>
   `)
-
-  await t.sendMail({
-    from: from(),
-    to,
-    subject: `[NEW ORDER] ${data.orderNumber} — ₹${data.total.toLocaleString('en-IN')}`,
-    html,
-    text: `New order ${data.orderNumber} — ₹${data.total.toLocaleString('en-IN')}`,
-  })
+  await send(to, `[NEW ORDER] ${data.orderNumber} — ₹${data.total.toLocaleString('en-IN')}`, html,
+    `New order ${data.orderNumber} — ₹${data.total.toLocaleString('en-IN')}`)
 }
 
 // ─── Shipment created (to customer) ──────────────────────────────────────────
@@ -198,9 +173,7 @@ interface ShipmentEmailData extends OrderEmailData {
 }
 
 export async function sendShipmentCreatedEmail(data: ShipmentEmailData): Promise<void> {
-  const t = getTransporter()
-  if (!t || !data.customerEmail) return
-
+  if (!data.customerEmail) return
   const html = wrapHtml(`
     <div class="body">
       <h2>Your order is on its way${data.customerName ? `, ${data.customerName.split(' ')[0]}` : ''}!</h2>
@@ -238,14 +211,8 @@ export async function sendShipmentCreatedEmail(data: ShipmentEmailData): Promise
       </p>
     </div>
   `)
-
-  await t.sendMail({
-    from: from(),
-    to:   data.customerEmail,
-    subject: `Your order ${data.orderNumber} has been shipped! 🚚`,
-    html,
-    text: `Your order ${data.orderNumber} has been shipped. AWB: ${data.awbNumber}. Track at: ${data.trackingUrl}`,
-  })
+  await send(data.customerEmail, `Your order ${data.orderNumber} has been shipped!`, html,
+    `Your order ${data.orderNumber} has been shipped. AWB: ${data.awbNumber}. Track at: ${data.trackingUrl}`)
 }
 
 // ─── Delivery confirmation (to customer) ─────────────────────────────────────
@@ -258,9 +225,7 @@ interface DeliveryEmailData {
 }
 
 export async function sendDeliveryConfirmationEmail(data: DeliveryEmailData): Promise<void> {
-  const t = getTransporter()
-  if (!t || !data.customerEmail) return
-
+  if (!data.customerEmail) return
   const html = wrapHtml(`
     <div class="body">
       <h2>Order Delivered${data.customerName ? ` — Thank you, ${data.customerName.split(' ')[0]}` : ''}!</h2>
@@ -275,14 +240,8 @@ export async function sendDeliveryConfirmationEmail(data: DeliveryEmailData): Pr
       </p>
     </div>
   `)
-
-  await t.sendMail({
-    from: from(),
-    to:   data.customerEmail,
-    subject: `Delivered: Order ${data.orderNumber} | Vami Clubwear`,
-    html,
-    text: `Your order ${data.orderNumber} has been delivered. Thank you for shopping with Vami Clubwear!`,
-  })
+  await send(data.customerEmail, `Delivered: Order ${data.orderNumber} | Vami Clubwear`, html,
+    `Your order ${data.orderNumber} has been delivered. Thank you for shopping with Vami Clubwear!`)
 }
 
 // ─── Admin invite email ───────────────────────────────────────────────────────
@@ -294,9 +253,6 @@ export async function sendAdminInvite(opts: {
   tempPass: string
   loginUrl: string
 }): Promise<void> {
-  const t = getTransporter()
-  if (!t) return
-
   const html = wrapHtml(`
     <div class="body">
       <h2>You've been added to Vami Clubwear Admin</h2>
@@ -319,12 +275,6 @@ export async function sendAdminInvite(opts: {
       </p>
     </div>
   `)
-
-  await t.sendMail({
-    from: from(),
-    to:   opts.to,
-    subject: `You've been invited to Vami Clubwear Admin`,
-    html,
-    text: `You've been invited. Email: ${opts.to}, Password: ${opts.tempPass}. Login at: ${opts.loginUrl}`,
-  })
+  await send(opts.to, `You've been invited to Vami Clubwear Admin`, html,
+    `You've been invited. Email: ${opts.to}, Password: ${opts.tempPass}. Login at: ${opts.loginUrl}`)
 }

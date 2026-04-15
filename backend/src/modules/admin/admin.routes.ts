@@ -3,41 +3,29 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { requireAuth, requireAdmin } from '../../middleware/auth'
 import { prisma } from '../../lib/prisma'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 import { sendAdminInvite } from '../../lib/email'
 
 const router = Router()
 
-// ── GET /api/admin/test-email — smoke-test SMTP config (ADMIN only) ──────────
+// ── GET /api/admin/test-email — smoke-test Resend config ─────────────────────
 router.get('/test-email', async (_req: Request, res: Response) => {
-  const user = process.env.SMTP_USER
-  const pass = (process.env.SMTP_PASS ?? '').replace(/\s/g, '') // strip any accidental spaces
-  if (!user || !pass) {
-    res.status(500).json({ ok: false, error: 'SMTP_USER or SMTP_PASS not set in environment' })
+  const key = process.env.RESEND_API_KEY
+  if (!key) {
+    res.status(500).json({ ok: false, error: 'RESEND_API_KEY not set in environment' })
     return
   }
   try {
-    // Port 587 + STARTTLS — works on Railway where 465/SSL is often blocked
-    const t = nodemailer.createTransport({
-      host:              'smtp.gmail.com',
-      port:              587,
-      secure:            false,
-      requireTLS:        true,
-      connectionTimeout: 8000,
-      greetingTimeout:   8000,
-      auth:              { user, pass },
-      family:            4,    // force IPv4 — not in @types but nodemailer passes it to net.connect
-    } as any)
-    await Promise.race([
-      t.sendMail({
-        from:    `Vami Clubwear <${user}>`,
-        to:      user,
-        subject: 'Vami Clubwear — SMTP test ✓',
-        text:    'SMTP is working. Order, shipment and delivery emails are live.',
-      }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP timeout after 10s — check Railway outbound rules or credentials')), 10000)),
-    ])
-    res.json({ ok: true, message: `Test email sent to ${user}` })
+    const resend = new Resend(key)
+    const from   = process.env.RESEND_FROM ?? 'Vami Clubwear <orders@vamiclubwear.in>'
+    const to     = process.env.STORE_EMAIL ?? 'vamiclubwear@gmail.com'
+    await resend.emails.send({
+      from,
+      to,
+      subject: 'Vami Clubwear — Email test ✓',
+      text:    'Resend is working. Order, shipment and delivery emails are live.',
+    })
+    res.json({ ok: true, message: `Test email sent to ${to}` })
   } catch (err: any) {
     res.status(500).json({ ok: false, error: err.message ?? String(err) })
   }
