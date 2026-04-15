@@ -25,11 +25,13 @@ function getTransporter(): Transporter | null {
   if (!user || !pass) return null
 
   _transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST ?? 'smtp.gmail.com',
-    port: Number(process.env.SMTP_PORT ?? 465),
-    secure: Number(process.env.SMTP_PORT ?? 465) === 465,
-    auth: { user, pass },
-  })
+    host:       process.env.SMTP_HOST ?? 'smtp.gmail.com',
+    port:       Number(process.env.SMTP_PORT ?? 587),
+    secure:     false,
+    requireTLS: true,
+    family:     4,   // force IPv4 — Railway has no IPv6 route to Gmail
+    auth:       { user, pass: pass.replace(/\s/g, '') },
+  } as any)
   return _transporter
 }
 

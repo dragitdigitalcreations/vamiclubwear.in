@@ -19,14 +19,15 @@ router.get('/test-email', async (_req: Request, res: Response) => {
   try {
     // Port 587 + STARTTLS — works on Railway where 465/SSL is often blocked
     const t = nodemailer.createTransport({
-      host:           'smtp.gmail.com',
-      port:           587,
-      secure:         false,
-      requireTLS:     true,
+      host:              'smtp.gmail.com',
+      port:              587,
+      secure:            false,
+      requireTLS:        true,
       connectionTimeout: 8000,
       greetingTimeout:   8000,
-      auth: { user, pass },
-    })
+      auth:              { user, pass },
+      family:            4,    // force IPv4 — not in @types but nodemailer passes it to net.connect
+    } as any)
     await Promise.race([
       t.sendMail({
         from:    `Vami Clubwear <${user}>`,
