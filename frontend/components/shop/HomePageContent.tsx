@@ -324,8 +324,8 @@ function CategorySection() {
       style={{ backgroundColor: '#ADAEF1', height: '810px' }}
       className="flex flex-col overflow-hidden"
     >
-      {/* ── ZONE 1: Header ── */}
-      <div className="mx-auto w-full max-w-[1242px] px-5 pt-10 pb-7 flex-shrink-0">
+      {/* ── ZONE 1: Header — no horizontal padding so text aligns with card strip left ── */}
+      <div className="mx-auto w-full max-w-[1242px] pt-10 pb-7 flex-shrink-0">
         <motion.div
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }}
@@ -352,7 +352,7 @@ function CategorySection() {
         className="mx-auto w-full max-w-[1242px] flex-shrink-0"
         style={{ height: '310px' }}
       >
-        <div className="flex h-full gap-3">
+        <div className="flex h-full gap-3 overflow-x-auto no-scrollbar">
           {loading
             ? Array.from({ length: 4 }).map((_, i) => <HomeCardSkeleton key={i} />)
             : products.map((product) => <HomeCard key={product.id} product={product} />)}
@@ -546,7 +546,7 @@ function FeaturedProducts() {
           View All <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </motion.div>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex overflow-x-auto no-scrollbar gap-3">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => <HomeCardSkeleton key={i} />)
           : products.map((product) => <HomeCard key={product.id} product={product} />)}
@@ -589,7 +589,7 @@ function TrendingSection() {
           View All <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </motion.div>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex overflow-x-auto no-scrollbar gap-3">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => <HomeCardSkeleton key={i} />)
           : products.map((product) => <HomeCard key={product.id} product={product} />)}
