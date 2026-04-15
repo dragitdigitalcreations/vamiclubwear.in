@@ -191,7 +191,7 @@ function ThisJustIn() {
       className="flex flex-col overflow-hidden"
     >
       {/* ── ZONE 1: Header text — padded from section edge ── */}
-      <div className="mx-auto w-full max-w-[1324px] px-5 pt-10 pb-7 flex-shrink-0">
+      <div className="mx-auto w-full max-w-[1242px] px-5 pt-10 pb-7 flex-shrink-0">
         <motion.div
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }}
@@ -213,13 +213,13 @@ function ThisJustIn() {
         </motion.div>
       </div>
 
-      {/* ── ZONE 2: Card carousel — exactly 1324px × 407px ── */}
+      {/* ── ZONE 2: Card carousel — exactly 1242px × 407px, zero side padding ── */}
       <div
-        className="mx-auto w-full max-w-[1324px] flex-shrink-0"
+        className="mx-auto w-full max-w-[1242px] flex-shrink-0"
         style={{ height: '407px' }}
       >
-        {/* flex row: [arrow][gap][strip fills remaining][gap][arrow] */}
-        <div className="flex items-center h-full gap-3 px-3">
+        {/* flex row: [arrow][gap][strip fills remaining][gap][arrow] — no side padding */}
+        <div className="flex items-center h-full gap-3">
 
           {/* Left arrow — bare black vector */}
           <button
@@ -307,6 +307,108 @@ function ThisJustIn() {
         >
           Shop Now
         </Link>
+      </div>
+
+    </section>
+  )
+}
+
+// ─── Category Section — blue (#ADAEF1), 4-card strip ─────────────────────────
+function CategorySection() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading,  setLoading]  = useState(true)
+
+  useEffect(() => {
+    productsApi.list({ isActive: 'true', limit: 4 })
+      .then((res) => setProducts(((res as any).data ?? []).slice(0, 4)))
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  return (
+    <section
+      style={{ backgroundColor: '#ADAEF1', height: '810px' }}
+      className="flex flex-col overflow-hidden"
+    >
+      {/* ── ZONE 1: Header ── */}
+      <div className="mx-auto w-full max-w-[1242px] px-5 pt-10 pb-7 flex-shrink-0">
+        <motion.div
+          variants={fadeUp} initial="hidden" whileInView="visible"
+          viewport={{ once: true }}
+        >
+          <h2
+            className="text-fg-1 uppercase leading-none"
+            style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 200,
+              fontSize: 'clamp(34px, 4.5vw, 56px)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Shop by Category
+          </h2>
+          <p className="mt-2 text-fg-3 text-[12px] leading-relaxed">
+            Explore our curated collections
+          </p>
+        </motion.div>
+      </div>
+
+      {/* ── ZONE 2: Card strip — 1242px × 407px, zero side padding, 4 cards ── */}
+      <div
+        className="mx-auto w-full max-w-[1242px] flex-shrink-0"
+        style={{ height: '407px' }}
+      >
+        <div className="flex h-full gap-3">
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 h-full flex flex-col"
+                  style={{ width: 'calc((100% - 36px) / 4)', minWidth: '130px' }}
+                >
+                  <div className="skeleton flex-1 w-full" />
+                  <div className="mt-2 space-y-1.5 px-2 pb-2 flex-shrink-0">
+                    <div className="skeleton h-2.5 w-3/4 rounded" />
+                    <div className="skeleton h-2.5 w-1/3 rounded" />
+                  </div>
+                </div>
+              ))
+            : products.map((product) => {
+                const imgUrl = getPrimaryImage(product)
+                return (
+                  <div
+                    key={product.id}
+                    className="flex-shrink-0 h-full"
+                    style={{ width: 'calc((100% - 36px) / 4)', minWidth: '130px' }}
+                  >
+                    <Link
+                      href={`/products/${product.slug}`}
+                      className="group flex flex-col h-full overflow-hidden bg-white hover:shadow-md transition-shadow duration-300"
+                    >
+                      <div className="relative flex-1 overflow-hidden bg-white">
+                        {imgUrl ? (
+                          <Image
+                            src={imgUrl}
+                            alt={product.name}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                            sizes="(max-width:640px) 44vw, 25vw"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center bg-[#F5F1EC]" />
+                        )}
+                      </div>
+                      <div className="flex-shrink-0 px-3 py-3 text-left">
+                        <p className="truncate text-[11px] text-fg-2 text-left">{product.name}</p>
+                        <p className="mt-1 text-[11px] font-semibold text-fg-1 text-left">
+                          ₹{product.basePrice.toLocaleString('en-IN')}
+                        </p>
+                      </div>
+                    </Link>
+                  </div>
+                )
+              })}
+        </div>
       </div>
 
     </section>
@@ -703,6 +805,7 @@ export function HomePageContent() {
       <AnnouncementBar />
       <HeroSection />
       <ThisJustIn />
+      <CategorySection />
       <CollectionsGrid />
       <FeaturedProducts />
       <TrendingSection />
