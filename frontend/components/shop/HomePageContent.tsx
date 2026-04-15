@@ -1,11 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { ArrowRight, ChevronLeft, ChevronRight, Truck, RotateCcw, Zap } from 'lucide-react'
 import { productsApi } from '@/lib/api'
 import { ProductCard } from '@/components/shop/ProductCard'
+import { getPrimaryImage } from '@/types/product'
 import type { Product } from '@/types/product'
 
 // ─── Shared animation ─────────────────────────────────────────────────────────
@@ -164,6 +166,146 @@ function HeroSection() {
 }
 
 
+
+// ─── This Just In — pink horizontal product scroll ────────────────────────────
+function ThisJustIn() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading,  setLoading]  = useState(true)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    productsApi.list({ isActive: 'true', limit: 12 })
+      .then((res) => setProducts((res as any).data ?? []))
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const scroll = useCallback((dir: 'left' | 'right') => {
+    scrollRef.current?.scrollBy({ left: dir === 'right' ? 340 : -340, behavior: 'smooth' })
+  }, [])
+
+  return (
+    <section className="py-14 md:py-20" style={{ backgroundColor: '#FCE4EB' }}>
+      <div className="mx-auto max-w-[1400px] px-8 md:px-12">
+
+        {/* Header */}
+        <motion.div
+          variants={fadeUp} initial="hidden" whileInView="visible"
+          viewport={{ once: true }}
+          className="mb-10"
+        >
+          <h2
+            className="text-fg-1 uppercase leading-none"
+            style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 800,
+              fontSize: 'clamp(38px, 5.5vw, 64px)',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            This Just In
+          </h2>
+          <p
+            className="mt-3 text-fg-3 leading-relaxed"
+            style={{ fontSize: '13px', maxWidth: '170px' }}
+          >
+            Shop the best brands from our new arrivals
+          </p>
+        </motion.div>
+
+        {/* Horizontal scroll + arrows */}
+        <div className="relative">
+
+          {/* Left arrow */}
+          <button
+            onClick={() => scroll('left')}
+            className="absolute -left-5 top-[42%] z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-sm hover:shadow-md transition-all duration-200"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="h-4 w-4 text-fg-2" />
+          </button>
+
+          {/* Card row */}
+          <div
+            ref={scrollRef}
+            className="flex gap-3 overflow-x-auto pb-1 no-scrollbar snap-x snap-mandatory"
+          >
+            {loading
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="flex-shrink-0 w-[140px] md:w-[160px] snap-start">
+                    <div className="skeleton aspect-[3/4] w-full rounded-sm" />
+                    <div className="mt-2.5 space-y-1.5 px-1">
+                      <div className="skeleton h-3 w-3/4 rounded" />
+                      <div className="skeleton h-3 w-1/3 rounded" />
+                    </div>
+                  </div>
+                ))
+              : products.map((product, i) => {
+                  const imgUrl = getPrimaryImage(product)
+                  return (
+                    <motion.div
+                      key={product.id}
+                      variants={fadeUp} initial="hidden" whileInView="visible"
+                      viewport={{ once: true, margin: '-20px' }} custom={i * 0.06}
+                      className="flex-shrink-0 w-[140px] md:w-[160px] snap-start"
+                    >
+                      <Link
+                        href={`/products/${product.slug}`}
+                        className="group block overflow-hidden bg-white hover:shadow-lg transition-shadow duration-300"
+                      >
+                        {/* Image */}
+                        <div className="relative aspect-[3/4] overflow-hidden bg-white">
+                          {imgUrl ? (
+                            <Image
+                              src={imgUrl}
+                              alt={product.name}
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                              sizes="160px"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              <div className="h-10 w-10 rounded-full bg-surface-elevated" />
+                            </div>
+                          )}
+                        </div>
+                        {/* Info */}
+                        <div className="px-3 py-2.5">
+                          <p className="truncate text-[11px] text-fg-2">{product.name}</p>
+                          <p className="mt-0.5 text-[11px] font-semibold text-fg-1">
+                            ₹{product.basePrice.toLocaleString('en-IN')}
+                          </p>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  )
+                })}
+          </div>
+
+          {/* Right arrow */}
+          <button
+            onClick={() => scroll('right')}
+            className="absolute -right-5 top-[42%] z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-sm hover:shadow-md transition-all duration-200"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="h-4 w-4 text-fg-2" />
+          </button>
+        </div>
+
+        {/* CTA — transparent outlined pill */}
+        <div className="mt-10 flex justify-center">
+          <Link
+            href="/products"
+            className="rounded-full border border-fg-1 bg-transparent px-12 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
+          >
+            Shop Now
+          </Link>
+        </div>
+
+      </div>
+    </section>
+  )
+}
 
 // ─── About section ────────────────────────────────────────────────────────────
 function AboutSection() {
@@ -340,43 +482,6 @@ function ProductGrid({ products, loading, cols = 4 }: { products: Product[]; loa
             </motion.div>
           ))}
     </div>
-  )
-}
-
-// ─── New Arrivals ─────────────────────────────────────────────────────────────
-function NewArrivalsSection() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading,  setLoading]  = useState(true)
-
-  useEffect(() => {
-    productsApi.list({ isActive: 'true', limit: 8 })
-      .then((res) => setProducts((res as any).data ?? []))
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false))
-  }, [])
-
-  if (!loading && products.length === 0) return null
-
-  return (
-    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-10">
-      <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
-        viewport={{ once: true, margin: '-60px' }}
-        className="mb-10 flex items-end justify-between">
-        <div>
-          <p className="mb-1 t-micro">Just Dropped</p>
-          <h2 className="t-h1">New Arrivals</h2>
-        </div>
-        <Link href="/products" className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
-          View All <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </motion.div>
-      <ProductGrid products={products} loading={loading} cols={4} />
-      <div className="mt-8 flex justify-center md:hidden">
-        <Link href="/products" className="inline-flex items-center gap-2 border border-border px-8 py-3 text-xs font-semibold uppercase tracking-widest text-on-background hover:bg-surface-elevated transition-all">
-          View All <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-    </section>
   )
 }
 
@@ -591,8 +696,8 @@ export function HomePageContent() {
     <>
       <AnnouncementBar />
       <HeroSection />
+      <ThisJustIn />
       <CollectionsGrid />
-      <NewArrivalsSection />
       <FeaturedProducts />
       <TrendingSection />
       <VideoShowcase />
