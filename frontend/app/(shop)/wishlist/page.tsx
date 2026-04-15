@@ -19,7 +19,7 @@ export default function WishlistPage() {
   const { items, removeItem } = useWishlistStore()
 
   return (
-    <div className="pt-16 min-h-screen">
+    <div className="pt-24 min-h-screen">
       {/* ── Header ── */}
       <div className="border-b border-border">
         <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10">

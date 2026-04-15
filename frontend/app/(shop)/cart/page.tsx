@@ -22,7 +22,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="pt-16 flex min-h-[70vh] flex-col items-center justify-center gap-6 px-4 text-center">
+      <div className="pt-24 flex min-h-[70vh] flex-col items-center justify-center gap-6 px-4 text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface-elevated">
           <ShoppingBag className="h-8 w-8 text-muted opacity-40" />
         </div>
@@ -43,7 +43,7 @@ export default function CartPage() {
   const total    = subtotal + shipping
 
   return (
-    <div className="pt-16 min-h-screen">
+    <div className="pt-24 min-h-screen">
 
       {/* Page header */}
       <div className="border-b border-border">
@@ -152,7 +152,7 @@ export default function CartPage() {
             variants={fadeUp} initial="hidden" animate="visible"
             className="lg:col-span-1"
           >
-            <div className="border border-border bg-surface p-6 space-y-5 lg:sticky lg:top-20">
+            <div className="border border-border bg-surface p-6 space-y-5 lg:sticky lg:top-[100px]">
               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-on-background">Order Summary</h2>
 
               <div className="space-y-3 text-sm">

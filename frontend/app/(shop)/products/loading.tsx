@@ -1,7 +1,7 @@
 // Products listing route-level loading skeleton
 export default function ProductsLoading() {
   return (
-    <div className="pt-16">
+    <div className="pt-24">
       {/* Header */}
       <div className="border-b border-border px-4 sm:px-6 md:px-8 lg:px-10 py-10">
         <div className="mx-auto w-full">

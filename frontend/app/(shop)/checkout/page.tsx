@@ -221,7 +221,7 @@ export default function CheckoutPage() {
   // ── Order confirmed ────────────────────────────────────────────────────────
   if (confirmed) {
     return (
-      <div className="pt-16 min-h-screen">
+      <div className="pt-24 min-h-screen">
         <div className="mx-auto w-full max-w-lg px-4 py-20 flex flex-col items-center text-center gap-6">
           <motion.div
             initial={{ scale: 0 }} animate={{ scale: 1 }}
@@ -259,7 +259,7 @@ export default function CheckoutPage() {
 
   // ── Checkout form ──────────────────────────────────────────────────────────
   return (
-    <div className="pt-16 min-h-screen">
+    <div className="pt-24 min-h-screen">
 
       {/* Page header */}
       <div className="border-b border-border">

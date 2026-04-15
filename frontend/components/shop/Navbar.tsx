@@ -21,27 +21,25 @@ const CATEGORIES = [
   { slug: 'duppatta',      label: 'Duppatta'      },
 ]
 
+const NAV_PILLS = [
+  { href: '/',                           label: 'Home'     },
+  { href: '/products',                   label: 'Explore'  },
+  { href: '/products?category=big-size', label: 'Big Size' },
+]
+
 export function Navbar() {
-  const [scrolled,    setScrolled]    = useState(false)
   const [mobileOpen,  setMobileOpen]  = useState(false)
   const [catDropOpen, setCatDropOpen] = useState(false)
   const [searchOpen,  setSearchOpen]  = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  const catDropRef    = useRef<HTMLDivElement>(null)
+  const catDropRef     = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const router   = useRouter()
   const pathname = usePathname()
 
   const totalItems    = useCartStore(selectTotalItems)
   const wishlistCount = useWishlistStore(selectWishlistCount)
-
-  // Scroll detection
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   // Close on route change
   useEffect(() => {
@@ -82,134 +80,151 @@ export function Navbar() {
     setMobileOpen(false)
   }
 
-  // ── Shared nav-link style ──
-  const navLinkCls = [
-    'relative py-1 text-[11px] font-semibold uppercase tracking-[0.2em]',
-    'text-fg-2 hover:text-fg-1 transition-colors duration-200',
-    "after:content-[''] after:absolute after:bottom-0 after:left-0",
-    'after:h-px after:w-0 after:bg-brand',
-    'after:transition-[width] after:duration-300 hover:after:w-full',
-  ].join(' ')
-
-  // ── Header background style ──
-  const headerStyle = scrolled
-    ? { backgroundColor: 'rgba(250,248,245,0.97)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', boxShadow: '0 1px 0 0 rgba(0,0,0,0.06)' }
-    : { backgroundColor: 'transparent' }
+  // Active pill = outlined; inactive = solid black
+  function isActive(href: string) {
+    if (href === '/') return pathname === '/'
+    return pathname.startsWith(href.split('?')[0])
+  }
 
   return (
     <>
       {/* ══════════════════════ HEADER ══════════════════════ */}
-      <header
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
-        style={headerStyle}
-      >
-        {/* ── Main row — 3-column grid ── */}
-        <div className="mx-auto grid max-w-[1320px] grid-cols-[1fr_auto_1fr] h-16 items-center gap-4 px-4 md:px-8">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#FAF8F5]">
 
-          {/* ── Zone 1: Logo + mobile hamburger ── */}
-          <div className="flex items-center gap-3">
-            <button
-              className="md:hidden p-1.5 -ml-1.5 text-fg-3 hover:text-fg-1 transition-colors"
-              onClick={() => setMobileOpen(o => !o)}
-              aria-label="Toggle menu"
-            >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-            <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
-              <VamiLogo size="md" />
-            </Link>
-          </div>
+        {/* ── ROW 1: Logo + Nav pills ── */}
+        <div className="border-b border-border">
+          <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-5 md:px-10 h-14">
 
-          {/* ── Zone 2: Nav links (desktop center) ── */}
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="/" className={navLinkCls}>Home</Link>
-            <Link href="/products" className={navLinkCls}>Explore</Link>
-
-            {/* Category dropdown */}
-            <div ref={catDropRef} className="relative">
+            {/* Left: hamburger (mobile) + logo */}
+            <div className="flex items-center gap-3 flex-shrink-0">
               <button
-                onClick={() => setCatDropOpen(o => !o)}
-                className={cn(navLinkCls, 'flex items-center gap-1')}
+                className="md:hidden p-1.5 -ml-1 text-fg-3 hover:text-fg-1 transition-colors"
+                onClick={() => setMobileOpen(o => !o)}
+                aria-label="Toggle menu"
               >
-                Collections
-                <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', catDropOpen && 'rotate-180')} />
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
-
-              <AnimatePresence>
-                {catDropOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                    transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+14px)] w-48 bg-[#FAF8F5] border border-border shadow-z4 overflow-hidden py-2"
-                  >
-                    {CATEGORIES.map(cat => (
-                      <Link
-                        key={cat.slug}
-                        href={`/products?category=${cat.slug}`}
-                        onClick={() => setCatDropOpen(false)}
-                        className="block px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.12em] text-fg-2 hover:bg-surface-raised hover:text-fg-1 transition-colors duration-150"
-                      >
-                        {cat.label}
-                      </Link>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
+                <VamiLogo size="md" />
+              </Link>
             </div>
 
-            <Link href="/products?category=big-size" className={navLinkCls}>Big Size</Link>
-          </nav>
+            {/* Right: pill nav (desktop only) */}
+            <nav className="hidden md:flex items-center gap-2">
+              {NAV_PILLS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    'px-5 py-[7px] rounded-full text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-200',
+                    isActive(href)
+                      ? 'border border-fg-3 bg-transparent text-fg-1'
+                      : 'bg-fg-1 text-white hover:bg-[#2a2a2a]'
+                  )}
+                >
+                  {label}
+                </Link>
+              ))}
 
-          {/* ── Zone 3: Action icons ── */}
-          <div className="flex items-center justify-end gap-0">
+              {/* Collections pill — dropdown */}
+              <div ref={catDropRef} className="relative">
+                <button
+                  onClick={() => setCatDropOpen(o => !o)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-5 py-[7px] rounded-full text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-200',
+                    catDropOpen
+                      ? 'border border-fg-3 bg-transparent text-fg-1'
+                      : 'bg-fg-1 text-white hover:bg-[#2a2a2a]'
+                  )}
+                >
+                  Collections
+                  <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', catDropOpen && 'rotate-180')} />
+                </button>
 
-            {/* Search */}
+                <AnimatePresence>
+                  {catDropOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                      transition={{ duration: 0.15, ease: 'easeOut' }}
+                      className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+10px)] w-48 bg-[#FAF8F5] border border-border shadow-z4 rounded-xl overflow-hidden py-2"
+                    >
+                      {CATEGORIES.map(cat => (
+                        <Link
+                          key={cat.slug}
+                          href={`/products?category=${cat.slug}`}
+                          onClick={() => setCatDropOpen(false)}
+                          className="block px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.1em] text-fg-2 hover:bg-surface-elevated hover:text-fg-1 transition-colors duration-150"
+                        >
+                          {cat.label}
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </nav>
+          </div>
+        </div>
+
+        {/* ── ROW 2: Search icon (left) + Icons (right) ── */}
+        <div className="border-b border-border">
+          <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 md:px-10 h-10">
+
+            {/* Search icon — left */}
             <button
               onClick={() => setSearchOpen(o => !o)}
-              className="p-2.5 text-fg-3 hover:text-fg-1 transition-colors duration-200"
+              className="p-1 text-fg-3 hover:text-fg-1 transition-colors duration-200"
               aria-label="Search"
             >
-              <Search className="h-[18px] w-[18px]" />
+              <Search className="h-4 w-4" />
             </button>
 
-            {/* Wishlist */}
-            <Link
-              href="/wishlist"
-              className="relative p-2.5 text-fg-3 hover:text-fg-1 transition-colors duration-200"
-              aria-label={`Wishlist (${wishlistCount})`}
-            >
-              <Heart className={cn('h-[18px] w-[18px] transition-colors', wishlistCount > 0 && 'fill-brand stroke-brand')} />
-              {wishlistCount > 0 && (
-                <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand text-[8px] font-bold text-white">
-                  {wishlistCount > 9 ? '9+' : wishlistCount}
-                </span>
-              )}
-            </Link>
+            {/* Icons — right */}
+            <div className="flex items-center gap-4">
 
-            {/* Profile */}
-            <Link
-              href="/profile"
-              className="p-2.5 text-fg-3 hover:text-fg-1 transition-colors duration-200"
-              aria-label="My Profile"
-            >
-              <User className="h-[18px] w-[18px]" />
-            </Link>
+              {/* Cart bag */}
+              <Link
+                href="/cart"
+                className="relative p-1 text-fg-3 hover:text-fg-1 transition-colors duration-200"
+                aria-label={`Cart (${totalItems})`}
+              >
+                <ShoppingBag className="h-[17px] w-[17px]" />
+                {totalItems > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-fg-1 text-[8px] font-bold text-white">
+                    {totalItems > 9 ? '9+' : totalItems}
+                  </span>
+                )}
+              </Link>
 
-            {/* Cart */}
-            <Link
-              href="/cart"
-              className="relative p-2.5 text-fg-3 hover:text-fg-1 transition-colors duration-200"
-              aria-label={`Cart (${totalItems})`}
-            >
-              <ShoppingBag className="h-[18px] w-[18px]" />
-              {totalItems > 0 && (
-                <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-fg-1 text-[8px] font-bold text-white">
-                  {totalItems > 9 ? '9+' : totalItems}
+              {/* Profile — circle pill with chevron */}
+              <Link
+                href="/profile"
+                className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-fg-3 hover:text-fg-1 hover:border-fg-3 transition-all duration-200"
+                aria-label="My Profile"
+              >
+                <User className="h-3.5 w-3.5" />
+                <ChevronDown className="h-3 w-3" />
+              </Link>
+
+              {/* Wishlist — heart + text label */}
+              <Link
+                href="/wishlist"
+                className="flex items-center gap-1.5 text-fg-3 hover:text-fg-1 transition-colors duration-200"
+                aria-label={`Wishlist (${wishlistCount})`}
+              >
+                <Heart className={cn('h-[17px] w-[17px] transition-colors', wishlistCount > 0 && 'fill-brand stroke-brand')} />
+                <span className="hidden sm:inline text-[11px] font-medium tracking-wide text-fg-2">
+                  Wishlist
                 </span>
-              )}
-            </Link>
+                {wishlistCount > 0 && (
+                  <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand text-[8px] font-bold text-white">
+                    {wishlistCount > 9 ? '9+' : wishlistCount}
+                  </span>
+                )}
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -221,11 +236,11 @@ export function Navbar() {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-              className="overflow-hidden border-t border-border bg-[#FAF8F5]"
+              className="overflow-hidden border-b border-border bg-[#FAF8F5]"
             >
               <form
                 onSubmit={handleSearch}
-                className="mx-auto flex max-w-[1320px] items-center gap-4 px-4 md:px-8 py-4"
+                className="mx-auto flex max-w-[1400px] items-center gap-4 px-5 md:px-10 py-3"
               >
                 <Search className="h-4 w-4 flex-shrink-0 text-fg-4" />
                 <input
@@ -253,7 +268,6 @@ export function Navbar() {
       <AnimatePresence>
         {mobileOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
@@ -261,7 +275,6 @@ export function Navbar() {
               onClick={() => setMobileOpen(false)}
             />
 
-            {/* Drawer panel */}
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}

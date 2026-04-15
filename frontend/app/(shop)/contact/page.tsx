@@ -21,7 +21,7 @@ export default function ContactPage() {
 
   if (sent) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4 pt-20 text-center">
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4 pt-24 text-center">
         <CheckCircle className="h-14 w-14 text-green-400" />
         <h1 className="font-display text-3xl font-bold text-on-background">Message Received!</h1>
         <p className="text-muted max-w-sm text-sm">

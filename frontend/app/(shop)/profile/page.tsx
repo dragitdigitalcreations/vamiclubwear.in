@@ -337,7 +337,7 @@ export default function ProfilePage() {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MSG)}`
 
   return (
-    <div className="pt-16 min-h-screen">
+    <div className="pt-24 min-h-screen">
 
       {/* Page header */}
       <div className="border-b border-border">
