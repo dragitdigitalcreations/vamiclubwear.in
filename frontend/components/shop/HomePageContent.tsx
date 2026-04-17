@@ -522,56 +522,50 @@ function PromoSection() {
       style={{ height: '90vh', minHeight: '600px', maxHeight: '1000px' }}
     >
 
-      {/* z1: Right background — THE ONLY ANIMATED ELEMENT */}
-      <motion.div
-        className="absolute pointer-events-none"
-        style={{
-          width: '721px', height: '1008px',
-          right: 0, top: '-80px', zIndex: 1,
-          y: rightBgFinalY, x: rightBgMX,
-          scale: 1.05,
-          willChange: 'transform',
-        }}
-      >
-        <div className="w-full h-full" style={{
-          backgroundImage: 'url(/promo-b.jpg)',
-          backgroundSize: 'cover', backgroundPosition: 'center',
-          backgroundColor: '#3D2E22',
-        }} />
-      </motion.div>
-
-      {/* z2: Depth gradient */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        zIndex: 2,
-        background: 'linear-gradient(to right, rgba(18,18,18,0.65) 0%, rgba(18,18,18,0.12) 52%, transparent 100%)',
-      }} />
-
-      {/* z3: Left main image — STATIC */}
+      {/* ── z1: Left image — 50% width, fully static ── */}
       <div
         className="absolute pointer-events-none"
-        style={{ width: '719px', height: '795px', left: 0, bottom: '-40px', zIndex: 3 }}
+        style={{ left: 0, top: 0, width: '50%', height: '100%', zIndex: 1 }}
       >
         <div className="w-full h-full" style={{
           backgroundImage: 'url(/promo-a.jpg)',
-          backgroundSize: 'cover', backgroundPosition: 'center top',
+          backgroundSize: 'cover', backgroundPosition: 'center',
           backgroundColor: '#2D2420',
         }} />
+        {/* gradient for text legibility over left image */}
         <div className="absolute inset-0" style={{
-          background: 'linear-gradient(to right, transparent 55%, rgba(18,18,18,0.5) 100%)',
+          background: 'linear-gradient(to right, rgba(18,18,18,0.72) 0%, rgba(18,18,18,0.28) 70%, transparent 100%)',
         }} />
       </div>
 
-      {/* z4: Product card — static, bottom-left inside the right background frame */}
-      {/* right bg is 721px wide at right:0 → card left edge = 721-348-16 = 357px from right */}
+      {/* ── z2: Right background — 50% width, THE ONLY ANIMATED ELEMENT ── */}
+      {/* overflow:hidden clips the scale-expanded inner div at the container edge */}
+      <div
+        className="absolute pointer-events-none overflow-hidden"
+        style={{ right: 0, top: 0, width: '50%', height: '100%', zIndex: 2 }}
+      >
+        <motion.div
+          className="absolute inset-0"
+          style={{
+            scale: 1.2,   /* extra size absorbs ±75px travel without gap */
+            y: rightBgFinalY,
+            x: rightBgMX,
+            willChange: 'transform',
+          }}
+        >
+          <div className="w-full h-full" style={{
+            backgroundImage: 'url(/promo-b.jpg)',
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            backgroundColor: '#3D2E22',
+          }} />
+        </motion.div>
+      </div>
+
+      {/* ── z3: Product card — flush to bottom-left corner of right frame, no shadow ── */}
+      {/* left:50% = exact left edge of right frame; bottom:0 = flush to section bottom */}
       <div
         className="absolute group overflow-hidden"
-        style={{
-          width: '348px', height: '379px',
-          right: '357px', bottom: '72px',
-          zIndex: 4,
-          borderRadius: '3px',
-          boxShadow: '0 28px 70px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.28)',
-        }}
+        style={{ left: '50%', bottom: 0, width: '348px', height: '379px', zIndex: 3 }}
       >
         <div
           className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"
@@ -583,10 +577,10 @@ function PromoSection() {
         />
       </div>
 
-      {/* z5: Text block — fade + slide on viewport enter, then static */}
+      {/* ── z4: Text block — left panel, fade + slide on enter ── */}
       <motion.div
         className="absolute"
-        style={{ left: '6%', top: '18%', zIndex: 5, maxWidth: '420px' }}
+        style={{ left: '6%', top: '18%', zIndex: 4, maxWidth: '420px' }}
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
