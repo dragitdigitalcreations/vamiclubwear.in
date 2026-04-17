@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { ArrowRight, ChevronLeft, ChevronRight, Truck, RotateCcw, Zap } from 'lucide-react'
 import { productsApi } from '@/lib/api'
@@ -63,7 +63,6 @@ function AnnouncementBar() {
 // ─── Scroll Down Marquee (scroll-velocity driven) ─────────────────────────────
 function ScrollDownMarquee() {
   const { scrollY } = useScroll()
-  // Parallax: moves left as you scroll down, reverses on scroll up
   const x = useTransform(scrollY, [0, 800], [0, -420], { clamp: false })
 
   return (
@@ -87,7 +86,6 @@ function HeroSection() {
   return (
     <section className="relative overflow-hidden" style={{ height: '713px' }}>
 
-      {/* Background image — place /hero-bg.jpg in /public for actual photo */}
       <div
         className="absolute inset-0"
         style={{
@@ -98,10 +96,8 @@ function HeroSection() {
         }}
       />
 
-      {/* Left gradient — makes text legible over the photo */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
 
-      {/* Hero text */}
       <div className="relative z-10 flex h-full items-center px-8 md:px-16 lg:px-24">
         <div className="max-w-[560px]">
 
@@ -157,7 +153,6 @@ function HeroSection() {
         </div>
       </div>
 
-      {/* Scroll Down marquee — velocity driven by scroll position */}
       <ScrollDownMarquee />
     </section>
   )
@@ -209,7 +204,6 @@ function ThisJustIn() {
   }, [])
 
   return (
-    // Total section: 810px tall, pink bg, flex column
     <section
       style={{ backgroundColor: '#FCE4EB' }}
       className="flex flex-col overflow-hidden min-h-[580px] sm:h-[810px]"
@@ -402,6 +396,167 @@ function CategorySection() {
   )
 }
 
+// ─── Promo Section — layered parallax with mouse tracking ─────────────────────
+function PromoSection() {
+  const sectionRef = useRef<HTMLDivElement>(null)
+
+  // ── Scroll-based parallax ──────────────────────────────────────────────────
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  })
+  const rightBgScrollY    = useTransform(scrollYProgress, [0, 1], [-55,   55])
+  const leftImgScrollY    = useTransform(scrollYProgress, [0, 1], [-105, 105])
+  const centerCardScrollY = useTransform(scrollYProgress, [0, 1], [-160, 160])
+  const centerCardScale   = useTransform(scrollYProgress, [0.2, 0.8], [0.97, 1.04])
+
+  // ── Mouse parallax (desktop only) ─────────────────────────────────────────
+  const rawMX = useMotionValue(0)
+  const rawMY = useMotionValue(0)
+  const mx = useSpring(rawMX, { stiffness: 80, damping: 22 })
+  const my = useSpring(rawMY, { stiffness: 80, damping: 22 })
+
+  const rightBgMX = useTransform(mx, v => v * -14)
+  const rightBgMY = useTransform(my, v => v *  -8)
+  const leftMX    = useTransform(mx, v => v *   9)
+  const leftMY    = useTransform(my, v => v *   6)
+  const cardMX    = useTransform(mx, v => v *  22)
+  const cardMY    = useTransform(my, v => v *  15)
+
+  // Combine scroll Y + mouse Y per layer
+  const rightBgY    = useTransform([rightBgScrollY,    rightBgMY], ([s, m]: number[]) => s + m)
+  const leftImgY    = useTransform([leftImgScrollY,    leftMY],    ([s, m]: number[]) => s + m)
+  const centerCardY = useTransform([centerCardScrollY, cardMY],    ([s, m]: number[]) => s + m)
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return
+    if (!sectionRef.current) return
+    const r = sectionRef.current.getBoundingClientRect()
+    rawMX.set((e.clientX - r.left  - r.width  / 2) / r.width)
+    rawMY.set((e.clientY - r.top   - r.height / 2) / r.height)
+  }, [rawMX, rawMY])
+
+  const handleMouseLeave = useCallback(() => {
+    rawMX.set(0); rawMY.set(0)
+  }, [rawMX, rawMY])
+
+  return (
+    <section
+      ref={sectionRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="relative overflow-hidden select-none"
+      style={{ height: '90vh', minHeight: '600px', maxHeight: '1000px' }}
+    >
+
+      {/* ── z1: Right background — slowest (0.2×) ── */}
+      <motion.div
+        className="absolute pointer-events-none will-change-transform"
+        style={{
+          width: '721px', height: '1008px',
+          right: 0, top: '-80px',
+          zIndex: 1,
+          y: rightBgY,
+          x: rightBgMX,
+        }}
+      >
+        <div className="w-full h-full" style={{
+          backgroundImage: 'url(/promo-b.jpg)',
+          backgroundSize: 'cover', backgroundPosition: 'center',
+          backgroundColor: '#3D2E22',
+        }} />
+      </motion.div>
+
+      {/* ── z2: Depth gradient ── */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        zIndex: 2,
+        background: 'linear-gradient(to right, rgba(18,18,18,0.6) 0%, rgba(18,18,18,0.08) 55%, transparent 100%)',
+      }} />
+
+      {/* ── z3: Left main image — medium (0.35×) ── */}
+      <motion.div
+        className="absolute pointer-events-none will-change-transform"
+        style={{
+          width: '719px', height: '795px',
+          left: 0, bottom: '-40px',
+          zIndex: 3,
+          y: leftImgY,
+          x: leftMX,
+        }}
+      >
+        <div className="w-full h-full" style={{
+          backgroundImage: 'url(/promo-a.jpg)',
+          backgroundSize: 'cover', backgroundPosition: 'center top',
+          backgroundColor: '#2D2420',
+        }} />
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(to right, transparent 55%, rgba(18,18,18,0.55) 100%)',
+        }} />
+      </motion.div>
+
+      {/* ── z4: Center focal card — fastest (0.5×) + scale ── */}
+      <motion.div
+        className="absolute will-change-transform"
+        style={{
+          width: '348px', height: '379px',
+          left: '50%', top: '52%',
+          marginLeft: '-174px', marginTop: '-190px',
+          zIndex: 4,
+          y: centerCardY,
+          x: cardMX,
+          scale: centerCardScale,
+          borderRadius: '3px',
+          overflow: 'hidden',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)',
+        }}
+      >
+        <div className="w-full h-full" style={{
+          backgroundImage: 'url(/promo-accent.jpg)',
+          backgroundSize: 'cover', backgroundPosition: 'center',
+          backgroundColor: '#8B7355',
+        }} />
+      </motion.div>
+
+      {/* ── z5: Text block — fades in on enter ── */}
+      <motion.div
+        className="absolute"
+        style={{ left: '6%', top: '18%', zIndex: 5, maxWidth: '420px' }}
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: true, margin: '-80px' }}
+      >
+        <p className="mb-3 text-[9px] uppercase tracking-[0.3em] text-white/50">New Collection</p>
+        <h2
+          className="text-white uppercase leading-[0.95]"
+          style={{
+            fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+            fontWeight: 200,
+            fontSize: 'clamp(32px, 4.2vw, 62px)',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          Wear What<br />Moves You
+        </h2>
+        <p className="mt-4 text-white/60" style={{
+          fontSize: '14px', fontWeight: 300, lineHeight: 1.75,
+          fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+          maxWidth: '270px',
+        }}>
+          Indo-Western fusion crafted for every occasion. From streets to celebrations.
+        </p>
+        <Link
+          href="/products"
+          className="mt-6 inline-flex items-center gap-2.5 bg-white px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-black transition-all duration-300 hover:bg-[#5C4033] hover:text-white"
+        >
+          Explore Now <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </motion.div>
+
+    </section>
+  )
+}
+
 // ─── About section ────────────────────────────────────────────────────────────
 function AboutSection() {
   return (
@@ -520,18 +675,14 @@ function CollectionsGrid() {
             viewport={{ once: true, margin: '-50px' }} custom={i * 0.3}>
             <Link href={`/products?category=${col.slug}`}
               className="group relative flex h-[380px] flex-col justify-end overflow-hidden border border-border/60">
-              {/* Background gradient */}
               <div className={`absolute inset-0 bg-gradient-to-br ${col.gradient} transition-transform duration-700 ease-out group-hover:scale-[1.04]`} />
-              {/* Decorative circle */}
               <motion.div
                 className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border"
                 style={{ borderColor: `${col.accent}30`, width: 180, height: 180 }}
                 animate={{ scale: [1, 1.06, 1], rotate: [0, 6, 0] }}
                 transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
               />
-              {/* Bottom fade to cream */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#D8CFC4]/80 via-transparent to-transparent" />
-              {/* Content */}
               <div className="relative z-10 p-7">
                 <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.18em]"
                   style={{ color: col.accent }}>
@@ -765,7 +916,6 @@ function VideoShowcase() {
         </motion.div>
       </div>
 
-      {/* Single-row horizontal scroll — shows ~5 on desktop, ~2 on mobile */}
       <div
         ref={scrollRef}
         className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory px-4 sm:px-6 md:px-8 lg:px-10 pb-2"
@@ -779,134 +929,6 @@ function VideoShowcase() {
           : items.map((item) => <VideoCard key={item.id} item={item} />)
         }
       </div>
-    </section>
-  )
-}
-
-// ─── Promo Section — two-column editorial with parallax right panel ──────────
-function PromoSection() {
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start end', 'end start'],
-  })
-
-  // Right bg image drifts at ~60% of scroll speed → "through a hole" depth
-  const bgY = useTransform(scrollYProgress, [0, 1], ['12%', '-12%'])
-
-  const panelHeight = 'clamp(360px, 50vw, 680px)'
-
-  return (
-    <section ref={sectionRef} className="relative grid grid-cols-1 sm:grid-cols-2 overflow-hidden">
-
-      {/* ── LEFT: large image + promo code ── */}
-      <div className="relative overflow-hidden" style={{ height: panelHeight }}>
-        <div
-          className="absolute inset-0 transition-transform duration-700"
-          style={{
-            backgroundImage: 'url(/promo-a.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundColor: '#2D2420',
-          }}
-        />
-        {/* Gradient for text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
-
-        <motion.div
-          variants={fadeUp} initial="hidden" whileInView="visible"
-          viewport={{ once: true }}
-          className="absolute bottom-10 left-8 z-10"
-        >
-          <p className="mb-3 text-[9px] uppercase tracking-[0.28em] text-white/50">Exclusives</p>
-          <h3
-            className="text-white uppercase leading-[1.05]"
-            style={{
-              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-              fontWeight: 200,
-              fontSize: 'clamp(22px, 2.8vw, 34px)',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            Get 10% Off<br />Using Code<br />
-            <span className="font-semibold tracking-widest">VAMI23</span>
-          </h3>
-          <Link
-            href="/products"
-            className="mt-5 inline-flex items-center gap-2 border border-white/40 px-6 py-2.5 text-[10px] font-medium uppercase tracking-[0.18em] text-white transition-all duration-300 hover:bg-white hover:text-black"
-          >
-            Shop Now <ArrowRight className="h-3 w-3" />
-          </Link>
-        </motion.div>
-      </div>
-
-      {/* ── RIGHT: parallax bg + text block + small accent image ── */}
-      <div className="relative overflow-hidden" style={{ height: panelHeight }}>
-
-        {/* Parallax background — scaled to prevent edge gaps during motion */}
-        <motion.div
-          style={{ y: bgY }}
-          className="absolute inset-0 scale-[1.28] origin-center will-change-transform"
-        >
-          <div
-            className="h-full w-full"
-            style={{
-              backgroundImage: 'url(/promo-b.jpg)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundColor: '#3D2E22',
-            }}
-          />
-        </motion.div>
-        <div className="absolute inset-0 bg-black/35" />
-
-        {/* Foreground — normal scroll speed, floats over the slow bg */}
-        <div className="relative z-10 flex h-full flex-col justify-between p-8 sm:p-10">
-
-          {/* Top: text left + small accent card right */}
-          <motion.div
-            variants={fadeUp} initial="hidden" whileInView="visible"
-            viewport={{ once: true }}
-            className="flex items-start justify-between gap-5"
-          >
-            <div>
-              <p className="mb-2 text-[9px] uppercase tracking-[0.28em] text-white/50">New In</p>
-              <h3
-                className="text-white uppercase leading-[1.05]"
-                style={{
-                  fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-                  fontWeight: 200,
-                  fontSize: 'clamp(22px, 2.8vw, 34px)',
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                Starting<br />At ₹999
-              </h3>
-              <Link
-                href="/products"
-                className="mt-4 inline-flex items-center gap-2 border border-white/40 px-6 py-2.5 text-[10px] font-medium uppercase tracking-[0.18em] text-white transition-all duration-300 hover:bg-white hover:text-black"
-              >
-                Shop Now <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            {/* Small accent product card */}
-            <div
-              className="flex-shrink-0 overflow-hidden rounded-sm"
-              style={{
-                width:  'clamp(90px, 11vw, 130px)',
-                height: 'clamp(110px, 14vw, 160px)',
-                backgroundImage: 'url(/promo-accent.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundColor: '#8B7355',
-              }}
-            />
-          </motion.div>
-
-        </div>
-      </div>
-
     </section>
   )
 }
