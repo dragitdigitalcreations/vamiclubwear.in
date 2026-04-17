@@ -165,47 +165,29 @@ function HeroSection() {
 
 
 
-// ─── Shared home card — 232 × 310 ────────────────────────────────────────────
+// ─── Shared home card — image only, info rendered outside by parent ───────────
 function HomeCard({ product }: { product: Product }) {
   const imgUrl = getPrimaryImage(product)
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="group flex flex-col w-full h-full overflow-hidden bg-white hover:shadow-md transition-shadow duration-300"
+      className="group relative block w-full h-full overflow-hidden bg-[#F5F1EC]"
     >
-      <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ flex: 1 }}>
-        {imgUrl ? (
-          <Image
-            src={imgUrl}
-            alt={product.name}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-            sizes="232px"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center bg-[#F5F1EC]" />
-        )}
-      </div>
-      <div className="flex-shrink-0 px-3 py-3 text-left" style={{ height: '62px' }}>
-        <p className="truncate text-[11px] text-fg-2">{product.name}</p>
-        <p className="mt-1 text-[11px] font-semibold text-fg-1">
-          ₹{product.basePrice.toLocaleString('en-IN')}
-        </p>
-      </div>
+      {imgUrl && (
+        <Image
+          src={imgUrl}
+          alt={product.name}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          sizes="232px"
+        />
+      )}
     </Link>
   )
 }
 
 function HomeCardSkeleton() {
-  return (
-    <div className="w-full h-full flex flex-col">
-      <div className="skeleton flex-1 w-full" />
-      <div className="flex-shrink-0 mt-2 space-y-1.5 px-3" style={{ height: '62px' }}>
-        <div className="skeleton h-2.5 w-3/4 rounded" />
-        <div className="skeleton h-2.5 w-1/3 rounded" />
-      </div>
-    </div>
-  )
+  return <div className="skeleton w-full h-full" />
 }
 
 // ─── This Just In — pink horizontal product scroll ────────────────────────────
@@ -278,13 +260,23 @@ function ThisJustIn() {
           >
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 h-full snap-start w-[82vw] sm:w-[calc((100%_-_48px)_/_5)]">
-                    <HomeCardSkeleton />
+                  <div key={i} className="flex-shrink-0 flex flex-col h-full snap-start w-[82vw] sm:w-[calc((100%_-_48px)_/_5)]">
+                    <div className="flex-1 min-h-0"><HomeCardSkeleton /></div>
+                    <div className="flex-shrink-0 pt-2 space-y-1.5">
+                      <div className="skeleton h-2.5 w-3/4 rounded" />
+                      <div className="skeleton h-2.5 w-1/3 rounded" />
+                    </div>
                   </div>
                 ))
               : products.map((product) => (
-                  <div key={product.id} className="flex-shrink-0 h-full snap-start w-[82vw] sm:w-[calc((100%_-_48px)_/_5)]">
-                    <HomeCard product={product} />
+                  <div key={product.id} className="flex-shrink-0 flex flex-col h-full snap-start w-[82vw] sm:w-[calc((100%_-_48px)_/_5)]">
+                    <div className="flex-1 min-h-0 relative overflow-hidden">
+                      <HomeCard product={product} />
+                    </div>
+                    <div className="flex-shrink-0 pt-2">
+                      <p className="truncate text-[11px] text-fg-2">{product.name}</p>
+                      <p className="mt-0.5 text-[11px] font-semibold text-fg-1">₹{Number(product.basePrice).toLocaleString('en-IN')}</p>
+                    </div>
                   </div>
                 ))}
           </div>
@@ -378,13 +370,22 @@ function CategorySection() {
           >
             {loading
               ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 h-full snap-start w-[82vw] sm:w-[calc((100%_-_336px)_/_4)]">
-                    <HomeCardSkeleton />
+                  <div key={i} className="flex-shrink-0 flex flex-col h-full snap-start w-[82vw] sm:w-[calc((100%_-_336px)_/_4)]">
+                    <div className="flex-1 min-h-0"><HomeCardSkeleton /></div>
+                    <div className="flex-shrink-0 pt-2 space-y-1.5">
+                      <div className="skeleton h-2.5 w-2/3 rounded" />
+                      <div className="skeleton h-2.5 w-1/2 rounded" />
+                    </div>
                   </div>
                 ))
               : products.map((product) => (
-                  <div key={product.id} className="flex-shrink-0 h-full snap-start w-[82vw] sm:w-[calc((100%_-_336px)_/_4)]">
-                    <HomeCard product={product} />
+                  <div key={product.id} className="flex-shrink-0 flex flex-col h-full snap-start w-[82vw] sm:w-[calc((100%_-_336px)_/_4)]">
+                    <div className="flex-1 min-h-0 relative overflow-hidden">
+                      <HomeCard product={product} />
+                    </div>
+                    <div className="flex-shrink-0 pt-2">
+                      <p className="truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-fg-1">{product.category.name}</p>
+                    </div>
                   </div>
                 ))}
           </div>
