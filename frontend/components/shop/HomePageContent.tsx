@@ -225,24 +225,21 @@ function ThisJustIn() {
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
               fontWeight: 200,
-              fontSize: 'clamp(34px, 4.5vw, 56px)',
+              fontSize: 'clamp(40px, 5.5vw, 72px)',
               letterSpacing: '-0.01em',
             }}
           >
             This Just In
           </h2>
-          <p className="mt-2 text-fg-3 text-[12px] leading-relaxed" style={{ maxWidth: '160px' }}>
+          <p className="mt-3 text-fg-3 leading-relaxed" style={{ fontSize: '16px', fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 200, maxWidth: '200px' }}>
             Shop the best brands from our new arrivals
           </p>
         </motion.div>
       </div>
 
-      {/* ── ZONE 2: Card carousel — 1242px × 310px, zero side padding ── */}
-      <div
-        className="mx-auto w-full max-w-[1242px] flex-shrink-0"
-        style={{ height: '310px' }}
-      >
-        <div className="flex items-center h-full gap-3">
+      {/* ── ZONE 2: Card carousel — 1242px, zero side padding ── */}
+      <div className="mx-auto w-full max-w-[1242px] flex-shrink-0">
+        <div className="flex items-center gap-3">
 
           {/* Left arrow */}
           <button
@@ -253,27 +250,27 @@ function ThisJustIn() {
             <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
           </button>
 
-          {/* Scrollable card strip — cards sized so 5 fill the visible strip width */}
+          {/* Scrollable card strip — 236×315 cards */}
           <div
             ref={scrollRef}
-            className="flex flex-1 gap-3 overflow-x-auto no-scrollbar h-full snap-x snap-mandatory"
+            className="flex flex-1 gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory"
           >
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 flex flex-col h-full snap-start w-[82vw] sm:w-[calc((100%_-_48px)_/_5)]">
-                    <div className="flex-1 min-h-0"><HomeCardSkeleton /></div>
-                    <div className="flex-shrink-0 pt-2 space-y-1.5">
+                  <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                    <div className="bg-[#F5F1EC]" style={{ height: '315px' }}><HomeCardSkeleton /></div>
+                    <div className="pt-2 space-y-1.5">
                       <div className="skeleton h-2.5 w-3/4 rounded" />
                       <div className="skeleton h-2.5 w-1/3 rounded" />
                     </div>
                   </div>
                 ))
               : products.map((product) => (
-                  <div key={product.id} className="flex-shrink-0 flex flex-col h-full snap-start w-[82vw] sm:w-[calc((100%_-_48px)_/_5)]">
-                    <div className="flex-1 min-h-0 relative overflow-hidden">
+                  <div key={product.id} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                    <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
                       <HomeCard product={product} />
                     </div>
-                    <div className="flex-shrink-0 pt-2">
+                    <div className="pt-2">
                       <p className="truncate text-[11px] text-fg-2">{product.name}</p>
                       <p className="mt-0.5 text-[11px] font-semibold text-fg-1">₹{Number(product.basePrice).toLocaleString('en-IN')}</p>
                     </div>
@@ -342,19 +339,19 @@ function CategorySection() {
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
               fontWeight: 200,
-              fontSize: 'clamp(34px, 4.5vw, 56px)',
+              fontSize: 'clamp(40px, 5.5vw, 72px)',
               letterSpacing: '-0.01em',
             }}
           >
             Shop by Category
           </h2>
-          <p className="mt-2 text-fg-3 text-[12px] leading-relaxed">
+          <p className="mt-3 text-fg-3 leading-relaxed" style={{ fontSize: '16px', fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 200 }}>
             Explore our curated collections
           </p>
         </motion.div>
 
-        {/* Card strip with arrows — matches ThisJustIn structure */}
-        <div className="flex items-center gap-3" style={{ height: '310px' }}>
+        {/* Card strip with arrows — 236×315 cards */}
+        <div className="flex items-center gap-3">
 
           <button
             onClick={() => scroll('left')}
@@ -366,25 +363,25 @@ function CategorySection() {
 
           <div
             ref={scrollRef}
-            className="flex flex-1 overflow-x-auto no-scrollbar h-full snap-x snap-mandatory gap-3 sm:gap-[112px]"
+            className="flex flex-1 overflow-x-auto no-scrollbar snap-x snap-mandatory gap-3 sm:gap-[78px]"
           >
             {loading
               ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 flex flex-col h-full snap-start w-[82vw] sm:w-[calc((100%_-_336px)_/_4)]">
-                    <div className="flex-1 min-h-0"><HomeCardSkeleton /></div>
-                    <div className="flex-shrink-0 pt-2 space-y-1.5">
+                  <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                    <div className="bg-[#F5F1EC]" style={{ height: '315px' }}><HomeCardSkeleton /></div>
+                    <div className="pt-2 space-y-1.5">
                       <div className="skeleton h-2.5 w-2/3 rounded" />
                       <div className="skeleton h-2.5 w-1/2 rounded" />
                     </div>
                   </div>
                 ))
               : products.map((product) => (
-                  <div key={product.id} className="flex-shrink-0 flex flex-col h-full snap-start w-[82vw] sm:w-[calc((100%_-_336px)_/_4)]">
-                    <div className="flex-1 min-h-0 relative overflow-hidden">
+                  <div key={product.id} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                    <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
                       <HomeCard product={product} />
                     </div>
-                    <div className="flex-shrink-0 pt-2">
-                      <p className="truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-fg-1">{product.category.name}</p>
+                    <div className="pt-2">
+                      <p className="truncate font-semibold uppercase text-fg-1" style={{ fontSize: '25px', letterSpacing: '0.05em', fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 200 }}>{product.category.name}</p>
                     </div>
                   </div>
                 ))}
