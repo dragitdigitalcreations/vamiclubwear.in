@@ -519,7 +519,7 @@ function PromoSection() {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className="relative overflow-hidden select-none"
-      style={{ height: '90vh', minHeight: '600px', maxHeight: '1000px' }}
+      style={{ height: '736px' }}
     >
 
       {/* ── z1: Left image — 50% width, fully static ── */}
