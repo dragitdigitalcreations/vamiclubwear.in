@@ -229,8 +229,8 @@ function ThisJustIn() {
   return (
     // Total section: 810px tall, pink bg, flex column
     <section
-      style={{ backgroundColor: '#FCE4EB', height: '810px' }}
-      className="flex flex-col overflow-hidden"
+      style={{ backgroundColor: '#FCE4EB' }}
+      className="flex flex-col overflow-hidden min-h-[580px] sm:h-[810px]"
     >
       {/* ── ZONE 1: Header text — padded from section edge ── */}
       <div className="mx-auto w-full max-w-[1242px] px-5 pt-10 pb-7 flex-shrink-0">
@@ -274,16 +274,16 @@ function ThisJustIn() {
           {/* Scrollable card strip — cards sized so 5 fill the visible strip width */}
           <div
             ref={scrollRef}
-            className="flex flex-1 gap-3 overflow-x-auto no-scrollbar h-full"
+            className="flex flex-1 gap-3 overflow-x-auto no-scrollbar h-full snap-x snap-mandatory"
           >
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 48px) / 5)' }}>
+                  <div key={i} className="flex-shrink-0 h-full snap-start w-[82vw] sm:w-[calc((100%_-_48px)_/_5)]">
                     <HomeCardSkeleton />
                   </div>
                 ))
               : products.map((product) => (
-                  <div key={product.id} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 48px) / 5)' }}>
+                  <div key={product.id} className="flex-shrink-0 h-full snap-start w-[82vw] sm:w-[calc((100%_-_48px)_/_5)]">
                     <HomeCard product={product} />
                   </div>
                 ))}
@@ -314,10 +314,11 @@ function ThisJustIn() {
   )
 }
 
-// ─── Category Section — blue (#ADAEF1), 4-card strip ─────────────────────────
+// ─── Category Section — violet (#ADAEF1), 4-card strip ───────────────────────
 function CategorySection() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading,  setLoading]  = useState(true)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     productsApi.list({ isActive: 'true', limit: 4 })
@@ -326,19 +327,23 @@ function CategorySection() {
       .finally(() => setLoading(false))
   }, [])
 
+  const scroll = useCallback((dir: 'left' | 'right') => {
+    const w = scrollRef.current?.clientWidth ?? 600
+    scrollRef.current?.scrollBy({ left: dir === 'right' ? w : -w, behavior: 'smooth' })
+  }, [])
+
   return (
     <section
-      style={{ backgroundColor: '#ADAEF1', height: '810px' }}
-      className="flex flex-col justify-center overflow-hidden"
+      style={{ backgroundColor: '#ADAEF1' }}
+      className="flex flex-col justify-center overflow-hidden min-h-[580px] sm:h-[810px]"
     >
-      {/* Centered content block — max 1242px, horizontally centered */}
       <div className="mx-auto w-full max-w-[1242px]">
 
-        {/* Header — left-aligned to card container edge */}
+        {/* Header — aligned to card container edge */}
         <motion.div
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }}
-          className="pb-7"
+          className="px-5 pb-7"
         >
           <h2
             className="text-fg-1 uppercase leading-none"
@@ -356,19 +361,42 @@ function CategorySection() {
           </p>
         </motion.div>
 
-        {/* Card strip — 4 cards fill full 1242px, 112px gap (100px added to base 12px) */}
-        <div className="flex overflow-x-auto no-scrollbar" style={{ height: '310px', gap: '112px' }}>
-          {loading
-            ? Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 336px) / 4)' }}>
-                  <HomeCardSkeleton />
-                </div>
-              ))
-            : products.map((product) => (
-                <div key={product.id} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 336px) / 4)' }}>
-                  <HomeCard product={product} />
-                </div>
-              ))}
+        {/* Card strip with arrows — matches ThisJustIn structure */}
+        <div className="flex items-center gap-3" style={{ height: '310px' }}>
+
+          <button
+            onClick={() => scroll('left')}
+            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="flex flex-1 overflow-x-auto no-scrollbar h-full snap-x snap-mandatory gap-3 sm:gap-[112px]"
+          >
+            {loading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex-shrink-0 h-full snap-start w-[82vw] sm:w-[calc((100%_-_336px)_/_4)]">
+                    <HomeCardSkeleton />
+                  </div>
+                ))
+              : products.map((product) => (
+                  <div key={product.id} className="flex-shrink-0 h-full snap-start w-[82vw] sm:w-[calc((100%_-_336px)_/_4)]">
+                    <HomeCard product={product} />
+                  </div>
+                ))}
+          </div>
+
+          <button
+            onClick={() => scroll('right')}
+            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
+          </button>
+
         </div>
 
       </div>
