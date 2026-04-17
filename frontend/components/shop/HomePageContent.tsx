@@ -429,11 +429,9 @@ function PromoSection() {
       const el = sectionRef.current
       if (!el) { raf = requestAnimationFrame(tick); return }
       const rect   = el.getBoundingClientRect()
-      const vh     = window.innerHeight
-      const target = Math.max(0, Math.min(1, 1 - rect.bottom / (vh + rect.height)))
-      lerpedProgress = lerp(lerpedProgress, target, 0.028)
-      // very low travel: image drifts ±40px — "standing still" premium feel
-      rightBgY.set((lerpedProgress - 0.5) * 80)
+      const target = -rect.top
+      lerpedProgress = lerp(lerpedProgress, target, 0.18)
+      rightBgY.set(lerpedProgress)
       raf = requestAnimationFrame(tick)
     }
 
@@ -545,15 +543,15 @@ function PromoSection() {
           className="absolute"
           style={{
             left: 0, right: 0,
-            top: -300,
-            height: 'calc(100% + 600px)',
+            top: 'calc(-100vh)',
+            height: 'calc(100% + 200vh)',
             y: rightBgFinalY,
             willChange: 'transform',
           }}
         >
           <div className="w-full h-full" style={{
             backgroundImage: 'url(/promo-b.png)',
-            backgroundSize: 'auto 90%', backgroundPosition: '68% center',
+            backgroundSize: 'auto 85vh', backgroundPosition: '68% center',
             backgroundColor: '#5C3A2A',
           }} />
         </motion.div>
