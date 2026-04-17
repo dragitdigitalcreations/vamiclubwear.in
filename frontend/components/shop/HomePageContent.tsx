@@ -460,8 +460,8 @@ function PromoSection() {
     return (
       <section className="relative overflow-hidden bg-[#121212] px-6 py-16">
         <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: 'url(/promo-b.jpg)',
-          backgroundSize: 'cover', backgroundPosition: 'center',
+          backgroundImage: 'url(/promo-b.png)',
+          backgroundSize: 'cover', backgroundPosition: '60% center',
           backgroundColor: '#1E1E1E', opacity: 0.35,
         }} />
         <div className="absolute inset-0 pointer-events-none"
@@ -502,9 +502,9 @@ function PromoSection() {
           style={{ width: '75vw', maxWidth: '300px', height: '320px' }}
         >
           <div className="w-full h-full rounded-[3px] overflow-hidden" style={{
-            backgroundImage: 'url(/promo-accent.jpg)',
+            backgroundImage: 'url(/promo-accent.png)',
             backgroundSize: 'cover', backgroundPosition: 'center',
-            backgroundColor: '#8B7355',
+            backgroundColor: '#F2EBE0',
             boxShadow: '0 24px 60px rgba(0,0,0,0.55)',
           }} />
         </motion.div>
@@ -528,9 +528,9 @@ function PromoSection() {
         style={{ left: 0, top: 0, width: '50%', height: '100%', zIndex: 1 }}
       >
         <div className="w-full h-full" style={{
-          backgroundImage: 'url(/promo-a.jpg)',
-          backgroundSize: 'cover', backgroundPosition: 'center',
-          backgroundColor: '#2D2420',
+          backgroundImage: 'url(/promo-a.png)',
+          backgroundSize: 'cover', backgroundPosition: 'center 30%',
+          backgroundColor: '#EDE8E1',
         }} />
         {/* gradient for text legibility over left image */}
         <div className="absolute inset-0" style={{
@@ -547,16 +547,16 @@ function PromoSection() {
         <motion.div
           className="absolute inset-0"
           style={{
-            scale: 1.2,   /* extra size absorbs ±75px travel without gap */
+            scale: 1.25,  /* 1.25 gives ~92px buffer each side — covers ±75px travel */
             y: rightBgFinalY,
             x: rightBgMX,
             willChange: 'transform',
           }}
         >
           <div className="w-full h-full" style={{
-            backgroundImage: 'url(/promo-b.jpg)',
-            backgroundSize: 'cover', backgroundPosition: 'center',
-            backgroundColor: '#3D2E22',
+            backgroundImage: 'url(/promo-b.png)',
+            backgroundSize: 'cover', backgroundPosition: '60% center',
+            backgroundColor: '#5C3A2A',
           }} />
         </motion.div>
       </div>
@@ -570,9 +570,9 @@ function PromoSection() {
         <div
           className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"
           style={{
-            backgroundImage: 'url(/promo-accent.jpg)',
+            backgroundImage: 'url(/promo-accent.png)',
             backgroundSize: 'cover', backgroundPosition: 'center',
-            backgroundColor: '#8B7355',
+            backgroundColor: '#F2EBE0',
           }}
         />
       </div>
