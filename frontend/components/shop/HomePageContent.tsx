@@ -404,13 +404,10 @@ function PromoSection() {
   // ── Only the right background is animated ─────────────────────────────────
   const rightBgY = useMotionValue(0)
 
-  // Mouse parallax — right background only, subtle
-  const rawMX = useMotionValue(0)
+  // Mouse parallax — Y only (no X: taller-div approach has no horizontal buffer)
   const rawMY = useMotionValue(0)
-  const mx = useSpring(rawMX, { stiffness: 80, damping: 22 })
   const my = useSpring(rawMY, { stiffness: 80, damping: 22 })
-  const rightBgMX = useTransform(mx, v => v * -10)
-  const rightBgMY = useTransform(my, v => v *  -8)
+  const rightBgMY = useTransform(my, v => v * -10)
   const rightBgFinalY = useTransform([rightBgY, rightBgMY], ([s, m]: number[]) => s + m)
 
   // ── Mobile detection ───────────────────────────────────────────────────────
@@ -435,8 +432,8 @@ function PromoSection() {
       const vh     = window.innerHeight
       const target = Math.max(0, Math.min(1, 1 - rect.bottom / (vh + rect.height)))
       lerpedProgress = lerp(lerpedProgress, target, 0.075)
-      // translateY(scrollY * 0.75) — ±225px (3× original travel)
-      rightBgY.set((lerpedProgress - 0.5) * 450)
+      // translateY(scrollY * 1.0) — ±300px (4× original, +1x per user request)
+      rightBgY.set((lerpedProgress - 0.5) * 600)
       raf = requestAnimationFrame(tick)
     }
 
@@ -447,13 +444,12 @@ function PromoSection() {
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (isMobile || !sectionRef.current) return
     const r = sectionRef.current.getBoundingClientRect()
-    rawMX.set((e.clientX - r.left - r.width  / 2) / r.width)
-    rawMY.set((e.clientY - r.top  - r.height / 2) / r.height)
-  }, [isMobile, rawMX, rawMY])
+    rawMY.set((e.clientY - r.top - r.height / 2) / r.height)
+  }, [isMobile, rawMY])
 
   const handleMouseLeave = useCallback(() => {
-    rawMX.set(0); rawMY.set(0)
-  }, [rawMX, rawMY])
+    rawMY.set(0)
+  }, [rawMY])
 
   // ── Mobile: stacked, fade only ────────────────────────────────────────────
   if (isMobile) {
@@ -540,23 +536,26 @@ function PromoSection() {
       </div>
 
       {/* ── z2: Right background — 50% width, THE ONLY ANIMATED ELEMENT ── */}
-      {/* overflow:hidden clips the scale-expanded inner div at the container edge */}
+      {/* Taller div (736+600=1336px, top:-300) gives ±300px Y travel without scale.   */}
+      {/* No horizontal scale → full 720px width available for correct model framing.  */}
+      {/* backgroundPosition 87%: model centers at ~509px (between card 309px & edge). */}
       <div
         className="absolute pointer-events-none overflow-hidden"
         style={{ right: 0, top: 0, width: '50%', height: '100%', zIndex: 2 }}
       >
         <motion.div
-          className="absolute inset-0"
+          className="absolute"
           style={{
-            scale: 1.65,  /* covers ±225px (3× original) travel — 736×0.325=239px buffer */
+            left: 0, right: 0,
+            top: -300,
+            height: 'calc(100% + 600px)',
             y: rightBgFinalY,
-            x: rightBgMX,
             willChange: 'transform',
           }}
         >
           <div className="w-full h-full" style={{
             backgroundImage: 'url(/promo-b.png)',
-            backgroundSize: 'cover', backgroundPosition: '38% center',
+            backgroundSize: 'cover', backgroundPosition: '87% center',
             backgroundColor: '#5C3A2A',
           }} />
         </motion.div>
