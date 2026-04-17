@@ -406,7 +406,7 @@ function PromoSection() {
 
   // Mouse parallax — Y only (no X: taller-div approach has no horizontal buffer)
   const rawMY = useMotionValue(0)
-  const my = useSpring(rawMY, { stiffness: 80, damping: 22 })
+  const my = useSpring(rawMY, { stiffness: 40, damping: 28 })
   const rightBgMY = useTransform(my, v => v * -10)
   const rightBgFinalY = useTransform([rightBgY, rightBgMY], ([s, m]: number[]) => s + m)
 
@@ -431,9 +431,9 @@ function PromoSection() {
       const rect   = el.getBoundingClientRect()
       const vh     = window.innerHeight
       const target = Math.max(0, Math.min(1, 1 - rect.bottom / (vh + rect.height)))
-      lerpedProgress = lerp(lerpedProgress, target, 0.075)
-      // translateY(scrollY * 1.0) — ±300px (4× original, +1x per user request)
-      rightBgY.set((lerpedProgress - 0.5) * 600)
+      lerpedProgress = lerp(lerpedProgress, target, 0.028)
+      // very low travel: image drifts ±40px — "standing still" premium feel
+      rightBgY.set((lerpedProgress - 0.5) * 80)
       raf = requestAnimationFrame(tick)
     }
 
