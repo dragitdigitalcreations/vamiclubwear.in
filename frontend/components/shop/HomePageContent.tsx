@@ -561,12 +561,13 @@ function PromoSection() {
         }} />
       </div>
 
-      {/* z4: Product card — FULLY STATIC, bottom-right of left image, hover only */}
+      {/* z4: Product card — static, bottom-left inside the right background frame */}
+      {/* right bg is 721px wide at right:0 → card left edge = 721-348-16 = 357px from right */}
       <div
         className="absolute group overflow-hidden"
         style={{
           width: '348px', height: '379px',
-          left: '371px', bottom: '70px',
+          right: '357px', bottom: '72px',
           zIndex: 4,
           borderRadius: '3px',
           boxShadow: '0 28px 70px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.28)',
