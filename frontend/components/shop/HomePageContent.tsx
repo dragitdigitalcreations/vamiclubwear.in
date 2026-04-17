@@ -381,7 +381,7 @@ function CategorySection() {
                       <HomeCard product={product} />
                     </div>
                     <div className="pt-2">
-                      <p className="truncate font-sans font-medium uppercase text-fg-1" style={{ fontSize: '25px', letterSpacing: '0.05em' }}>{product.category.name}</p>
+                      <p className="truncate font-sans font-medium uppercase text-fg-1" style={{ fontSize: '20px', letterSpacing: '0.05em' }}>{product.category.name}</p>
                     </div>
                   </div>
                 ))}
