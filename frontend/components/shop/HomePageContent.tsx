@@ -293,7 +293,7 @@ function ThisJustIn() {
       <div className="flex flex-1 items-center justify-center">
         <Link
           href="/products"
-          className="rounded-full border border-fg-1 bg-transparent px-12 py-4 text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
+          className="rounded-full border border-fg-1 bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
         >
           Shop Now
         </Link>
