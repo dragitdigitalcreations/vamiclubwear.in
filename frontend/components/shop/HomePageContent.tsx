@@ -396,34 +396,22 @@ function CategorySection() {
   )
 }
 
-// ─── Promo Section — RAF + lerp layered parallax ─────────────────────────────
+// ─── Promo Section — right-bg parallax only, card fully static ───────────────
 function PromoSection() {
-  const sectionRef  = useRef<HTMLDivElement>(null)
+  const sectionRef = useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = useState(false)
 
-  // ── Per-layer motion values (driven by RAF loop) ───────────────────────────
-  const rightBgY    = useMotionValue(0)
-  const leftImgY    = useMotionValue(0)
-  const centerY     = useMotionValue(0)
-  const centerScale = useMotionValue(0.97)
+  // ── Only the right background is animated ─────────────────────────────────
+  const rightBgY = useMotionValue(0)
 
-  // ── Mouse parallax motion values ───────────────────────────────────────────
+  // Mouse parallax — right background only, subtle
   const rawMX = useMotionValue(0)
   const rawMY = useMotionValue(0)
   const mx = useSpring(rawMX, { stiffness: 80, damping: 22 })
   const my = useSpring(rawMY, { stiffness: 80, damping: 22 })
-
-  const rightBgMX = useTransform(mx, v => v * -14)
+  const rightBgMX = useTransform(mx, v => v * -10)
   const rightBgMY = useTransform(my, v => v *  -8)
-  const leftMX    = useTransform(mx, v => v *   9)
-  const leftMY    = useTransform(my, v => v *   6)
-  const cardMX    = useTransform(mx, v => v *  22)
-  const cardMY    = useTransform(my, v => v *  15)
-
-  // Combine RAF scroll Y + spring mouse Y per layer
   const rightBgFinalY = useTransform([rightBgY, rightBgMY], ([s, m]: number[]) => s + m)
-  const leftFinalY    = useTransform([leftImgY, leftMY],    ([s, m]: number[]) => s + m)
-  const centerFinalY  = useTransform([centerY,  cardMY],    ([s, m]: number[]) => s + m)
 
   // ── Mobile detection ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -433,71 +421,52 @@ function PromoSection() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // ── RAF + lerp scroll loop (desktop only) ──────────────────────────────────
+  // ── RAF + lerp — drives only rightBgY ────────────────────────────────────
   useEffect(() => {
     if (isMobile) return
     let lerpedProgress = 0
     let raf: number
-
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
     const tick = () => {
       const el = sectionRef.current
       if (!el) { raf = requestAnimationFrame(tick); return }
-
-      const rect     = el.getBoundingClientRect()
-      const vh       = window.innerHeight
-      // 0 = section bottom enters viewport, 1 = section top exits
-      const target   = Math.max(0, Math.min(1, 1 - rect.bottom / (vh + rect.height)))
-
+      const rect   = el.getBoundingClientRect()
+      const vh     = window.innerHeight
+      const target = Math.max(0, Math.min(1, 1 - rect.bottom / (vh + rect.height)))
       lerpedProgress = lerp(lerpedProgress, target, 0.075)
-      const p = lerpedProgress
-
-      // Layer speeds: 0.2× / 0.35× / 0.5× mapped to ±55 / ±105 / ±160 px
-      rightBgY.set((p - 0.5) * 110)
-      leftImgY.set((p - 0.5) * 210)
-      centerY.set( (p - 0.5) * 320)
-
-      // Scale: 0.97 → 1.04 between progress 0.2 and 0.8
-      const sp = Math.max(0, Math.min(1, (p - 0.2) / 0.6))
-      centerScale.set(0.97 + sp * 0.07)
-
+      // translateY(scrollY * 0.25) — ±75 px total travel
+      rightBgY.set((lerpedProgress - 0.5) * 150)
       raf = requestAnimationFrame(tick)
     }
 
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [isMobile, rightBgY, leftImgY, centerY, centerScale])
+  }, [isMobile, rightBgY])
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (isMobile || !sectionRef.current) return
     const r = sectionRef.current.getBoundingClientRect()
-    rawMX.set((e.clientX - r.left  - r.width  / 2) / r.width)
-    rawMY.set((e.clientY - r.top   - r.height / 2) / r.height)
+    rawMX.set((e.clientX - r.left - r.width  / 2) / r.width)
+    rawMY.set((e.clientY - r.top  - r.height / 2) / r.height)
   }, [isMobile, rawMX, rawMY])
 
   const handleMouseLeave = useCallback(() => {
     rawMX.set(0); rawMY.set(0)
   }, [rawMX, rawMY])
 
-  // ── Mobile layout — stacked, fade only ────────────────────────────────────
+  // ── Mobile: stacked, fade only ────────────────────────────────────────────
   if (isMobile) {
     return (
       <section className="relative overflow-hidden bg-[#121212] px-6 py-16">
-        {/* Background image full-bleed, faded */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: 'url(/promo-b.jpg)',
-            backgroundSize: 'cover', backgroundPosition: 'center',
-            backgroundColor: '#1E1E1E',
-            opacity: 0.35,
-          }}
-        />
+        <div className="absolute inset-0 pointer-events-none" style={{
+          backgroundImage: 'url(/promo-b.jpg)',
+          backgroundSize: 'cover', backgroundPosition: 'center',
+          backgroundColor: '#1E1E1E', opacity: 0.35,
+        }} />
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: 'linear-gradient(to bottom, rgba(18,18,18,0.4) 0%, rgba(18,18,18,0.85) 100%)' }} />
 
-        {/* Text */}
         <motion.div
           className="relative z-10 mb-10"
           initial={{ opacity: 0, y: 30 }}
@@ -506,33 +475,24 @@ function PromoSection() {
           viewport={{ once: true }}
         >
           <p className="mb-3 text-[9px] uppercase tracking-[0.3em] text-white/50">New Collection</p>
-          <h2
-            className="text-white uppercase leading-[0.95]"
-            style={{
-              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-              fontWeight: 200,
-              fontSize: 'clamp(34px, 9vw, 52px)',
-              letterSpacing: '-0.02em',
-            }}
-          >
+          <h2 className="text-white uppercase leading-[0.95]" style={{
+            fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+            fontWeight: 200, fontSize: 'clamp(34px, 9vw, 52px)', letterSpacing: '-0.02em',
+          }}>
             Wear What<br />Moves You
           </h2>
           <p className="mt-4 text-white/55" style={{
             fontSize: '14px', fontWeight: 300, lineHeight: 1.75,
-            fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-            maxWidth: '260px',
+            fontFamily: 'var(--font-poppins), Poppins, sans-serif', maxWidth: '260px',
           }}>
             Indo-Western fusion crafted for every occasion.
           </p>
-          <Link
-            href="/products"
-            className="mt-7 inline-flex items-center gap-2.5 bg-white px-7 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-black transition-all duration-300 hover:bg-[#5C4033] hover:text-white"
-          >
+          <Link href="/products"
+            className="mt-7 inline-flex items-center gap-2.5 bg-white px-7 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-black transition-all duration-300 hover:bg-[#5C4033] hover:text-white">
             Explore Now <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </motion.div>
 
-        {/* Center card */}
         <motion.div
           className="relative z-10 mx-auto"
           initial={{ opacity: 0, y: 20 }}
@@ -541,21 +501,18 @@ function PromoSection() {
           viewport={{ once: true }}
           style={{ width: '75vw', maxWidth: '300px', height: '320px' }}
         >
-          <div
-            className="w-full h-full rounded-[3px] overflow-hidden"
-            style={{
-              backgroundImage: 'url(/promo-accent.jpg)',
-              backgroundSize: 'cover', backgroundPosition: 'center',
-              backgroundColor: '#8B7355',
-              boxShadow: '0 24px 60px rgba(0,0,0,0.55)',
-            }}
-          />
+          <div className="w-full h-full rounded-[3px] overflow-hidden" style={{
+            backgroundImage: 'url(/promo-accent.jpg)',
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            backgroundColor: '#8B7355',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.55)',
+          }} />
         </motion.div>
       </section>
     )
   }
 
-  // ── Desktop layout — full layered parallax ────────────────────────────────
+  // ── Desktop: right bg animates, everything else static ───────────────────
   return (
     <section
       ref={sectionRef}
@@ -565,13 +522,14 @@ function PromoSection() {
       style={{ height: '90vh', minHeight: '600px', maxHeight: '1000px' }}
     >
 
-      {/* z1: Right background — slowest 0.2× */}
+      {/* z1: Right background — THE ONLY ANIMATED ELEMENT */}
       <motion.div
         className="absolute pointer-events-none"
         style={{
           width: '721px', height: '1008px',
           right: 0, top: '-80px', zIndex: 1,
           y: rightBgFinalY, x: rightBgMX,
+          scale: 1.05,
           willChange: 'transform',
         }}
       >
@@ -582,21 +540,16 @@ function PromoSection() {
         }} />
       </motion.div>
 
-      {/* z2: Depth gradient overlay */}
+      {/* z2: Depth gradient */}
       <div className="absolute inset-0 pointer-events-none" style={{
         zIndex: 2,
-        background: 'linear-gradient(to right, rgba(18,18,18,0.62) 0%, rgba(18,18,18,0.1) 52%, transparent 100%)',
+        background: 'linear-gradient(to right, rgba(18,18,18,0.65) 0%, rgba(18,18,18,0.12) 52%, transparent 100%)',
       }} />
 
-      {/* z3: Left main image — 0.35× */}
-      <motion.div
+      {/* z3: Left main image — STATIC */}
+      <div
         className="absolute pointer-events-none"
-        style={{
-          width: '719px', height: '795px',
-          left: 0, bottom: '-40px', zIndex: 3,
-          y: leftFinalY, x: leftMX,
-          willChange: 'transform',
-        }}
+        style={{ width: '719px', height: '795px', left: 0, bottom: '-40px', zIndex: 3 }}
       >
         <div className="w-full h-full" style={{
           backgroundImage: 'url(/promo-a.jpg)',
@@ -604,34 +557,32 @@ function PromoSection() {
           backgroundColor: '#2D2420',
         }} />
         <div className="absolute inset-0" style={{
-          background: 'linear-gradient(to right, transparent 52%, rgba(18,18,18,0.55) 100%)',
+          background: 'linear-gradient(to right, transparent 55%, rgba(18,18,18,0.5) 100%)',
         }} />
-      </motion.div>
+      </div>
 
-      {/* z4: Center focal card — fastest 0.5× + scale */}
-      <motion.div
-        className="absolute"
+      {/* z4: Product card — FULLY STATIC, bottom-right of left image, hover only */}
+      <div
+        className="absolute group overflow-hidden"
         style={{
           width: '348px', height: '379px',
-          left: '50%', top: '52%',
-          marginLeft: '-174px', marginTop: '-190px',
+          left: '371px', bottom: '70px',
           zIndex: 4,
-          y: centerFinalY, x: cardMX,
-          scale: centerScale,
           borderRadius: '3px',
-          overflow: 'hidden',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.52), 0 8px 24px rgba(0,0,0,0.32)',
-          willChange: 'transform',
+          boxShadow: '0 28px 70px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.28)',
         }}
       >
-        <div className="w-full h-full" style={{
-          backgroundImage: 'url(/promo-accent.jpg)',
-          backgroundSize: 'cover', backgroundPosition: 'center',
-          backgroundColor: '#8B7355',
-        }} />
-      </motion.div>
+        <div
+          className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+          style={{
+            backgroundImage: 'url(/promo-accent.jpg)',
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            backgroundColor: '#8B7355',
+          }}
+        />
+      </div>
 
-      {/* z5: Text block — fade + slide in on viewport enter */}
+      {/* z5: Text block — fade + slide on viewport enter, then static */}
       <motion.div
         className="absolute"
         style={{ left: '6%', top: '18%', zIndex: 5, maxWidth: '420px' }}
