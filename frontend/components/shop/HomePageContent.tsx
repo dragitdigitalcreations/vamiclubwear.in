@@ -565,7 +565,7 @@ function PromoSection() {
       {/* left:50% = exact left edge of right frame; bottom:0 = flush to section bottom */}
       <div
         className="absolute group overflow-hidden"
-        style={{ left: '50%', bottom: 0, width: '348px', height: '309px', zIndex: 3 }}
+        style={{ left: '50%', bottom: 0, width: '309px', height: '309px', zIndex: 3 }}
       >
         <div
           className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"
