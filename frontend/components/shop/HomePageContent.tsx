@@ -527,11 +527,9 @@ function PromoSection() {
           backgroundImage: 'url(/promo-a.png)',
           backgroundSize: 'cover', backgroundPosition: 'center 30%',
           backgroundColor: '#EDE8E1',
-          filter: 'contrast(1.25) brightness(1.06) saturate(1.1)',
         }} />
-        {/* light vignette so black text reads cleanly over bright image */}
         <div className="absolute inset-0" style={{
-          background: 'linear-gradient(to right, rgba(245,241,236,0.62) 0%, rgba(245,241,236,0.22) 65%, transparent 100%)',
+          background: 'linear-gradient(to right, rgba(245,241,236,0.3) 0%, rgba(245,241,236,0.08) 60%, transparent 100%)',
         }} />
       </div>
 
@@ -555,7 +553,7 @@ function PromoSection() {
         >
           <div className="w-full h-full" style={{
             backgroundImage: 'url(/promo-b.png)',
-            backgroundSize: 'auto 90%', backgroundPosition: '87% center',
+            backgroundSize: 'auto 90%', backgroundPosition: '82% center',
             backgroundColor: '#5C3A2A',
           }} />
         </motion.div>
@@ -565,7 +563,7 @@ function PromoSection() {
       {/* left:50% = exact left edge of right frame; bottom:0 = flush to section bottom */}
       <div
         className="absolute group overflow-hidden"
-        style={{ left: 'calc(50% + 28px)', bottom: 0, width: '309px', height: '309px', zIndex: 3 }}
+        style={{ left: '50%', bottom: 0, width: '309px', height: '309px', zIndex: 3 }}
       >
         <div
           className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"
@@ -577,39 +575,37 @@ function PromoSection() {
         />
       </div>
 
-      {/* ── z4: Text block — left panel, fade + slide on enter ── */}
+      {/* ── z4: Text block — right-centre of left panel, reference style ── */}
       <motion.div
         className="absolute"
-        style={{ left: '6%', top: '18%', zIndex: 4, maxWidth: '420px' }}
+        style={{ left: '27%', top: '36%', zIndex: 4, maxWidth: '230px' }}
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         viewport={{ once: true, margin: '-80px' }}
       >
-        <p className="mb-3 text-[9px] uppercase tracking-[0.3em] text-[#121212]/55">New Collection</p>
         <h2
-          className="text-[#121212] uppercase leading-[0.95]"
+          className="text-[#111] uppercase leading-[0.92]"
           style={{
             fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-            fontWeight: 600,
-            fontSize: 'clamp(32px, 4.2vw, 62px)',
-            letterSpacing: '-0.02em',
+            fontWeight: 800,
+            fontSize: 'clamp(26px, 3vw, 46px)',
+            letterSpacing: '-0.01em',
           }}
         >
           Wear What<br />Moves You
         </h2>
-        <p className="mt-4 text-[#121212]/70" style={{
-          fontSize: '14px', fontWeight: 500, lineHeight: 1.75,
+        <p className="mt-3 text-[#111]/60" style={{
+          fontSize: '12px', fontWeight: 400,
           fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-          maxWidth: '270px',
         }}>
-          Indo-Western fusion crafted for every occasion. From streets to celebrations.
+          Indo-Western Fusion
         </p>
         <Link
           href="/products"
-          className="mt-6 inline-flex items-center gap-2.5 bg-[#121212] px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition-all duration-300 hover:bg-[#5C4033]"
+          className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#111] px-7 py-2.5 text-[11px] font-medium text-[#111] transition-all duration-300 hover:bg-[#111] hover:text-white"
         >
-          Explore Now <ArrowRight className="h-3.5 w-3.5" />
+          Shop Now
         </Link>
       </motion.div>
 
