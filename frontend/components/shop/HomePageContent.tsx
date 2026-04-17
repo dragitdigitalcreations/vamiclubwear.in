@@ -555,7 +555,7 @@ function PromoSection() {
         >
           <div className="w-full h-full" style={{
             backgroundImage: 'url(/promo-b.png)',
-            backgroundSize: 'cover', backgroundPosition: '87% center',
+            backgroundSize: 'auto 90%', backgroundPosition: '87% center',
             backgroundColor: '#5C3A2A',
           }} />
         </motion.div>
@@ -565,7 +565,7 @@ function PromoSection() {
       {/* left:50% = exact left edge of right frame; bottom:0 = flush to section bottom */}
       <div
         className="absolute group overflow-hidden"
-        style={{ left: '50%', bottom: 0, width: '309px', height: '309px', zIndex: 3 }}
+        style={{ left: 'calc(50% + 28px)', bottom: 0, width: '309px', height: '309px', zIndex: 3 }}
       >
         <div
           className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"
