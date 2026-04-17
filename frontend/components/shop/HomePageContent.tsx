@@ -435,8 +435,8 @@ function PromoSection() {
       const vh     = window.innerHeight
       const target = Math.max(0, Math.min(1, 1 - rect.bottom / (vh + rect.height)))
       lerpedProgress = lerp(lerpedProgress, target, 0.075)
-      // translateY(scrollY * 0.25) — ±75 px total travel
-      rightBgY.set((lerpedProgress - 0.5) * 150)
+      // translateY(scrollY * 0.75) — ±225px (3× original travel)
+      rightBgY.set((lerpedProgress - 0.5) * 450)
       raf = requestAnimationFrame(tick)
     }
 
@@ -531,10 +531,11 @@ function PromoSection() {
           backgroundImage: 'url(/promo-a.png)',
           backgroundSize: 'cover', backgroundPosition: 'center 30%',
           backgroundColor: '#EDE8E1',
+          filter: 'contrast(1.25) brightness(1.06) saturate(1.1)',
         }} />
-        {/* gradient for text legibility over left image */}
+        {/* light vignette so black text reads cleanly over bright image */}
         <div className="absolute inset-0" style={{
-          background: 'linear-gradient(to right, rgba(18,18,18,0.72) 0%, rgba(18,18,18,0.28) 70%, transparent 100%)',
+          background: 'linear-gradient(to right, rgba(245,241,236,0.62) 0%, rgba(245,241,236,0.22) 65%, transparent 100%)',
         }} />
       </div>
 
@@ -547,7 +548,7 @@ function PromoSection() {
         <motion.div
           className="absolute inset-0"
           style={{
-            scale: 1.25,  /* 1.25 gives ~92px buffer each side — covers ±75px travel */
+            scale: 1.65,  /* covers ±225px (3× original) travel — 736×0.325=239px buffer */
             y: rightBgFinalY,
             x: rightBgMX,
             willChange: 'transform',
@@ -555,7 +556,7 @@ function PromoSection() {
         >
           <div className="w-full h-full" style={{
             backgroundImage: 'url(/promo-b.png)',
-            backgroundSize: 'cover', backgroundPosition: '60% center',
+            backgroundSize: 'cover', backgroundPosition: '38% center',
             backgroundColor: '#5C3A2A',
           }} />
         </motion.div>
@@ -586,20 +587,20 @@ function PromoSection() {
         transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         viewport={{ once: true, margin: '-80px' }}
       >
-        <p className="mb-3 text-[9px] uppercase tracking-[0.3em] text-white/50">New Collection</p>
+        <p className="mb-3 text-[9px] uppercase tracking-[0.3em] text-[#121212]/55">New Collection</p>
         <h2
-          className="text-white uppercase leading-[0.95]"
+          className="text-[#121212] uppercase leading-[0.95]"
           style={{
             fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-            fontWeight: 200,
+            fontWeight: 600,
             fontSize: 'clamp(32px, 4.2vw, 62px)',
             letterSpacing: '-0.02em',
           }}
         >
           Wear What<br />Moves You
         </h2>
-        <p className="mt-4 text-white/60" style={{
-          fontSize: '14px', fontWeight: 300, lineHeight: 1.75,
+        <p className="mt-4 text-[#121212]/70" style={{
+          fontSize: '14px', fontWeight: 500, lineHeight: 1.75,
           fontFamily: 'var(--font-poppins), Poppins, sans-serif',
           maxWidth: '270px',
         }}>
@@ -607,7 +608,7 @@ function PromoSection() {
         </p>
         <Link
           href="/products"
-          className="mt-6 inline-flex items-center gap-2.5 bg-white px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-black transition-all duration-300 hover:bg-[#5C4033] hover:text-white"
+          className="mt-6 inline-flex items-center gap-2.5 bg-[#121212] px-8 py-3.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition-all duration-300 hover:bg-[#5C4033]"
         >
           Explore Now <ArrowRight className="h-3.5 w-3.5" />
         </Link>
