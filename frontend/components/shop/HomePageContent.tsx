@@ -783,6 +783,134 @@ function VideoShowcase() {
   )
 }
 
+// ─── Promo Section — two-column editorial with parallax right panel ──────────
+function PromoSection() {
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  })
+
+  // Right bg image drifts at ~60% of scroll speed → "through a hole" depth
+  const bgY = useTransform(scrollYProgress, [0, 1], ['12%', '-12%'])
+
+  const panelHeight = 'clamp(360px, 50vw, 680px)'
+
+  return (
+    <section ref={sectionRef} className="relative grid grid-cols-1 sm:grid-cols-2 overflow-hidden">
+
+      {/* ── LEFT: large image + promo code ── */}
+      <div className="relative overflow-hidden" style={{ height: panelHeight }}>
+        <div
+          className="absolute inset-0 transition-transform duration-700"
+          style={{
+            backgroundImage: 'url(/promo-a.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: '#2D2420',
+          }}
+        />
+        {/* Gradient for text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+
+        <motion.div
+          variants={fadeUp} initial="hidden" whileInView="visible"
+          viewport={{ once: true }}
+          className="absolute bottom-10 left-8 z-10"
+        >
+          <p className="mb-3 text-[9px] uppercase tracking-[0.28em] text-white/50">Exclusives</p>
+          <h3
+            className="text-white uppercase leading-[1.05]"
+            style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 200,
+              fontSize: 'clamp(22px, 2.8vw, 34px)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Get 10% Off<br />Using Code<br />
+            <span className="font-semibold tracking-widest">VAMI23</span>
+          </h3>
+          <Link
+            href="/products"
+            className="mt-5 inline-flex items-center gap-2 border border-white/40 px-6 py-2.5 text-[10px] font-medium uppercase tracking-[0.18em] text-white transition-all duration-300 hover:bg-white hover:text-black"
+          >
+            Shop Now <ArrowRight className="h-3 w-3" />
+          </Link>
+        </motion.div>
+      </div>
+
+      {/* ── RIGHT: parallax bg + text block + small accent image ── */}
+      <div className="relative overflow-hidden" style={{ height: panelHeight }}>
+
+        {/* Parallax background — scaled to prevent edge gaps during motion */}
+        <motion.div
+          style={{ y: bgY }}
+          className="absolute inset-0 scale-[1.28] origin-center will-change-transform"
+        >
+          <div
+            className="h-full w-full"
+            style={{
+              backgroundImage: 'url(/promo-b.jpg)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundColor: '#3D2E22',
+            }}
+          />
+        </motion.div>
+        <div className="absolute inset-0 bg-black/35" />
+
+        {/* Foreground — normal scroll speed, floats over the slow bg */}
+        <div className="relative z-10 flex h-full flex-col justify-between p-8 sm:p-10">
+
+          {/* Top: text left + small accent card right */}
+          <motion.div
+            variants={fadeUp} initial="hidden" whileInView="visible"
+            viewport={{ once: true }}
+            className="flex items-start justify-between gap-5"
+          >
+            <div>
+              <p className="mb-2 text-[9px] uppercase tracking-[0.28em] text-white/50">New In</p>
+              <h3
+                className="text-white uppercase leading-[1.05]"
+                style={{
+                  fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+                  fontWeight: 200,
+                  fontSize: 'clamp(22px, 2.8vw, 34px)',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                Starting<br />At ₹999
+              </h3>
+              <Link
+                href="/products"
+                className="mt-4 inline-flex items-center gap-2 border border-white/40 px-6 py-2.5 text-[10px] font-medium uppercase tracking-[0.18em] text-white transition-all duration-300 hover:bg-white hover:text-black"
+              >
+                Shop Now <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+
+            {/* Small accent product card */}
+            <div
+              className="flex-shrink-0 overflow-hidden rounded-sm"
+              style={{
+                width:  'clamp(90px, 11vw, 130px)',
+                height: 'clamp(110px, 14vw, 160px)',
+                backgroundImage: 'url(/promo-accent.jpg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundColor: '#8B7355',
+              }}
+            />
+          </motion.div>
+
+        </div>
+      </div>
+
+    </section>
+  )
+}
+
 // ─── Export ───────────────────────────────────────────────────────────────────
 export function HomePageContent() {
   return (
@@ -791,6 +919,7 @@ export function HomePageContent() {
       <HeroSection />
       <ThisJustIn />
       <CategorySection />
+      <PromoSection />
       <CollectionsGrid />
       <FeaturedProducts />
       <TrendingSection />
