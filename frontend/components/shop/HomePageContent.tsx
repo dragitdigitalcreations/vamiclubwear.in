@@ -422,12 +422,17 @@ function PromoSection() {
   useEffect(() => {
     if (isMobile) return
     let raf: number
+    let current = 0
+    let initialized = false
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
     const tick = () => {
       const el = sectionRef.current
       if (!el) { raf = requestAnimationFrame(tick); return }
-      const rect = el.getBoundingClientRect()
-      rightBgY.set(-rect.top)
+      const target = -el.getBoundingClientRect().top
+      if (!initialized) { current = target; initialized = true }
+      current = lerp(current, target, 0.15)
+      rightBgY.set(current)
       raf = requestAnimationFrame(tick)
     }
 
@@ -547,7 +552,7 @@ function PromoSection() {
         >
           <div className="w-full h-full" style={{
             backgroundImage: 'url(/promo-b.png)',
-            backgroundSize: 'cover', backgroundPosition: '35% center',
+            backgroundSize: 'auto 90%', backgroundPosition: '35% center',
           }} />
         </motion.div>
       </div>
