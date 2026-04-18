@@ -553,7 +553,7 @@ function PromoSection() {
         >
           <div className="w-full h-full" style={{
             backgroundImage: 'url(/promo-b.png)',
-            backgroundSize: '100% auto', backgroundPosition: '50% 30%',
+            backgroundSize: '100% auto', backgroundPosition: '68% 30%',
             backgroundRepeat: 'no-repeat',
             backgroundColor: '#8B5E52',
           }} />
