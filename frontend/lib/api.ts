@@ -456,6 +456,59 @@ export interface HeroBanner {
   updatedAt:    string
 }
 
+// ── Return Requests ───────────────────────────────────────────────────────────
+
+export type ReturnStatus = 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'RESOLVED'
+
+export interface ReturnRequest {
+  id:            string
+  orderNumber:   string
+  customerName:  string
+  customerEmail: string
+  customerPhone: string
+  reason:        string
+  description:   string
+  status:        ReturnStatus
+  adminNote:     string | null
+  resolvedBy:    string | null
+  createdAt:     string
+  updatedAt:     string
+}
+
+export const returnsApi = {
+  submit: (data: {
+    orderNumber:   string
+    customerName:  string
+    customerEmail: string
+    customerPhone: string
+    description:   string
+  }) =>
+    request<{ id: string; status: string }>('/returns', {
+      method: 'POST',
+      body:   JSON.stringify(data),
+    }),
+
+  list: (params?: { status?: string; page?: number; limit?: number }) => {
+    const qs = new URLSearchParams()
+    if (params?.status) qs.set('status', params.status)
+    if (params?.page)   qs.set('page',   String(params.page))
+    if (params?.limit)  qs.set('limit',  String(params.limit))
+    return request<{ data: ReturnRequest[]; total: number; page: number; pages: number }>(
+      `/returns${qs.toString() ? `?${qs}` : ''}`
+    )
+  },
+
+  get: (id: string) => request<ReturnRequest>(`/returns/${id}`),
+
+  update: (id: string, data: { status: ReturnStatus; adminNote?: string }) =>
+    request<ReturnRequest>(`/returns/${id}`, {
+      method: 'PATCH',
+      body:   JSON.stringify(data),
+    }),
+}
+
+// ── Hero Banners ──────────────────────────────────────────────────────────────
+
 export const bannersApi = {
   // Public — active banners for storefront
   list: () => request<HeroBanner[]>('/banners'),

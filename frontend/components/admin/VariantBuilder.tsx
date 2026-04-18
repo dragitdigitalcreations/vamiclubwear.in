@@ -10,6 +10,55 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 
+// ─── Hex → nearest colour name ────────────────────────────────────────────────
+
+const COLOR_MAP: Array<[number, number, number, string]> = [
+  [255,255,255,'White'],[0,0,0,'Black'],[128,128,128,'Grey'],
+  [192,192,192,'Silver'],[255,255,0,'Yellow'],[255,215,0,'Gold'],
+  [255,165,0,'Orange'],[255,140,0,'Dark Orange'],[255,69,0,'Red Orange'],
+  [255,0,0,'Red'],[220,20,60,'Crimson'],[139,0,0,'Dark Red'],
+  [255,20,147,'Deep Pink'],[255,105,180,'Hot Pink'],[255,182,193,'Light Pink'],
+  [255,192,203,'Pink'],[128,0,32,'Burgundy'],[128,0,0,'Maroon'],
+  [153,0,76,'Wine'],[0,128,0,'Green'],[0,255,0,'Lime Green'],
+  [34,139,34,'Forest Green'],[0,100,0,'Dark Green'],[50,205,50,'Medium Green'],
+  [144,238,144,'Light Green'],[0,255,127,'Spring Green'],[64,224,208,'Turquoise'],
+  [0,128,128,'Teal'],[0,139,139,'Dark Cyan'],[0,255,255,'Cyan'],
+  [135,206,235,'Sky Blue'],[0,0,255,'Blue'],[0,0,139,'Dark Blue'],
+  [70,130,180,'Steel Blue'],[100,149,237,'Cornflower Blue'],[173,216,230,'Light Blue'],
+  [25,25,112,'Midnight Blue'],[0,0,128,'Navy Blue'],[75,0,130,'Indigo'],
+  [148,0,211,'Violet'],[128,0,128,'Purple'],[139,0,139,'Dark Magenta'],
+  [238,130,238,'Orchid'],[218,112,214,'Plum'],[216,191,216,'Thistle'],
+  [255,0,255,'Magenta'],[210,180,140,'Tan'],[244,164,96,'Sandy Brown'],
+  [222,184,135,'Burlywood'],[205,133,63,'Peru'],[139,69,19,'Saddle Brown'],
+  [160,82,45,'Sienna'],[101,67,33,'Dark Brown'],[92,64,51,'Mocha Brown'],
+  [245,245,220,'Beige'],[255,228,196,'Bisque'],[255,248,220,'Cream'],
+  [253,245,230,'Old Lace'],[240,230,140,'Khaki'],[189,183,107,'Dark Khaki'],
+  [128,128,0,'Olive'],[107,142,35,'Olive Green'],[154,205,50,'Yellow Green'],
+  [80,200,120,'Emerald Green'],[0,201,87,'Emerald'],[127,255,0,'Chartreuse'],
+  [255,127,80,'Coral'],[240,128,128,'Light Coral'],[250,128,114,'Salmon'],
+  [233,150,122,'Dark Salmon'],[255,160,122,'Light Salmon'],
+  [176,196,222,'Light Steel Blue'],[230,230,250,'Lavender'],
+  [147,112,219,'Medium Purple'],[123,104,238,'Medium Slate Blue'],
+  [72,61,139,'Dark Slate Blue'],[106,90,205,'Slate Blue'],
+  [255,250,250,'Snow White'],[245,245,245,'Off White'],
+  [112,128,144,'Slate Grey'],[47,79,79,'Dark Slate Grey'],
+  [105,105,105,'Dim Grey'],[169,169,169,'Dark Grey'],
+]
+
+function hexToColorName(hex: string): string {
+  const h = hex.replace('#', '')
+  if (h.length !== 6) return ''
+  const r = parseInt(h.slice(0,2), 16)
+  const g = parseInt(h.slice(2,4), 16)
+  const b = parseInt(h.slice(4,6), 16)
+  let best = '', bestDist = Infinity
+  for (const [cr,cg,cb,name] of COLOR_MAP) {
+    const d = (r-cr)**2 + (g-cg)**2 + (b-cb)**2
+    if (d < bestDist) { bestDist = d; best = name }
+  }
+  return best
+}
+
 // ─── Option lists ─────────────────────────────────────────────────────────────
 
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size', 'Custom']
@@ -153,7 +202,11 @@ function VariantRow({
                     <input
                       type="color"
                       value={field.value ?? '#888888'}
-                      onChange={(e) => field.onChange(e.target.value)}
+                      onChange={(e) => {
+                        field.onChange(e.target.value)
+                        const name = hexToColorName(e.target.value)
+                        if (name) setValue(`variants.${index}.color`, name, { shouldValidate: true })
+                      }}
                       className="h-9 w-10 cursor-pointer rounded border border-border bg-input p-0.5"
                       title="Pick swatch colour"
                     />

@@ -345,6 +345,33 @@ enum InventoryAction {
   ADJUSTMENT // delta decrease by staff
 }
 
+enum ReturnStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  RESOLVED
+}
+
+model ReturnRequest {
+  id            String       @id @default(cuid())
+  orderNumber   String
+  customerName  String
+  customerEmail String
+  customerPhone String
+  reason        String       // always "damaged" for now
+  description   String       @db.Text
+  status        ReturnStatus @default(PENDING)
+  adminNote     String?      @db.Text
+  resolvedBy    String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([orderNumber])
+  @@index([status])
+  @@index([createdAt])
+}
+
 model InventoryHistory {
   id          String           @id @default(cuid())
   variantId   String

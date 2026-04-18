@@ -15,6 +15,7 @@ export type AdminSection =
   | 'products'
   | 'inventory'
   | 'orders'
+  | 'returns'
   | 'pos-sync'
   | 'pos-scanner'
   | 'users'
@@ -24,6 +25,7 @@ export const SECTION_ROLES: Record<AdminSection, UserRole[]> = {
   products:      ['ADMIN', 'MANAGER'],
   inventory:     ['ADMIN', 'MANAGER'],
   orders:        ['ADMIN', 'MANAGER', 'STAFF'],
+  returns:       ['ADMIN', 'MANAGER'],
   'pos-sync':    ['ADMIN'],
   'pos-scanner': ['ADMIN', 'MANAGER'],
   users:         ['ADMIN'],

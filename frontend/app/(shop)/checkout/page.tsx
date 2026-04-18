@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle, CreditCard, Banknote } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle, CreditCard, ShieldCheck } from 'lucide-react'
 import { useCartStore, selectSubtotal } from '@/stores/cartStore'
 import { useSavedAddress } from '@/hooks/useSavedAddress'
 import { ApiError } from '@/lib/api'
@@ -32,15 +32,12 @@ const EMPTY_FORM: CheckoutForm = {
   address: '', city: '', state: '', pincode: '', notes: '',
 }
 
-type PaymentMethod = 'cod' | 'online'
-
 export default function CheckoutPage() {
   const router  = useRouter()
   const { items, clearCart } = useCartStore()
   const subtotal = useCartStore(selectSubtotal)
 
   const [form,        setForm]        = useState<CheckoutForm>(EMPTY_FORM)
-  const [method,      setMethod]      = useState<PaymentMethod>('cod')
   const [submitting,  setSubmitting]  = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Partial<CheckoutForm>>({})
   const [saveAddr,    setSaveAddr]    = useState(false)
@@ -115,30 +112,6 @@ export default function CheckoutPage() {
     return Object.keys(e).length === 0
   }
 
-  async function handleCOD() {
-    if (!validate()) return
-    setSubmitting(true)
-    try {
-      const res  = await fetch(`${API_BASE}/api/payment/cod`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          ...form,
-          items: items.map(i => ({ variantId: i.variantId, quantity: i.quantity })),
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new ApiError(res.status, data.error ?? 'Order failed')
-      maybePersistAddress()
-      clearCart()
-      setConfirmed(data.orderNumber)
-    } catch (err: any) {
-      toast.error(err.message ?? 'Order failed. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
   async function handleRazorpay() {
     if (!validate()) return
     setSubmitting(true)
@@ -203,8 +176,7 @@ export default function CheckoutPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (method === 'cod') handleCOD()
-    else handleRazorpay()
+    handleRazorpay()
   }
 
   function f(key: keyof CheckoutForm) {
@@ -374,38 +346,14 @@ export default function CheckoutPage() {
             </label>
           </div>
 
-          {/* Payment method */}
-          <div className="space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-on-background">Payment Method</h2>
-            <div className="space-y-2">
-              {([
-                { id: 'cod',    Icon: Banknote,   label: 'Cash on Delivery', sub: 'Pay when your order arrives' },
-                { id: 'online', Icon: CreditCard, label: 'Pay Online',        sub: 'UPI, Cards, Net Banking, Wallets' },
-              ] as const).map(({ id, Icon, label, sub }) => (
-                <label
-                  key={id}
-                  className={`flex items-center gap-4 cursor-pointer border p-4 transition-colors ${
-                    method === id ? 'border-on-background bg-surface-elevated' : 'border-border hover:border-on-background/40'
-                  }`}
-                >
-                  <input
-                    type="radio" name="payment" value={id}
-                    checked={method === id} onChange={() => setMethod(id)}
-                    className="sr-only"
-                  />
-                  <div className={`flex h-4 w-4 items-center justify-center rounded-full border-2 flex-shrink-0 ${
-                    method === id ? 'border-on-background' : 'border-border'
-                  }`}>
-                    {method === id && <div className="h-2 w-2 rounded-full bg-on-background" />}
-                  </div>
-                  <Icon className="h-4 w-4 text-muted flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-on-background">{label}</p>
-                    <p className="text-xs text-muted">{sub}</p>
-                  </div>
-                </label>
-              ))}
+          {/* Payment */}
+          <div className="flex items-center gap-3 border border-border bg-surface-elevated p-4">
+            <CreditCard className="h-4 w-4 text-muted flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-on-background">Pay Online</p>
+              <p className="text-xs text-muted">UPI, Cards, Net Banking, Wallets — secured by Razorpay</p>
             </div>
+            <ShieldCheck className="h-4 w-4 text-green-400 ml-auto flex-shrink-0" />
           </div>
 
           {/* Place order */}
@@ -417,15 +365,11 @@ export default function CheckoutPage() {
             >
               {submitting ? (
                 <><Loader2 className="h-4 w-4 animate-spin" />Processing…</>
-              ) : method === 'cod' ? (
-                <>Place Order (COD) — ₹{subtotal.toLocaleString('en-IN')}</>
               ) : (
-                <>Pay Online — ₹{subtotal.toLocaleString('en-IN')}</>
+                <>Pay ₹{subtotal.toLocaleString('en-IN')} — Razorpay</>
               )}
             </button>
-            <p className="text-center text-[10px] text-muted">
-              {method === 'online' ? 'Secured by Razorpay' : 'Pay cash when your order arrives'}
-            </p>
+            <p className="text-center text-[10px] text-muted">256-bit SSL secured · No COD available</p>
           </div>
 
         </form>
