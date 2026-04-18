@@ -547,7 +547,7 @@ function PromoSection() {
         >
           <div className="w-full h-full" style={{
             backgroundImage: 'url(/promo-b.png)',
-            backgroundSize: 'cover', backgroundPosition: '65% center',
+            backgroundSize: 'cover', backgroundPosition: '35% center',
           }} />
         </motion.div>
       </div>
