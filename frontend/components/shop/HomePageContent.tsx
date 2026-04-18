@@ -425,11 +425,13 @@ function PromoSection() {
     let raf: number
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
+    let initialized = false
     const tick = () => {
       const el = sectionRef.current
       if (!el) { raf = requestAnimationFrame(tick); return }
       const rect   = el.getBoundingClientRect()
       const target = -rect.top
+      if (!initialized) { lerpedProgress = target; initialized = true }
       lerpedProgress = lerp(lerpedProgress, target, 0.055)
       rightBgY.set(lerpedProgress)
       raf = requestAnimationFrame(tick)
@@ -523,7 +525,7 @@ function PromoSection() {
       >
         <div className="w-full h-full" style={{
           backgroundImage: 'url(/promo-a.png)',
-          backgroundSize: 'cover', backgroundPosition: 'center 30%',
+          backgroundSize: 'cover', backgroundPosition: 'center 65%',
           backgroundColor: '#EDE8E1',
         }} />
         <div className="absolute inset-0" style={{
@@ -551,9 +553,9 @@ function PromoSection() {
         >
           <div className="w-full h-full" style={{
             backgroundImage: 'url(/promo-b.png)',
-            backgroundSize: 'auto 85vh', backgroundPosition: '68% center',
+            backgroundSize: '100% auto', backgroundPosition: '50% 30%',
             backgroundRepeat: 'no-repeat',
-            backgroundColor: '#5C3A2A',
+            backgroundColor: '#8B5E52',
           }} />
         </motion.div>
       </div>
