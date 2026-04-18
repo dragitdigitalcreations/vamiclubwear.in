@@ -21,18 +21,18 @@ router.get('/summary', async (_req: Request, res: Response, next: NextFunction) 
     ] = await Promise.all([
       prisma.product.count({ where: { isActive: true } }),
       prisma.order.count({
-        where: { createdAt: { gte: start30 }, status: { notIn: ['CANCELLED'] } },
+        where: { createdAt: { gte: start30 }, paymentStatus: 'PAID' },
       }),
       prisma.order.aggregate({
         _sum: { total: true },
-        where: { createdAt: { gte: start30 }, status: { notIn: ['CANCELLED'] } },
+        where: { createdAt: { gte: start30 }, paymentStatus: 'PAID' },
       }),
       prisma.order.aggregate({
         _sum: { total: true },
-        where: { createdAt: { gte: start60, lt: start30 }, status: { notIn: ['CANCELLED'] } },
+        where: { createdAt: { gte: start60, lt: start30 }, paymentStatus: 'PAID' },
       }),
       prisma.order.count({
-        where: { createdAt: { gte: start60, lt: start30 }, status: { notIn: ['CANCELLED'] } },
+        where: { createdAt: { gte: start60, lt: start30 }, paymentStatus: 'PAID' },
       }),
       prisma.inventory.count({ where: { quantity: { lte: 5 } } }),
       prisma.webhookLog.count({ where: { status: { in: ['PENDING', 'FAILED'] } } }).catch(() => 0),
@@ -68,7 +68,7 @@ router.get('/sales', async (req: Request, res: Response, next: NextFunction) => 
     const orders = await prisma.order.findMany({
       where: {
         createdAt: { gte: since },
-        status: { notIn: ['CANCELLED'] },
+        paymentStatus: 'PAID',
       },
       select: { createdAt: true, total: true },
       orderBy: { createdAt: 'asc' },
