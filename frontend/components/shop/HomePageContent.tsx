@@ -66,7 +66,7 @@ function ScrollDownMarquee() {
   const x = useTransform(scrollY, [0, 800], [0, -420], { clamp: false })
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-t border-black/10">
+    <div className="absolute left-0 right-0 overflow-hidden border-t border-black/10" style={{ bottom: '50px' }}>
       <motion.div style={{ x }} className="flex items-center whitespace-nowrap py-3.5">
         {Array.from({ length: 12 }).map((_, i) => (
           <span key={i} className="flex items-center gap-4 px-8 text-[10px] font-semibold uppercase tracking-[0.28em] text-fg-3/80">
@@ -84,15 +84,15 @@ function ScrollDownMarquee() {
 // ─── Hero Section ─────────────────────────────────────────────────────────────
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden" style={{ height: '713px' }}>
+    <section className="relative overflow-hidden w-full" style={{ aspectRatio: '2784/1536' }}>
 
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: 'url(/hero-bg.jpg)',
+          backgroundImage: 'url(/hero-models.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center right',
-          backgroundColor: '#EDE8E1',
+          backgroundPosition: 'center',
+          backgroundColor: '#BAB3B4',
         }}
       />
 
