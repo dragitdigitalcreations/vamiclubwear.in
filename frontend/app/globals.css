@@ -127,7 +127,7 @@
   .t-h1 {
     font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif;
     font-size: 26px;
-    font-weight: 700;
+    font-weight: 800;
     line-height: 1.08;
     letter-spacing: -0.025em;
     color: var(--fg-1);
@@ -136,7 +136,7 @@
   .t-h2 {
     font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif;
     font-size: clamp(1.5rem, 3vw, 2.25rem);
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.15;
     letter-spacing: -0.02em;
     color: var(--fg-1);

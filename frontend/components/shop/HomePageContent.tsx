@@ -108,7 +108,7 @@ function HeroSection() {
             className="text-fg-1 uppercase leading-[0.95]"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-              fontWeight: 200,
+              fontWeight: 400,
               fontSize: 'clamp(46px, 5.2vw, 72px)',
               letterSpacing: '-0.01em',
             }}
@@ -218,7 +218,7 @@ function ThisJustIn() {
             className="text-fg-1 uppercase leading-none"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-              fontWeight: 200,
+              fontWeight: 400,
               fontSize: 'clamp(40px, 5.5vw, 72px)',
               letterSpacing: '-0.01em',
             }}
@@ -332,7 +332,7 @@ function CategorySection() {
             className="text-fg-1 uppercase leading-none"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-              fontWeight: 200,
+              fontWeight: 400,
               fontSize: 'clamp(40px, 5.5vw, 72px)',
               letterSpacing: '-0.01em',
             }}
@@ -467,7 +467,7 @@ function PromoSection() {
           <p className="mb-3 text-[9px] uppercase tracking-[0.3em] text-white/50">New Collection</p>
           <h2 className="text-white uppercase leading-[0.95]" style={{
             fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-            fontWeight: 200, fontSize: 'clamp(34px, 9vw, 52px)', letterSpacing: '-0.02em',
+            fontWeight: 400, fontSize: 'clamp(34px, 9vw, 52px)', letterSpacing: '-0.02em',
           }}>
             Wear What<br />Moves You
           </h2>
@@ -627,7 +627,7 @@ function AboutSection() {
         <motion.h2
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }}
-          className="font-display text-3xl font-semibold text-on-background md:text-4xl"
+          className="font-display text-3xl font-bold text-on-background md:text-4xl"
         >
           About Vami
         </motion.h2>
@@ -671,7 +671,7 @@ function BenefitsCards() {
       <motion.h2
         variants={fadeUp} initial="hidden" whileInView="visible"
         viewport={{ once: true }}
-        className="mb-10 text-center font-display text-2xl font-semibold text-on-background md:text-3xl"
+        className="mb-10 text-center font-display text-2xl font-bold text-on-background md:text-3xl"
       >
         Our Benefits
       </motion.h2>
