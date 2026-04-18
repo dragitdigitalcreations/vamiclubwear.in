@@ -430,7 +430,7 @@ function PromoSection() {
       if (!el) { raf = requestAnimationFrame(tick); return }
       const rect   = el.getBoundingClientRect()
       const target = -rect.top
-      lerpedProgress = lerp(lerpedProgress, target, 0.18)
+      lerpedProgress = lerp(lerpedProgress, target, 0.055)
       rightBgY.set(lerpedProgress)
       raf = requestAnimationFrame(tick)
     }
@@ -552,6 +552,7 @@ function PromoSection() {
           <div className="w-full h-full" style={{
             backgroundImage: 'url(/promo-b.png)',
             backgroundSize: 'auto 85vh', backgroundPosition: '68% center',
+            backgroundRepeat: 'no-repeat',
             backgroundColor: '#5C3A2A',
           }} />
         </motion.div>
