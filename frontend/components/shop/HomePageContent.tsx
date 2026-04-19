@@ -18,14 +18,6 @@ const fadeUp = {
   }),
 }
 
-// ─── Collections ──────────────────────────────────────────────────────────────
-const COLLECTIONS = [
-  { slug: 'anarkali',    label: 'Anarkali',      sub: 'Classic & contemporary', gradient: 'from-[#EDE8E1] to-[#DDD4C8]', accent: '#8B6B47' },
-  { slug: 'sharara-set', label: 'Sharara Set',   sub: 'Elegant all occasions',  gradient: 'from-[#E8E1D8] to-[#D6CBBC]', accent: '#6B4A31' },
-  { slug: 'modest-wear', label: 'Modest Wear',   sub: 'Elegance redefined',     gradient: 'from-[#EAE4DA] to-[#D8D0C4]', accent: '#5C4033' },
-  { slug: 'duppatta',    label: 'Duppatta',      sub: 'The art of draping',     gradient: 'from-[#E6DFD5] to-[#D4C8BB]', accent: '#9B7B5B' },
-]
-
 // ─── Announcement Bar ─────────────────────────────────────────────────────────
 function AnnouncementBar() {
   return (
@@ -369,16 +361,31 @@ function CategorySection() {
                     </div>
                   </div>
                 ))
-              : products.map((product) => (
-                  <div key={product.id} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
-                    <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
-                      <HomeCard product={product} />
-                    </div>
-                    <div className="pt-2">
-                      <p className="truncate font-sans font-medium uppercase text-fg-1" style={{ fontSize: '20px', letterSpacing: '0.05em' }}>{product.category.name}</p>
-                    </div>
-                  </div>
-                ))}
+              : products.map((product) => {
+                  const imgUrl = getPrimaryImage(product)
+                  return (
+                    <Link
+                      key={product.id}
+                      href={`/products?category=${product.category.slug}`}
+                      className="group flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]"
+                    >
+                      <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
+                        {imgUrl && (
+                          <Image
+                            src={imgUrl}
+                            alt={product.category.name}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                            sizes="236px"
+                          />
+                        )}
+                      </div>
+                      <div className="pt-2">
+                        <p className="truncate font-sans font-medium uppercase text-fg-1 transition-colors group-hover:text-black" style={{ fontSize: '20px', letterSpacing: '0.05em' }}>{product.category.name}</p>
+                      </div>
+                    </Link>
+                  )
+                })}
           </div>
 
           <button
@@ -703,57 +710,88 @@ function BenefitsCards() {
 }
 
 
-// ─── Collections grid ─────────────────────────────────────────────────────────
-function CollectionsGrid() {
+// ─── Modest Collection Banner ─────────────────────────────────────────────────
+function ModestCollectionBanner() {
   return (
-    <section className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-10">
-      <motion.div
-        variants={fadeUp} initial="hidden" whileInView="visible"
-        viewport={{ once: true, margin: '-60px' }}
-        className="mb-10 flex items-end justify-between"
-      >
-        <div>
-          <p className="mb-1 t-micro">Explore</p>
-          <h2 className="t-h1">Our Collections</h2>
-        </div>
-        <Link href="/products"
-          className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
-          View All <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </motion.div>
+    <section className="relative overflow-hidden w-full" style={{ aspectRatio: '600/310' }}>
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: 'url(/modest-collection.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundColor: '#8B94AE',
+        }}
+      />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
-        {COLLECTIONS.map((col, i) => (
-          <motion.div key={col.slug}
+      {/* Left-side readability gradient — mirrors HeroSection */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#6E7992]/70 via-[#6E7992]/25 to-transparent md:from-[#6E7992]/60 md:via-transparent" />
+
+      <div className="relative z-10 flex h-full items-center px-6 md:px-16 lg:px-24">
+        <div className="max-w-[460px]">
+          <motion.p
             variants={fadeUp} initial="hidden" whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }} custom={i * 0.3}>
-            <Link href={`/products?category=${col.slug}`}
-              className="group relative flex h-[380px] flex-col justify-end overflow-hidden border border-border/60">
-              <div className={`absolute inset-0 bg-gradient-to-br ${col.gradient} transition-transform duration-700 ease-out group-hover:scale-[1.04]`} />
-              <motion.div
-                className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border"
-                style={{ borderColor: `${col.accent}30`, width: 180, height: 180 }}
-                animate={{ scale: [1, 1.06, 1], rotate: [0, 6, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#D8CFC4]/80 via-transparent to-transparent" />
-              <div className="relative z-10 p-7">
-                <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.18em]"
-                  style={{ color: col.accent }}>
-                  {col.sub}
-                </p>
-                <h3 className="font-display text-[22px] font-bold text-fg-1">{col.label}</h3>
-                <span
-                  className="mt-4 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all duration-300 group-hover:gap-3"
-                  style={{ color: col.accent }}
-                >
-                  Explore
-                  <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
-                </span>
-              </div>
+            viewport={{ once: true, margin: '-60px' }}
+            className="text-white/75 uppercase"
+            style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 500,
+              fontSize: 'clamp(9px, 1vw, 11px)',
+              letterSpacing: '0.28em',
+            }}
+          >
+            Modest Edit
+          </motion.p>
+
+          <motion.h2
+            variants={fadeUp} initial="hidden" whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }} custom={0.12}
+            className="mt-3 text-white uppercase leading-[0.95]"
+            style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 400,
+              fontSize: 'clamp(32px, 4.2vw, 60px)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Crafted for<br />Every Day
+          </motion.h2>
+
+          <motion.p
+            variants={fadeUp} initial="hidden" whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }} custom={0.24}
+            className="mt-4 text-white/80"
+            style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 300,
+              fontSize: 'clamp(12px, 1.2vw, 15px)',
+              lineHeight: 1.7,
+              maxWidth: '340px',
+            }}
+          >
+            Modest silhouettes in soft-spoken colour. Tailored to move with you — from prayer to celebration.
+          </motion.p>
+
+          <motion.div
+            variants={fadeUp} initial="hidden" whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }} custom={0.36}
+          >
+            <Link
+              href="/products"
+              className="group mt-7 inline-flex items-center gap-3 bg-white px-8 py-3.5 text-[#1A1D26] transition-all duration-300 hover:bg-[#1A1D26] hover:text-white hover:gap-5"
+              style={{
+                fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+                fontWeight: 500,
+                fontSize: 'clamp(11px, 1vw, 13px)',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Explore Collection
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </motion.div>
-        ))}
+        </div>
       </div>
     </section>
   )
@@ -996,7 +1034,7 @@ export function HomePageContent() {
       <ThisJustIn />
       <CategorySection />
       <PromoSection />
-      <CollectionsGrid />
+      <ModestCollectionBanner />
       <FeaturedProducts />
       <TrendingSection />
       <VideoShowcase />
