@@ -198,10 +198,10 @@ function ThisJustIn() {
   return (
     <section
       style={{ backgroundColor: '#FCE4EB' }}
-      className="flex flex-col overflow-hidden min-h-[580px] sm:h-[810px]"
+      className="flex flex-col justify-center overflow-hidden min-h-[580px] sm:h-[810px] py-14 sm:py-0"
     >
-      {/* ── ZONE 1: Header text — padded from section edge ── */}
-      <div className="mx-auto w-full max-w-[1242px] px-5 pt-10 pb-7 flex-shrink-0">
+      {/* ── ZONE 1: Header ── */}
+      <div className="mx-auto w-full max-w-[1242px] px-5">
         <motion.div
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }}
@@ -223,11 +223,9 @@ function ThisJustIn() {
         </motion.div>
       </div>
 
-      {/* ── ZONE 2: Card carousel — 1242px, zero side padding ── */}
-      <div className="mx-auto w-full max-w-[1242px] flex-shrink-0">
+      {/* ── ZONE 2: Card carousel ── */}
+      <div className="mx-auto w-full max-w-[1242px] mt-8">
         <div className="flex items-center gap-3">
-
-          {/* Left arrow */}
           <button
             onClick={() => scroll('left')}
             className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
@@ -236,7 +234,6 @@ function ThisJustIn() {
             <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
           </button>
 
-          {/* Scrollable card strip — 236×315 cards */}
           <div
             ref={scrollRef}
             className="flex flex-1 gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory"
@@ -264,7 +261,6 @@ function ThisJustIn() {
                 ))}
           </div>
 
-          {/* Right arrow */}
           <button
             onClick={() => scroll('right')}
             className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
@@ -275,8 +271,8 @@ function ThisJustIn() {
         </div>
       </div>
 
-      {/* ── ZONE 3: Bottom padding — CTA centered in remaining space ── */}
-      <div className="flex flex-1 items-center justify-center">
+      {/* ── ZONE 3: CTA ── */}
+      <div className="mt-10 flex justify-center">
         <Link
           href="/products"
           className="rounded-full border border-fg-1 bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
@@ -824,10 +820,10 @@ function FeaturedProducts() {
   return (
     <section
       style={{ backgroundColor: '#FFFFFF' }}
-      className="flex flex-col overflow-hidden min-h-[580px] sm:h-[953px]"
+      className="flex flex-col justify-center overflow-hidden min-h-[580px] sm:h-[953px] py-14 sm:py-0"
     >
       {/* ── ZONE 1: Header ── */}
-      <div className="mx-auto w-full max-w-[1242px] px-5 pt-14 pb-8 flex-shrink-0">
+      <div className="mx-auto w-full max-w-[1242px] px-5">
         <motion.div
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }}
@@ -858,7 +854,7 @@ function FeaturedProducts() {
       </div>
 
       {/* ── ZONE 2: Card carousel ── */}
-      <div className="mx-auto w-full max-w-[1242px] flex-shrink-0">
+      <div className="mx-auto w-full max-w-[1242px] mt-8">
         <div className="flex items-center gap-3">
           <button
             onClick={() => scroll('left')}
@@ -908,8 +904,8 @@ function FeaturedProducts() {
         </div>
       </div>
 
-      {/* ── ZONE 3: CTA centered ── */}
-      <div className="flex flex-1 items-center justify-center">
+      {/* ── ZONE 3: CTA ── */}
+      <div className="mt-10 flex justify-center">
         <Link
           href="/products"
           className="rounded-full border border-fg-1 bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
@@ -951,10 +947,10 @@ function TrendingSection() {
   return (
     <section
       style={{ backgroundColor: '#FADDE4' }}
-      className="flex flex-col overflow-hidden min-h-[580px] sm:h-[953px]"
+      className="flex flex-col justify-center overflow-hidden min-h-[580px] sm:h-[953px] py-14 sm:py-0"
     >
       {/* ── ZONE 1: Header ── */}
-      <div className="mx-auto w-full max-w-[1242px] px-5 pt-14 pb-8 flex-shrink-0">
+      <div className="mx-auto w-full max-w-[1242px] px-5">
         <motion.div
           variants={fadeUp} initial="hidden" whileInView="visible"
           viewport={{ once: true }}
@@ -985,7 +981,7 @@ function TrendingSection() {
       </div>
 
       {/* ── ZONE 2: Card carousel ── */}
-      <div className="mx-auto w-full max-w-[1242px] flex-shrink-0">
+      <div className="mx-auto w-full max-w-[1242px] mt-8">
         <div className="flex items-center gap-3">
           <button
             onClick={() => scroll('left')}
@@ -1032,8 +1028,8 @@ function TrendingSection() {
         </div>
       </div>
 
-      {/* ── ZONE 3: CTA centered ── */}
-      <div className="flex flex-1 items-center justify-center">
+      {/* ── ZONE 3: CTA ── */}
+      <div className="mt-10 flex justify-center">
         <Link
           href="/products"
           className="rounded-full border border-fg-1 bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
