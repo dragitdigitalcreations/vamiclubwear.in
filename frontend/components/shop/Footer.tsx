@@ -1,138 +1,120 @@
 import Link from 'next/link'
 import { MessageCircle } from 'lucide-react'
-import { VamiLogo } from '@/components/shop/VamiLogo'
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '919XXXXXXXXX'
 const WHATSAPP_MSG    = 'Hi Vami Clubwear! I have a query.'
-const IG_HANDLE       = '@vami_clubwear_manjeri'
 const IG_URL          = 'https://www.instagram.com/vami_clubwear_manjeri/'
 
-const COLLECTIONS = [
-  { href: '/products',                          label: 'All Collections' },
-  { href: '/products?category=anarkali',        label: 'Anarkali'        },
-  { href: '/products?category=salwar',          label: 'Salwar'          },
-  { href: '/products?category=sharara-set',     label: 'Sharara Set'     },
-  { href: '/products?category=churidar-bit',    label: 'Churidar Bit'    },
-  { href: '/products?category=cotton-salwar',   label: 'Cotton Salwar'   },
-  { href: '/products?category=modest-wear',     label: 'Modest Wear'     },
-  { href: '/products?category=pants',           label: 'Pants'           },
-  { href: '/products?category=duppatta',        label: 'Duppatta'        },
-  { href: '/products?category=big-size',        label: 'Big Size'        },
-]
-
-const INFO_LINKS = [
-  { href: '/about',    label: 'About Us'         },
-  { href: '/contact',  label: 'Contact'          },
+const POLICY_LINKS = [
   { href: '/shipping', label: 'Shipping & Returns' },
-  { href: '/sizing',   label: 'Size Guide'       },
+  { href: '/returns',  label: 'Returns'            },
+  { href: '/sizing',   label: 'Size Guide'         },
+  { href: '/about',    label: 'Terms & Conditions' },
 ]
 
-const ACCOUNT_LINKS = [
-  { href: '/wishlist',  label: 'Wishlist'     },
-  { href: '/my-orders', label: 'My Orders'    },
-  { href: '/track',     label: 'Track Order'  },
-  { href: '/cart',      label: 'Cart'         },
+const CUSTOMER_CARE_LINKS = [
+  { href: '/about',     label: 'About Us'    },
+  { href: '/contact',   label: 'Contact'     },
+  { href: '/my-orders', label: 'My Orders'   },
+  { href: '/track',     label: 'Track Order' },
 ]
+
+const MENU_LINKS = [
+  { href: '/',                           label: 'Home'        },
+  { href: '/products',                   label: 'Explore'     },
+  { href: '/products',                   label: 'Collections' },
+  { href: '/products?category=big-size', label: 'Big Size'    },
+  { href: '/wishlist',                   label: 'Wishlist'    },
+]
+
+const PAYMENT_METHODS = ['UPI', 'Visa', 'Mastercard', 'RuPay', 'Razorpay']
+
+function ColumnHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h3
+      className="text-fg-1 uppercase"
+      style={{
+        fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+        fontWeight: 500,
+        fontSize: 'clamp(18px, 1.6vw, 22px)',
+        letterSpacing: '0.02em',
+        lineHeight: 1.1,
+      }}
+    >
+      {children}
+    </h3>
+  )
+}
+
+function FooterLink({ href, label, external }: { href: string; label: string; external?: boolean }) {
+  const className =
+    'block text-[11px] font-medium uppercase tracking-[0.1em] text-fg-3 transition-colors hover:text-fg-1'
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+        {label}
+      </a>
+    )
+  }
+  return (
+    <Link href={href} className={className}>
+      {label}
+    </Link>
+  )
+}
 
 export function Footer() {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MSG)}`
 
   return (
-    <footer className="border-t border-border bg-surface mt-12">
-      <div className="mx-auto w-full px-6 py-16 md:py-20">
+    <footer className="bg-[#FAF8F5] border-t border-[#C8C0B8]">
+      <div className="mx-auto w-full max-w-[1400px] px-5 md:px-10">
 
-        {/* ── Main grid (5-col, logo spans 2) ── */}
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-5">
+        {/* ── Top grid — 4 columns with vertical dividers ── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-[#C8C0B8] py-12 md:py-14">
 
-          {/* Col 1–2 — Brand */}
-          <div className="md:col-span-2 flex flex-col items-center justify-center text-center gap-6">
-            <Link href="/" aria-label="Vami Clubwear — Home">
-              <VamiLogo height={72} />
-            </Link>
-            <p className="max-w-xs text-sm leading-relaxed text-muted/80">
-              Premium Indo-Western fashion for the modern woman.
-              Crafted with intention, worn with grace.
-            </p>
-            <a
-              href="mailto:vamiclubwear@gmail.com"
-              className="text-sm text-muted transition-colors hover:text-on-background"
-            >
-              vamiclubwear@gmail.com
-            </a>
-            <div className="flex items-center gap-3 pt-1">
-              <a
-                href={IG_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-elevated transition-colors hover:border-border-strong"
-              >
-                <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" style={{ stroke: '#E1306C' }}><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="#E1306C" stroke="none"/></svg>
-              </a>
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="WhatsApp"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface-elevated transition-colors hover:border-border-strong"
-              >
-                <MessageCircle className="h-4 w-4" style={{ color: '#25D366' }} />
-              </a>
-            </div>
-          </div>
-
-          {/* Col 3 — Collections */}
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-on-background">
-              Collections
-            </h3>
-            <ul className="mt-5 space-y-3.5">
-              {COLLECTIONS.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted/90 transition-colors hover:text-on-background"
-                  >
-                    {link.label}
-                  </Link>
+          {/* POLICY */}
+          <div className="px-5 md:px-8 first:pl-0">
+            <ColumnHeading>Policy</ColumnHeading>
+            <ul className="mt-6 space-y-3">
+              {POLICY_LINKS.map(link => (
+                <li key={link.label}>
+                  <FooterLink href={link.href} label={link.label} />
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Col 4 — Information */}
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-on-background">
-              Information
-            </h3>
-            <ul className="mt-5 space-y-3.5">
-              {INFO_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted/90 transition-colors hover:text-on-background"
-                  >
-                    {link.label}
-                  </Link>
+          {/* CUSTOMER CARE */}
+          <div className="px-5 md:px-8">
+            <ColumnHeading>Customer<br />Care</ColumnHeading>
+            <ul className="mt-6 space-y-3">
+              {CUSTOMER_CARE_LINKS.map(link => (
+                <li key={link.label}>
+                  <FooterLink href={link.href} label={link.label} />
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Col 5 — Account */}
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-on-background">
-              Account
-            </h3>
-            <ul className="mt-5 space-y-3.5">
-              {ACCOUNT_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted/90 transition-colors hover:text-on-background"
-                  >
-                    {link.label}
-                  </Link>
+          {/* SOCIAL */}
+          <div className="px-5 md:px-8">
+            <ColumnHeading>Social</ColumnHeading>
+            <ul className="mt-6 space-y-3">
+              <li><FooterLink href={IG_URL} label="Instagram" external /></li>
+              <li><FooterLink href={whatsappUrl} label="WhatsApp" external /></li>
+              <li><FooterLink href="#" label="Facebook" external /></li>
+              <li><FooterLink href="#" label="Pinterest" external /></li>
+            </ul>
+          </div>
+
+          {/* MENU */}
+          <div className="px-5 md:px-8">
+            <ColumnHeading>Menu</ColumnHeading>
+            <ul className="mt-6 space-y-3">
+              {MENU_LINKS.map(link => (
+                <li key={link.label}>
+                  <FooterLink href={link.href} label={link.label} />
                 </li>
               ))}
             </ul>
@@ -140,36 +122,57 @@ export function Footer() {
 
         </div>
 
-        {/* ── Bottom bar (3-part, matches reference) ── */}
-        <div className="mt-12 border-t border-border pt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* ── Middle strip — Brand + Payment ── */}
+        <div className="border-t border-[#C8C0B8] flex flex-col md:flex-row items-center justify-between gap-6 py-8">
 
-          <p className="text-xs text-muted">
+          <Link
+            href="/"
+            aria-label="Vami Clubwear — Home"
+            className="text-fg-1 uppercase"
+            style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 500,
+              fontSize: 'clamp(22px, 2vw, 28px)',
+              letterSpacing: '0.08em',
+            }}
+          >
+            Vami
+          </Link>
+
+          <div className="flex flex-wrap items-center gap-3 md:gap-4">
+            <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-fg-3">
+              Pay Securely With
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {PAYMENT_METHODS.map(m => (
+                <span
+                  key={m}
+                  className="rounded-md border border-[#C8C0B8] bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-2"
+                >
+                  {m}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Bottom copyright ── */}
+        <div className="border-t border-[#C8C0B8] flex flex-col sm:flex-row items-center justify-between gap-3 py-5">
+          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-fg-3">
             &copy; {new Date().getFullYear()} Vami Clubwear. All rights reserved.
           </p>
-
-          <div className="flex items-center gap-6">
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs text-muted transition-colors hover:text-on-background"
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              <span className="font-semibold uppercase tracking-widest">Chat on WhatsApp</span>
-            </a>
-            <a
-              href={IG_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs text-muted transition-colors hover:text-on-background"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>
-              <span className="font-semibold uppercase tracking-widest">{IG_HANDLE}</span>
-            </a>
-          </div>
-
-          <p className="text-xs text-muted">Crafted by <span className="font-bold text-fg-1 uppercase">Dragit</span></p>
-
+          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-fg-3">
+            Crafted by <span className="text-fg-1 font-semibold">Dragit</span>
+          </p>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] text-fg-3 hover:text-fg-1 transition-colors"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            Chat on WhatsApp
+          </a>
         </div>
       </div>
     </footer>
