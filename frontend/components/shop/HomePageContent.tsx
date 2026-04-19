@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { ArrowRight, ChevronLeft, ChevronRight, Truck, RotateCcw, Zap } from 'lucide-react'
-import { productsApi } from '@/lib/api'
+import { productsApi, reviewsApi, type CustomerReview } from '@/lib/api'
 import { getPrimaryImage } from '@/types/product'
 import type { Product } from '@/types/product'
 
@@ -615,6 +615,214 @@ function PromoSection() {
 }
 
 // ─── About section ────────────────────────────────────────────────────────────
+// ─── Customer Reviews ────────────────────────────────────────────────────────
+function CustomerReviewsSection() {
+  const [reviews, setReviews] = useState<CustomerReview[]>([])
+  const [activeIdx, setActiveIdx] = useState(0)
+  const [formOpen, setFormOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [form, setForm] = useState({ customerName: '', email: '', body: '' })
+  const [submitting, setSubmitting] = useState(false)
+  const [feedback, setFeedback] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    reviewsApi.list()
+      .then((r) => { if (!cancelled) setReviews(r.data) })
+      .catch(() => { if (!cancelled) setReviews([]) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  // Auto-rotate
+  useEffect(() => {
+    if (reviews.length < 2) return
+    const id = setInterval(() => {
+      setActiveIdx((i) => (i + 1) % reviews.length)
+    }, 5000)
+    return () => clearInterval(id)
+  }, [reviews.length])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (submitting) return
+    setSubmitting(true)
+    setFeedback(null)
+    try {
+      const created = await reviewsApi.submit({
+        customerName: form.customerName.trim(),
+        email:        form.email.trim(),
+        body:         form.body.trim(),
+      })
+      setReviews((prev) => [created, ...prev])
+      setActiveIdx(0)
+      setForm({ customerName: '', email: '', body: '' })
+      setFormOpen(false)
+      setFeedback({ type: 'ok', msg: 'Thank you for sharing your experience.' })
+    } catch (err: any) {
+      setFeedback({ type: 'err', msg: err?.message ?? 'Something went wrong. Please try again.' })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const active = reviews[activeIdx]
+
+  return (
+    <section className="w-full" style={{ height: '465px' }}>
+      <div className="mx-auto grid h-full max-w-[1440px] grid-cols-1 md:grid-cols-2">
+        {/* ── Left: white, carousel / submit form ── */}
+        <div className="flex h-full flex-col justify-center bg-white px-8 py-10 md:px-14">
+          {loading ? (
+            <div className="flex items-center justify-center text-[11px] uppercase tracking-[0.2em] text-black/40">
+              Loading…
+            </div>
+          ) : formOpen ? (
+            <form onSubmit={handleSubmit} className="mx-auto flex w-full max-w-md flex-col gap-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-black/60">
+                Share your experience
+              </p>
+              <input
+                type="text"
+                required
+                maxLength={120}
+                placeholder="Your name"
+                value={form.customerName}
+                onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+                className="border-b border-black/20 bg-transparent py-2 text-sm text-black placeholder:text-black/40 focus:border-black focus:outline-none"
+              />
+              <input
+                type="email"
+                required
+                maxLength={200}
+                placeholder="Email (kept private)"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="border-b border-black/20 bg-transparent py-2 text-sm text-black placeholder:text-black/40 focus:border-black focus:outline-none"
+              />
+              <textarea
+                required
+                minLength={4}
+                maxLength={600}
+                rows={3}
+                placeholder="Tell us about your Vami moment…"
+                value={form.body}
+                onChange={(e) => setForm({ ...form, body: e.target.value })}
+                className="resize-none border-b border-black/20 bg-transparent py-2 text-sm text-black placeholder:text-black/40 focus:border-black focus:outline-none"
+              />
+              {feedback && (
+                <p className={`text-[11px] ${feedback.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>
+                  {feedback.msg}
+                </p>
+              )}
+              <div className="mt-2 flex items-center gap-4">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="bg-black px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-opacity hover:opacity-85 disabled:opacity-60"
+                >
+                  {submitting ? 'Submitting…' : 'Post Review'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setFormOpen(false); setFeedback(null) }}
+                  className="text-[10px] font-semibold uppercase tracking-[0.22em] text-black/60 hover:text-black"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : reviews.length === 0 ? (
+            <div className="mx-auto flex max-w-md flex-col items-start gap-5 text-left">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-black/50">
+                Reviews
+              </p>
+              <h3 className="font-display text-2xl leading-tight text-black md:text-[28px]">
+                Be the first to share your experience with us.
+              </h3>
+              <p className="text-sm leading-[1.75] text-black/60">
+                Your words help others discover Vami. Tell us what you loved — one review per person.
+              </p>
+              <button
+                onClick={() => setFormOpen(true)}
+                className="bg-black px-6 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white transition-opacity hover:opacity-85"
+              >
+                Write a Review
+              </button>
+            </div>
+          ) : (
+            <div className="mx-auto flex w-full max-w-md flex-col gap-6">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-black/50">
+                From our customers
+              </p>
+              <motion.blockquote
+                key={active?.id ?? activeIdx}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="flex flex-col gap-5"
+              >
+                <p className="font-display text-lg leading-[1.55] text-black md:text-xl">
+                  &ldquo;{active?.body}&rdquo;
+                </p>
+                <footer className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/70">
+                  — {active?.customerName}
+                </footer>
+              </motion.blockquote>
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex gap-1.5">
+                  {reviews.map((r, i) => (
+                    <button
+                      key={r.id}
+                      onClick={() => setActiveIdx(i)}
+                      aria-label={`Go to review ${i + 1}`}
+                      className={`h-[6px] rounded-full transition-all ${
+                        i === activeIdx ? 'w-6 bg-black' : 'w-[6px] bg-black/25 hover:bg-black/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <button
+                  onClick={() => setFormOpen(true)}
+                  className="text-[10px] font-semibold uppercase tracking-[0.22em] text-black/70 underline-offset-4 hover:text-black hover:underline"
+                >
+                  Share yours →
+                </button>
+              </div>
+              {feedback?.type === 'ok' && (
+                <p className="text-[11px] text-green-700">{feedback.msg}</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ── Right: black, testimonial lede ── */}
+        <div className="flex h-full flex-col justify-center bg-black px-8 py-10 text-white md:px-14">
+          <div className="mx-auto flex max-w-md flex-col gap-6">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/50">
+              Voices of Vami
+            </p>
+            <h3 className="font-display text-[32px] leading-[1.1] md:text-[40px]">
+              Worn. Loved. <span className="italic text-white/70">Remembered.</span>
+            </h3>
+            <p className="text-sm leading-[1.85] text-white/70">
+              Every piece we craft finds its story in the women who wear it — to weddings that
+              become memories, evenings that feel like poetry, mornings that deserve more than
+              ordinary. These are the voices that keep our hands and hearts at the loom.
+            </p>
+            <div className="mt-2 flex items-center gap-4">
+              <span className="h-px w-14 bg-white/30" />
+              <span className="text-[9px] font-semibold uppercase tracking-[0.22em] text-white/50">
+                Real customers · Real words
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function AboutSection() {
   return (
     <section className="relative overflow-hidden py-10 md:py-16">
@@ -1183,6 +1391,7 @@ export function HomePageContent() {
       <FeaturedProducts />
       <TrendingSection />
       <VideoShowcase />
+      <CustomerReviewsSection />
       <AboutSection />
       <BenefitsCards />
     </>

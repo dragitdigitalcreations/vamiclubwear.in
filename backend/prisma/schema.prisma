@@ -391,3 +391,20 @@ model InventoryHistory {
   @@index([action])
   @@index([createdAt])
 }
+
+// ─────────────────────────────────────────────
+// CUSTOMER REVIEWS
+// Public testimonials for the storefront homepage.
+// One review per email (enforced by unique index).
+// ─────────────────────────────────────────────
+
+model CustomerReview {
+  id           String   @id @default(cuid())
+  customerName String
+  email        String   @unique
+  body         String   @db.Text
+  isApproved   Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([isApproved, createdAt])
+}

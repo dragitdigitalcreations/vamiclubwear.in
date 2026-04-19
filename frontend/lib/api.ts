@@ -507,6 +507,37 @@ export const returnsApi = {
     }),
 }
 
+// ── Customer Reviews ──────────────────────────────────────────────────────────
+
+export interface CustomerReview {
+  id:           string
+  customerName: string
+  body:         string
+  createdAt:    string
+}
+
+export const reviewsApi = {
+  list: () => request<{ data: CustomerReview[] }>('/reviews'),
+
+  submit: (data: { customerName: string; email: string; body: string }) =>
+    request<CustomerReview>('/reviews', {
+      method: 'POST',
+      body:   JSON.stringify(data),
+    }),
+
+  listAll: () =>
+    request<{ data: Array<CustomerReview & { email: string; isApproved: boolean }> }>('/reviews/admin'),
+
+  setApproval: (id: string, isApproved: boolean) =>
+    request<CustomerReview & { email: string; isApproved: boolean }>(`/reviews/${id}`, {
+      method: 'PATCH',
+      body:   JSON.stringify({ isApproved }),
+    }),
+
+  delete: (id: string) =>
+    request<void>(`/reviews/${id}`, { method: 'DELETE' }),
+}
+
 // ── Hero Banners ──────────────────────────────────────────────────────────────
 
 export const bannersApi = {
