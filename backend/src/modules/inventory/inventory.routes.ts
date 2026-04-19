@@ -3,6 +3,7 @@ import { inventoryController } from './inventory.controller'
 import { validate } from '../../middleware/validateRequest'
 import { requireAuth } from '../../middleware/auth'
 import { prisma } from '../../lib/prisma'
+import { cache } from '../../lib/cache'
 import {
   setInventorySchema,
   adjustInventorySchema,
@@ -70,8 +71,8 @@ router.get('/by-barcode/:barcode', requireAuth, async (req: Request, res: Respon
     const barcode = decodeURIComponent(req.params.barcode)
 
     // Find the product by its barcode
-    const product = await prisma.product.findUnique({
-      where:  { barcode },
+    const product = await prisma.product.findFirst({
+      where:  { barcode, deletedAt: null },
       select: {
         id:   true,
         name: true,
@@ -179,6 +180,55 @@ router.patch('/reduce', requireAuth, async (req: Request, res: Response, next: N
       },
     })
 
+    // Invalidate product caches immediately — storefront reads stock from the
+    // cached product detail payload, so without this the website keeps showing
+    // the pre-sale quantity (single-qty items looked unchanged after POS scan).
+    const fullVariant = await prisma.productVariant.findUnique({
+      where: { id: variant.id },
+      select: { productId: true, product: { select: { slug: true } } },
+    })
+    if (fullVariant?.product?.slug) {
+      cache.del(`product:slug:${fullVariant.product.slug}`).catch(() => {})
+    }
+    cache.delPattern('products:list:*').catch(() => {})
+
+    let archived = false
+    if (fullVariant) {
+      const remaining = await prisma.inventory.aggregate({
+        _sum: { quantity: true, reserved: true },
+        where: { variant: { productId: fullVariant.productId } },
+      })
+      const totalQty      = remaining._sum.quantity ?? 0
+      const totalReserved = remaining._sum.reserved ?? 0
+      if (totalQty - totalReserved <= 0) {
+        const product = await prisma.product.findUnique({
+          where:  { id: fullVariant.productId },
+          select: { id: true, slug: true, barcode: true, deletedAt: true },
+        })
+        if (product && !product.deletedAt) {
+          const suffix = `:soldout:${Date.now()}`
+          await prisma.$transaction(async (tx) => {
+            await tx.product.update({
+              where: { id: product.id },
+              data: {
+                deletedAt: new Date(),
+                isActive:  false,
+                slug:      `${product.slug}${suffix}`,
+                barcode:   product.barcode ? `${product.barcode}${suffix}` : null,
+              },
+            })
+            await tx.productVariant.updateMany({
+              where: { productId: product.id },
+              data:  { isActive: false },
+            })
+          })
+          archived = true
+          cache.del(`product:slug:${product.slug}`).catch(() => {})
+          cache.delPattern('products:list:*').catch(() => {})
+        }
+      }
+    }
+
     res.json({
       ok:          true,
       sku:         variant.sku,
@@ -187,6 +237,7 @@ router.patch('/reduce', requireAuth, async (req: Request, res: Response, next: N
       color:       variant.color,
       deducted:    qty,
       newQuantity: inv.quantity - qty,
+      archived,
     })
   } catch (err) { next(err) }
 })

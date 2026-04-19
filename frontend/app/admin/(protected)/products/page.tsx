@@ -40,13 +40,14 @@ export default function ProductsPage() {
   useEffect(() => { load() }, [])
 
   async function handleDelete(p: ProductListItem) {
-    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return
+    if (!confirm(`Delete "${p.name}"? Products with order history are archived (hidden) to preserve sales records.`)) return
     try {
-      await productsApi.delete(p.id)
+      const res: any = await productsApi.delete(p.id)
       setProducts((prev) => prev.filter((x) => x.id !== p.id))
-      toast.success(`"${p.name}" deleted`)
-    } catch {
-      toast.error('Failed to delete product')
+      toast.success(res?.soft ? `"${p.name}" archived (had orders)` : `"${p.name}" deleted`)
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || 'Failed to delete product'
+      toast.error(msg)
     }
   }
 

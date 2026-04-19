@@ -19,7 +19,7 @@ router.get('/summary', async (_req: Request, res: Response, next: NextFunction) 
       lowStockCount,
       pendingSyncs,
     ] = await Promise.all([
-      prisma.product.count({ where: { isActive: true } }),
+      prisma.product.count({ where: { isActive: true, deletedAt: null } }),
       prisma.order.count({
         where: { createdAt: { gte: start30 }, paymentStatus: 'PAID' },
       }),

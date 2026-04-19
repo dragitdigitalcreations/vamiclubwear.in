@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { ShoppingBag, Menu, X, Search, User, Heart, ChevronDown } from 'lucide-react'
+import { ShoppingBag, Menu, X, Search, User, Heart, ChevronDown, Barcode } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useCartStore, selectTotalItems } from '@/stores/cartStore'
@@ -174,14 +174,24 @@ export function Navbar() {
         <div className="border-b border-[#C8C0B8]">
           <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 md:px-10 h-10">
 
-            {/* Search icon — left */}
-            <button
-              onClick={() => setSearchOpen(o => !o)}
-              className="p-1 text-fg-3 hover:text-fg-1 transition-colors duration-200"
-              aria-label="Search"
-            >
-              <Search className="h-4 w-4" />
-            </button>
+            {/* Search + Barcode — left */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSearchOpen(o => !o)}
+                className="p-1 text-fg-3 hover:text-fg-1 transition-colors duration-200"
+                aria-label="Search"
+              >
+                <Search className="h-4 w-4" />
+              </button>
+              <Link
+                href="/barcode"
+                className="p-1 text-fg-3 hover:text-fg-1 transition-colors duration-200"
+                aria-label="Find by barcode"
+                title="Find by barcode"
+              >
+                <Barcode className="h-4 w-4" />
+              </Link>
+            </div>
 
             {/* Icons — right */}
             <div className="flex items-center gap-4">

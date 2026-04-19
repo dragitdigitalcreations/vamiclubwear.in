@@ -85,11 +85,13 @@ model Product {
   media       ProductMedia[]
   isActive    Boolean          @default(true)
   isFeatured  Boolean          @default(false)
+  deletedAt   DateTime?        // soft delete — preserves order history while hiding from storefront/admin listings
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
   @@index([categoryId])
   @@index([slug])
+  @@index([deletedAt])
 }
 
 // ─────────────────────────────────────────────

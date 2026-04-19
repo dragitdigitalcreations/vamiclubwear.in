@@ -2,6 +2,20 @@ import { prisma } from '../../lib/prisma'
 import { SyncStatus } from '@prisma/client'
 import { SetInventoryInput, AdjustInventoryInput, CreateLocationInput } from './inventory.schema'
 import { NotFoundError, ConflictError } from '../../utils/errors'
+import { cache } from '../../lib/cache'
+
+// Clears the cached storefront payloads that embed inventory quantities, so
+// quantity changes are reflected on the website immediately.
+async function invalidateProductCacheByVariant(variantId: string) {
+  try {
+    const v = await prisma.productVariant.findUnique({
+      where:  { id: variantId },
+      select: { product: { select: { slug: true } } },
+    })
+    if (v?.product?.slug) await cache.del(`product:slug:${v.product.slug}`)
+    await cache.delPattern('products:list:*')
+  } catch { /* cache failures must never break a write */ }
+}
 
 const MAX_RETRIES = 3
 
@@ -171,6 +185,7 @@ export const inventoryService = {
       },
     })
 
+    await invalidateProductCacheByVariant(variantId)
     return row
   },
 
@@ -219,6 +234,7 @@ export const inventoryService = {
             performedBy: performedBy ?? 'system',
           },
         })
+        await invalidateProductCacheByVariant(variantId)
         return
       }
 

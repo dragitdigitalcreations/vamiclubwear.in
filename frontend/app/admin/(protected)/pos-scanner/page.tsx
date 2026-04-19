@@ -219,13 +219,13 @@ export default function PosScannerPage() {
     const scanId = `${variant.id}-${now}`
 
     try {
-      const result = await inventoryApi.reduce(variant.id, 1)
+      const result = await inventoryApi.reduce(variant.id, 1) as any
       const isLow  = result.newQuantity <= 5
       playBeep('success')
 
       setSession(prev => [{
         id:          scanId,
-        productName: lookup.productName,
+        productName: lookup.productName + (result.archived ? ' — ARCHIVED (sold out)' : ''),
         sku:         result.sku,
         size:        result.size,
         color:       result.color,

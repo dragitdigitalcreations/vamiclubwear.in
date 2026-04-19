@@ -156,14 +156,25 @@ export const productService = {
     const { page, limit, categoryId, category, isActive, isFeatured, search } = query
     const skip = (page - 1) * limit
 
-    // Resolve category slug → ID if provided
+    // Resolve category slug → ID if provided.
+    // IMPORTANT: if the caller passed a category slug that doesn't match any row,
+    // return an empty result set — DO NOT silently fall through to "all products".
     let resolvedCategoryId = categoryId
+    let categorySlugUnmatched = false
     if (!resolvedCategoryId && category) {
       const cat = await prisma.category.findUnique({
         where: { slug: category },
         select: { id: true },
       })
-      resolvedCategoryId = cat?.id
+      if (cat) {
+        resolvedCategoryId = cat.id
+      } else {
+        categorySlugUnmatched = true
+      }
+    }
+
+    if (categorySlugUnmatched) {
+      return { data: [], total: 0, page, limit, totalPages: 0 }
     }
 
     // Full-text search via raw Prisma query for PostgreSQL GIN index performance
@@ -185,6 +196,7 @@ export const productService = {
     }
 
     const where: Prisma.ProductWhereInput = {
+      deletedAt: null,
       ...(resolvedCategoryId !== undefined && { categoryId: resolvedCategoryId }),
       ...(isActive           !== undefined && { isActive }),
       ...(isFeatured         !== undefined && { isFeatured }),
@@ -221,8 +233,8 @@ export const productService = {
   },
 
   async getProductById(id: string) {
-    const product = await prisma.product.findUnique({
-      where: { id },
+    const product = await prisma.product.findFirst({
+      where: { id, deletedAt: null },
       include: productFullInclude,
     })
     if (!product) throw new NotFoundError(`Product ${id}`)
@@ -233,8 +245,8 @@ export const productService = {
     return cache.wrap(
       `product:slug:${slug}`,
       async () => {
-        const product = await prisma.product.findUnique({
-          where: { slug },
+        const product = await prisma.product.findFirst({
+          where: { slug, deletedAt: null },
           include: productFullInclude,
         })
         if (!product) throw new NotFoundError(`Product "${slug}"`)
@@ -245,9 +257,8 @@ export const productService = {
   },
 
   async updateProduct(id: string, data: UpdateProductInput) {
-    await prisma.product.findUniqueOrThrow({ where: { id } }).catch(() => {
-      throw new NotFoundError(`Product ${id}`)
-    })
+    const existing = await prisma.product.findFirst({ where: { id, deletedAt: null }, select: { id: true } })
+    if (!existing) throw new NotFoundError(`Product ${id}`)
 
     return prisma.$transaction(async (tx) => {
       // 1. Update product-level fields
@@ -357,6 +368,7 @@ export const productService = {
     const products = await prisma.product.findMany({
       where: {
         isActive: true,
+        deletedAt: null,
         media: { some: { type: 'VIDEO' } },
       },
       take: limit,
@@ -412,8 +424,8 @@ export const productService = {
   },
 
   async getProductByBarcode(barcode: string) {
-    const product = await prisma.product.findUnique({
-      where: { barcode },
+    const product = await prisma.product.findFirst({
+      where: { barcode, deletedAt: null },
       select: {
         id: true, name: true, slug: true,
         variants: {
@@ -435,22 +447,53 @@ export const productService = {
   },
 
   async deleteProduct(id: string) {
-    const toDelete = await prisma.product.findUniqueOrThrow({ where: { id } }).catch(() => {
-      throw new NotFoundError(`Product ${id}`)
+    const toDelete = await prisma.product.findUnique({ where: { id } })
+    if (!toDelete) throw new NotFoundError(`Product ${id}`)
+
+    // If any variant is referenced by an order, hard-delete would violate the
+    // OrderItem.variantId FK (Restrict). Soft-delete instead to preserve order history.
+    const orderedCount = await prisma.orderItem.count({
+      where: { variant: { productId: id } },
     })
-    // Cascade: delete inventory → orderItems ref variants (keep orders, just delete product+variants+media)
-    await prisma.$transaction(async (tx) => {
-      const variants = await tx.productVariant.findMany({ where: { productId: id }, select: { id: true } })
-      const variantIds = variants.map((v) => v.id)
-      await tx.inventory.deleteMany({ where: { variantId: { in: variantIds } } })
-      await tx.productMedia.deleteMany({ where: { productId: id } })
-      await tx.productVariant.deleteMany({ where: { productId: id } })
-      await tx.product.delete({ where: { id } })
-    })
-    // Invalidate caches
+
+    if (orderedCount > 0) {
+      await prisma.$transaction(async (tx) => {
+        // Free up the unique slug/barcode so a new product can reuse them
+        const suffix = `:deleted:${Date.now()}`
+        await tx.product.update({
+          where: { id },
+          data: {
+            deletedAt: new Date(),
+            isActive:  false,
+            slug:      `${toDelete.slug}${suffix}`,
+            barcode:   toDelete.barcode ? `${toDelete.barcode}${suffix}` : null,
+          },
+        })
+        await tx.productVariant.updateMany({
+          where: { productId: id },
+          data:  { isActive: false },
+        })
+        // Zero out inventory so listings/POS sync don't see phantom stock
+        await tx.inventory.updateMany({
+          where: { variant: { productId: id } },
+          data:  { quantity: 0, reserved: 0 },
+        })
+      })
+    } else {
+      // No order history — safe to hard-delete
+      await prisma.$transaction(async (tx) => {
+        const variants = await tx.productVariant.findMany({ where: { productId: id }, select: { id: true } })
+        const variantIds = variants.map((v) => v.id)
+        await tx.inventory.deleteMany({ where: { variantId: { in: variantIds } } })
+        await tx.productMedia.deleteMany({ where: { productId: id } })
+        await tx.productVariant.deleteMany({ where: { productId: id } })
+        await tx.product.delete({ where: { id } })
+      })
+    }
+
     cache.del(`product:slug:${toDelete.slug}`).catch(() => {})
     cache.delPattern('products:list:*').catch(() => {})
-    return { ok: true }
+    return { ok: true, soft: orderedCount > 0 }
   },
 
   async getVariantBySku(sku: string) {
