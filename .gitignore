@@ -3,6 +3,8 @@
 .env.local
 .env.*.local
 *.pem
+github-sa-key.json
+*-sa-key.json
 
 # ── Claude Code local files ────────────────────
 .claude/
@@ -19,8 +21,11 @@ frontend/out/
 # ── Backend build output ───────────────────────
 backend/dist/
 
-# ── Cloud Run deploy artifacts (contain env values) ─
-backend/deploy/
+# ── Cloud Run deploy artifacts ─────────────────
+# env.yaml has no secrets (those are in Secret Manager) — safe to commit for CI
+# deploy.sh and create-secrets.sh may contain local values — keep ignored
+backend/deploy/*
+!backend/deploy/env.yaml
 
 # ── Prisma ─────────────────────────────────────
 backend/prisma/migrations/dev.db
