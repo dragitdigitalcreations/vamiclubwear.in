@@ -61,7 +61,7 @@ function hexToColorName(hex: string): string {
 
 // ─── Option lists ─────────────────────────────────────────────────────────────
 
-const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size', 'Custom']
+const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', '5XL', '6XL', '7XL', 'Free Size', 'Custom']
 const FABRIC_OPTIONS = [
   'Pure Silk', 'Georgette', 'Chiffon', 'Velvet', 'Cotton', 'Linen',
   'Crepe', 'Net', 'Organza', 'Brocade', 'Satin', 'Rayon',
