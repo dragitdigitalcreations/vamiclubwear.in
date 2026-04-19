@@ -7,10 +7,9 @@ import { notFound } from 'next/navigation'
 import { serverProductsApi } from '@/lib/server-api'
 import { ProductDetailClient } from './ProductDetailClient'
 
-// ISR: revalidate every 60s so POS-driven stock changes surface quickly.
-// Inventory is the highest-churn field on this page — a longer TTL made
-// sold-out items appear in stock after a physical-store sale.
-export const revalidate = 60
+// ISR: revalidate every 30s so admin price edits + POS-driven stock changes
+// surface across all pages in roughly half a minute.
+export const revalidate = 30
 
 interface PageProps {
   params: { slug: string }

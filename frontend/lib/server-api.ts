@@ -21,10 +21,11 @@ async function serverFetch<T>(
 }
 
 export const serverProductsApi = {
+  // 30s TTL — admin price/detail edits surface across SSR pages within half a minute.
   getBySlug: (slug: string) =>
-    serverFetch<any>(`/products/slug/${encodeURIComponent(slug)}`, 3600),
+    serverFetch<any>(`/products/slug/${encodeURIComponent(slug)}`, 30),
 
-  list: (params: Record<string, string | number | boolean> = {}, revalidate = 600) => {
+  list: (params: Record<string, string | number | boolean> = {}, revalidate = 30) => {
     const qs = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined)

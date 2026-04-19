@@ -156,12 +156,18 @@ export const productService = {
     const { page, limit, categoryId, category, isActive, isFeatured, search } = query
     const skip = (page - 1) * limit
 
-    // Resolve category slug → ID if provided.
+    // Virtual "big-size" category: any product with an active variant sized XXXL or larger.
+    // This is a filter, not a stored category — so products auto-appear on the Big Size
+    // page as soon as such a variant is created.
+    const BIG_SIZE_TOKENS = ['XXXL', '3XL', '4XL', '5XL', '6XL', '7XL', '8XL', '9XL', '10XL']
+    const isBigSize = category === 'big-size'
+
+    // Resolve category slug → ID if provided (skip for big-size virtual filter).
     // IMPORTANT: if the caller passed a category slug that doesn't match any row,
     // return an empty result set — DO NOT silently fall through to "all products".
     let resolvedCategoryId = categoryId
     let categorySlugUnmatched = false
-    if (!resolvedCategoryId && category) {
+    if (!resolvedCategoryId && category && !isBigSize) {
       const cat = await prisma.category.findUnique({
         where: { slug: category },
         select: { id: true },
@@ -200,6 +206,16 @@ export const productService = {
       ...(resolvedCategoryId !== undefined && { categoryId: resolvedCategoryId }),
       ...(isActive           !== undefined && { isActive }),
       ...(isFeatured         !== undefined && { isFeatured }),
+      ...(isBigSize && {
+        variants: {
+          some: {
+            isActive: true,
+            OR: BIG_SIZE_TOKENS.map((s) => ({
+              size: { equals: s, mode: 'insensitive' as const },
+            })),
+          },
+        },
+      }),
       ...(search             !== undefined && (
         productIdsFromSearch !== undefined
           ? { id: { in: productIdsFromSearch } }
@@ -252,7 +268,7 @@ export const productService = {
         if (!product) throw new NotFoundError(`Product "${slug}"`)
         return product
       },
-      3600, // 1 hour — invalidated on update/delete
+      60, // 60s — invalidated on update/delete, short floor for price edits
     )
   },
 

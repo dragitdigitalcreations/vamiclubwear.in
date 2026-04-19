@@ -26,14 +26,30 @@ function MediaGallery({ media }: { media: ProductMedia[] }) {
   const [active, setActive] = useState(0)
   const sorted = [...media].sort((a, b) => a.sortOrder - b.sortOrder)
   const current = sorted[active]
+  const touchStartX = useRef<number | null>(null)
 
   function prev() { setActive((i) => (i - 1 + sorted.length) % sorted.length) }
   function next() { setActive((i) => (i + 1) % sorted.length) }
 
+  function onTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+  }
+  function onTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null || sorted.length <= 1) return
+    const delta = e.changedTouches[0].clientX - touchStartX.current
+    if (delta > 50) prev()
+    else if (delta < -50) next()
+    touchStartX.current = null
+  }
+
   return (
     <div className="flex flex-col gap-4 md:flex-row-reverse">
       {/* Main media */}
-      <div className="relative aspect-[3/4] flex-1 overflow-hidden bg-surface-elevated">
+      <div
+        className="relative aspect-[3/4] flex-1 overflow-hidden bg-surface-elevated touch-pan-y"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={active}
