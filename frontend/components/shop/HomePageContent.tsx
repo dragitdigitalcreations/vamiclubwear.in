@@ -797,49 +797,125 @@ function ModestCollectionBanner() {
   )
 }
 
-// ─── Best Sellers ─────────────────────────────────────────────────────────────
+// ─── Can't Miss Deals ─── white carousel, mirrors Trending/ThisJustIn ─────────
 function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading,  setLoading]  = useState(true)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     productsApi
-      .list({ isFeatured: 'true', isActive: 'true', limit: 4 })
+      .list({ isFeatured: 'true', isActive: 'true', limit: 12 })
       .then((res) => {
         const data = (res as any).data ?? []
         if (data.length > 0) { setProducts(data); return }
-        return productsApi.list({ isActive: 'true', limit: 4 })
+        return productsApi.list({ isActive: 'true', limit: 12 })
           .then((r) => setProducts((r as any).data ?? []))
       })
       .catch(() => setProducts([]))
       .finally(() => setLoading(false))
   }, [])
 
+  const scroll = useCallback((dir: 'left' | 'right') => {
+    const w = scrollRef.current?.clientWidth ?? 600
+    scrollRef.current?.scrollBy({ left: dir === 'right' ? w : -w, behavior: 'smooth' })
+  }, [])
+
   return (
-    <section className="mx-auto w-full max-w-[1242px] px-5 py-10">
-      <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
-        viewport={{ once: true, margin: '-60px' }}
-        className="mb-10 flex items-end justify-between">
-        <div>
-          <p className="mb-1 t-micro">Most Popular</p>
-          <h2 className="t-h1">Best Sellers</h2>
+    <section
+      style={{ backgroundColor: '#FFFFFF' }}
+      className="flex flex-col overflow-hidden min-h-[580px] sm:h-[953px]"
+    >
+      {/* ── ZONE 1: Header ── */}
+      <div className="mx-auto w-full max-w-[1242px] px-5 pt-14 pb-8 flex-shrink-0">
+        <motion.div
+          variants={fadeUp} initial="hidden" whileInView="visible"
+          viewport={{ once: true }}
+        >
+          <h2
+            className="text-fg-1 uppercase leading-[0.95]"
+            style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 400,
+              fontSize: 'clamp(40px, 5.5vw, 72px)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Can&rsquo;t Miss Deals
+          </h2>
+          <p
+            className="mt-4 text-fg-3 leading-relaxed"
+            style={{
+              fontSize: '16px',
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 200,
+              maxWidth: '360px',
+            }}
+          >
+            Everything on sale will make your wardrobe happier
+          </p>
+        </motion.div>
+      </div>
+
+      {/* ── ZONE 2: Card carousel ── */}
+      <div className="mx-auto w-full max-w-[1242px] flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => scroll('left')}
+            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="flex flex-1 gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory"
+          >
+            {loading
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                    <div className="bg-[#F5F1EC]" style={{ height: '315px' }}><HomeCardSkeleton /></div>
+                    <div className="pt-2 space-y-1.5">
+                      <div className="skeleton h-2.5 w-3/4 rounded" />
+                      <div className="skeleton h-2.5 w-1/3 rounded" />
+                    </div>
+                  </div>
+                ))
+              : products.map((product) => (
+                  <div key={product.id} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                    <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
+                      <span className="absolute left-3 top-3 z-10 rounded-full bg-black px-3 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-white">
+                        Sale
+                      </span>
+                      <HomeCard product={product} />
+                    </div>
+                    <div className="pt-2">
+                      <p className="truncate text-[11px] text-fg-2">{product.name}</p>
+                      <p className="mt-0.5 text-[11px] font-semibold text-fg-1">₹{Number(product.basePrice).toLocaleString('en-IN')}</p>
+                    </div>
+                  </div>
+                ))}
+          </div>
+
+          <button
+            onClick={() => scroll('right')}
+            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
+          </button>
         </div>
-        <Link href="/products" className="hidden items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted hover:text-on-background transition-colors md:flex">
-          View All <ArrowRight className="h-3.5 w-3.5" />
+      </div>
+
+      {/* ── ZONE 3: CTA centered ── */}
+      <div className="flex flex-1 items-center justify-center">
+        <Link
+          href="/products"
+          className="rounded-full border border-fg-1 bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
+        >
+          Shop Now
         </Link>
-      </motion.div>
-      <div className="flex overflow-x-auto no-scrollbar gap-3" style={{ height: '310px' }}>
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 36px) / 4)' }}>
-                <HomeCardSkeleton />
-              </div>
-            ))
-          : products.map((product) => (
-              <div key={product.id} className="flex-shrink-0 h-full" style={{ width: 'calc((100% - 36px) / 4)' }}>
-                <HomeCard product={product} />
-              </div>
-            ))}
       </div>
     </section>
   )
