@@ -72,18 +72,27 @@ const STYLE_OPTIONS = [
 ]
 
 // ─── SKU generator (matches backend convention) ────────────────────────────────
+// Format: VCW-{SLUG}-{COLOR}-{SIZE}-{FABRIC}-{STYLE}-{NN}
+// Missing dimensions fall back to "NA"; the 1-based index suffix guarantees
+// uniqueness across variants of the same product (backend rejects duplicates).
 
-function generateSku(slug: string, color: string, size: string, fabric: string): string {
+function generateSku(
+  slug: string,
+  color: string,
+  size: string,
+  fabric: string,
+  style: string,
+  index: number,
+): string {
   const clean = (s: string) =>
     s.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4)
-  const parts = [
-    'VCW',
-    clean(slug),
-    clean(color),
-    clean(size),
-    clean(fabric),
-  ].filter(Boolean)
-  return parts.join('-')
+  const slugCode   = clean(slug)   || 'PROD'
+  const colorCode  = clean(color)  || 'NA'
+  const sizeCode   = clean(size)   || 'NA'
+  const fabricCode = clean(fabric) || 'NA'
+  const styleCode  = clean(style)  || 'NA'
+  const idx        = String(index + 1).padStart(2, '0')
+  return `VCW-${slugCode}-${colorCode}-${sizeCode}-${fabricCode}-${styleCode}-${idx}`
 }
 
 // ─── Form shape (matches ProductUploadForm's productSchema) ────────────────────
@@ -122,16 +131,18 @@ function VariantRow({
   const size     = useWatch({ control, name: `variants.${index}.size` })
   const color    = useWatch({ control, name: `variants.${index}.color` })
   const fabric   = useWatch({ control, name: `variants.${index}.fabric` })
+  const style    = useWatch({ control, name: `variants.${index}.style` })
   const colorHex = useWatch({ control, name: `variants.${index}.colorHex` }) ?? '#888888'
 
-  // Auto-generate SKU from slug + dimensions
+  // Auto-generate SKU from slug + dimensions. Runs unconditionally so every
+  // variant always has a valid, unique SKU — even with partial dimensions.
   useEffect(() => {
-    if (productSlug && color && size && fabric) {
-      setValue(`variants.${index}.sku`, generateSku(productSlug, color, size, fabric), {
-        shouldValidate: true,
-      })
-    }
-  }, [productSlug, color, size, fabric, index, setValue])
+    setValue(
+      `variants.${index}.sku`,
+      generateSku(productSlug, color ?? '', size ?? '', fabric ?? '', style ?? '', index),
+      { shouldValidate: true },
+    )
+  }, [productSlug, color, size, fabric, style, index, setValue])
 
   const variantErrors = errors.variants?.[index]
   const summary = [color, size, fabric].filter(Boolean).join(' / ') || 'New variant'
