@@ -30,9 +30,17 @@ const PORT = process.env.PORT ?? 3001
 app.use(helmet())
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
+const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+
 app.use(
   cors({
-    origin:  process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true)
+      return cb(new Error(`CORS: origin ${origin} not allowed`))
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Api-Key'],
   })

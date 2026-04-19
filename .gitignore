@@ -19,6 +19,9 @@ frontend/out/
 # ── Backend build output ───────────────────────
 backend/dist/
 
+# ── Cloud Run deploy artifacts (contain env values) ─
+backend/deploy/
+
 # ── Prisma ─────────────────────────────────────
 backend/prisma/migrations/dev.db
 *.db
