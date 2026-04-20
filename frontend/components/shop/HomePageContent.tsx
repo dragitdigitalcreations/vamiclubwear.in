@@ -983,84 +983,145 @@ function BenefitsCards() {
 // ─── Modest Collection Banner ─────────────────────────────────────────────────
 function ModestCollectionBanner() {
   return (
-    <section className="relative overflow-hidden w-full" style={{ aspectRatio: '600/310' }}>
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: 'url(/modest-collection.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundColor: '#8B94AE',
-        }}
-      />
+    <section className="w-full">
+      {/* ── Mobile: stacked — black text block on top, image below ── */}
+      <div className="md:hidden">
+        <motion.div
+          className="flex flex-col items-center justify-center bg-[#121212] px-6 py-14 text-center text-white"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-white uppercase leading-[1]" style={{
+            fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+            fontWeight: 700,
+            fontSize: 'clamp(30px, 8.5vw, 44px)',
+            letterSpacing: '-0.01em',
+          }}>
+            Crafted for<br />Every Day
+          </h2>
 
-      {/* Left-side readability gradient — mirrors HeroSection */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#6E7992]/70 via-[#6E7992]/25 to-transparent md:from-[#6E7992]/60 md:via-transparent" />
+          <p className="mt-4 max-w-[280px] text-white/70" style={{
+            fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+            fontWeight: 300,
+            fontSize: '13px',
+            lineHeight: 1.7,
+          }}>
+            Modest silhouettes in soft-spoken colour — from prayer to celebration.
+          </p>
 
-      <div className="relative z-10 flex h-full items-center px-6 md:px-16 lg:px-24">
-        <div className="max-w-[460px]">
-          <motion.p
-            variants={fadeUp} initial="hidden" whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }}
-            className="text-white/75 uppercase"
+          <Link
+            href="/products"
+            className="mt-7 inline-flex items-center gap-2.5 rounded-full border border-white/80 px-8 py-3 text-white transition-all duration-300 hover:bg-white hover:text-[#121212]"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
               fontWeight: 500,
-              fontSize: 'clamp(9px, 1vw, 11px)',
-              letterSpacing: '0.28em',
+              fontSize: '11px',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
             }}
           >
-            Modest Edit
-          </motion.p>
+            Shop Now
+          </Link>
+        </motion.div>
 
-          <motion.h2
-            variants={fadeUp} initial="hidden" whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }} custom={0.12}
-            className="mt-3 text-white uppercase leading-[0.95]"
-            style={{
-              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-              fontWeight: 400,
-              fontSize: 'clamp(32px, 4.2vw, 60px)',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            Crafted for<br />Every Day
-          </motion.h2>
+        <motion.div
+          className="relative w-full"
+          style={{ aspectRatio: '1/1' }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          viewport={{ once: true }}
+        >
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'url(/modest-collection.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 30%',
+            backgroundColor: '#8B94AE',
+          }} />
+        </motion.div>
+      </div>
 
-          <motion.p
-            variants={fadeUp} initial="hidden" whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }} custom={0.24}
-            className="mt-4 text-white/80"
-            style={{
-              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-              fontWeight: 300,
-              fontSize: 'clamp(12px, 1.2vw, 15px)',
-              lineHeight: 1.7,
-              maxWidth: '340px',
-            }}
-          >
-            Modest silhouettes in soft-spoken colour. Tailored to move with you — from prayer to celebration.
-          </motion.p>
+      {/* ── Desktop: original overlay layout ── */}
+      <div className="relative overflow-hidden w-full hidden md:block" style={{ aspectRatio: '600/310' }}>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'url(/modest-collection.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: '#8B94AE',
+          }}
+        />
 
-          <motion.div
-            variants={fadeUp} initial="hidden" whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }} custom={0.36}
-          >
-            <Link
-              href="/products"
-              className="group mt-7 inline-flex items-center gap-3 bg-white px-8 py-3.5 text-[#1A1D26] transition-all duration-300 hover:bg-[#1A1D26] hover:text-white hover:gap-5"
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#6E7992]/60 to-transparent" />
+
+        <div className="relative z-10 flex h-full items-center px-16 lg:px-24">
+          <div className="max-w-[460px]">
+            <motion.p
+              variants={fadeUp} initial="hidden" whileInView="visible"
+              viewport={{ once: true, margin: '-60px' }}
+              className="text-white/75 uppercase"
               style={{
                 fontFamily: 'var(--font-poppins), Poppins, sans-serif',
                 fontWeight: 500,
-                fontSize: 'clamp(11px, 1vw, 13px)',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
+                fontSize: 'clamp(9px, 1vw, 11px)',
+                letterSpacing: '0.28em',
               }}
             >
-              Explore Collection
-              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-          </motion.div>
+              Modest Edit
+            </motion.p>
+
+            <motion.h2
+              variants={fadeUp} initial="hidden" whileInView="visible"
+              viewport={{ once: true, margin: '-60px' }} custom={0.12}
+              className="mt-3 text-white uppercase leading-[0.95]"
+              style={{
+                fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+                fontWeight: 400,
+                fontSize: 'clamp(32px, 4.2vw, 60px)',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              Crafted for<br />Every Day
+            </motion.h2>
+
+            <motion.p
+              variants={fadeUp} initial="hidden" whileInView="visible"
+              viewport={{ once: true, margin: '-60px' }} custom={0.24}
+              className="mt-4 text-white/80"
+              style={{
+                fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+                fontWeight: 300,
+                fontSize: 'clamp(12px, 1.2vw, 15px)',
+                lineHeight: 1.7,
+                maxWidth: '340px',
+              }}
+            >
+              Modest silhouettes in soft-spoken colour. Tailored to move with you — from prayer to celebration.
+            </motion.p>
+
+            <motion.div
+              variants={fadeUp} initial="hidden" whileInView="visible"
+              viewport={{ once: true, margin: '-60px' }} custom={0.36}
+            >
+              <Link
+                href="/products"
+                className="group mt-7 inline-flex items-center gap-3 bg-white px-8 py-3.5 text-[#1A1D26] transition-all duration-300 hover:bg-[#1A1D26] hover:text-white hover:gap-5"
+                style={{
+                  fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+                  fontWeight: 500,
+                  fontSize: 'clamp(11px, 1vw, 13px)',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Explore Collection
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </motion.div>
+          </div>
         </div>
       </div>
     </section>
