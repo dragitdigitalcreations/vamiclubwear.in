@@ -462,58 +462,103 @@ function PromoSection() {
     rawMY.set(0)
   }, [rawMY])
 
-  // ── Mobile: stacked, fade only ────────────────────────────────────────────
+  // ── Mobile: three-tile editorial stack (reference layout) ────────────────
   if (isMobile) {
     return (
-      <section className="relative overflow-hidden bg-[#121212] px-6 py-16">
-        <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: 'url(/promo-b.png)',
-          backgroundSize: 'cover', backgroundPosition: '60% center',
-          backgroundColor: '#1E1E1E', opacity: 0.35,
-        }} />
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: 'linear-gradient(to bottom, rgba(18,18,18,0.4) 0%, rgba(18,18,18,0.85) 100%)' }} />
-
+      <section className="relative w-full bg-[#FAF8F5]">
+        {/* ── Tile 1: promo-a with top-right text overlay ── */}
         <motion.div
-          className="relative z-10 mb-10"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-          viewport={{ once: true }}
-        >
-          <p className="mb-3 text-[9px] uppercase tracking-[0.3em] text-white/50">New Collection</p>
-          <h2 className="text-white uppercase leading-[0.95]" style={{
-            fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-            fontWeight: 400, fontSize: 'clamp(34px, 9vw, 52px)', letterSpacing: '-0.02em',
-          }}>
-            Wear What<br />Moves You
-          </h2>
-          <p className="mt-4 text-white/55" style={{
-            fontSize: '14px', fontWeight: 300, lineHeight: 1.75,
-            fontFamily: 'var(--font-poppins), Poppins, sans-serif', maxWidth: '260px',
-          }}>
-            Indo-Western fusion crafted for every occasion.
-          </p>
-          <Link href="/products"
-            className="mt-7 inline-flex items-center gap-2.5 bg-white px-7 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-black transition-all duration-300 hover:bg-[#5C4033] hover:text-white">
-            Explore Now <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </motion.div>
-
-        <motion.div
-          className="relative z-10 mx-auto"
+          className="relative w-full overflow-hidden"
+          style={{ aspectRatio: '3/4' }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           viewport={{ once: true }}
-          style={{ width: '75vw', maxWidth: '300px', height: '320px' }}
         >
-          <div className="w-full h-full rounded-[3px] overflow-hidden" style={{
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'url(/promo-a.png)',
+            backgroundSize: 'cover', backgroundPosition: 'center 35%',
+            backgroundColor: '#EDE8E1',
+          }} />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-[#EDE8E1]/70 via-[#EDE8E1]/20 to-transparent" />
+
+          <div className="relative z-10 flex h-full flex-col items-end px-6 pt-8 text-right">
+            <h2 className="text-[#111] uppercase leading-[0.95]" style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 800,
+              fontSize: 'clamp(22px, 7vw, 34px)',
+              letterSpacing: '-0.01em',
+              maxWidth: '60%',
+            }}>
+              Wear What<br />Moves You
+            </h2>
+            <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-[#111]/60" style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+            }}>
+              Indo-Western
+            </p>
+            <Link
+              href="/products"
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#111] bg-white/80 px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#111] backdrop-blur-sm transition-all duration-300 hover:bg-[#111] hover:text-white"
+            >
+              Shop Now
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* ── Tile 2: accent square on cream tone ── */}
+        <motion.div
+          className="relative w-full overflow-hidden bg-[#F2EBE0]"
+          style={{ aspectRatio: '4/3' }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          viewport={{ once: true }}
+        >
+          <div className="absolute inset-0" style={{
             backgroundImage: 'url(/promo-accent.png)',
             backgroundSize: 'cover', backgroundPosition: 'center',
-            backgroundColor: '#F2EBE0',
-            boxShadow: '0 24px 60px rgba(0,0,0,0.55)',
           }} />
+        </motion.div>
+
+        {/* ── Tile 3: promo-b with bottom-left text overlay ── */}
+        <motion.div
+          className="relative w-full overflow-hidden"
+          style={{ aspectRatio: '3/4' }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+          viewport={{ once: true }}
+        >
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'url(/promo-b.png)',
+            backgroundSize: 'cover', backgroundPosition: '50% 30%',
+            backgroundColor: '#3A2A22',
+          }} />
+          <div className="pointer-events-none absolute inset-0"
+            style={{ background: 'linear-gradient(to top, rgba(24,16,12,0.85) 0%, rgba(24,16,12,0.25) 55%, transparent 100%)' }} />
+
+          <div className="relative z-10 flex h-full flex-col justify-end px-6 pb-8">
+            <h3 className="text-white leading-[1.05]" style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 700,
+              fontSize: 'clamp(22px, 6.5vw, 30px)',
+              letterSpacing: '-0.01em',
+            }}>
+              Starting at ₹1,499
+            </h3>
+            <p className="mt-1.5 text-[12px] text-white/70" style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 300,
+            }}>
+              The Everyday Edit
+            </p>
+            <Link
+              href="/products"
+              className="mt-4 inline-flex w-fit items-center gap-2 bg-white px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition-all duration-300 hover:bg-[#5C4033] hover:text-white"
+            >
+              Shop Now
+            </Link>
+          </div>
         </motion.div>
       </section>
     )
