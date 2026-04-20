@@ -83,18 +83,30 @@ function HeroSection() {
       {/* Desktop keeps the original wide aspect; mobile uses aspect-[3/5] via Tailwind above */}
       <div className="hidden sm:block" style={{ aspectRatio: '2784/1536' }} />
 
+      {/* Mobile background — zoomed + anchored bottom-right so the models fill the frame */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 block sm:hidden"
+        style={{
+          backgroundImage: 'url(/hero-models.png)',
+          backgroundSize: '190% auto',
+          backgroundPosition: '78% 100%',
+          backgroundRepeat: 'no-repeat',
+          backgroundColor: '#BAB3B4',
+        }}
+      />
+      {/* Desktop background — original cover */}
+      <div
+        className="absolute inset-0 hidden sm:block"
         style={{
           backgroundImage: 'url(/hero-models.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'right bottom',
+          backgroundPosition: 'center',
           backgroundColor: '#BAB3B4',
         }}
       />
 
       {/* Left-side wash: stronger on mobile so black text stays legible; centered on desktop */}
-      <div className="pointer-events-none absolute inset-0 sm:hidden bg-gradient-to-b from-[#FAF8F5]/95 via-[#FAF8F5]/60 to-[#FAF8F5]/10" />
+      <div className="pointer-events-none absolute inset-0 sm:hidden bg-gradient-to-b from-[#FAF8F5]/95 via-[#FAF8F5]/45 to-transparent" />
       <div className="pointer-events-none absolute inset-0 hidden sm:block bg-gradient-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
 
       <div className="relative z-10 flex h-full items-start sm:items-center px-6 pt-10 pb-10 sm:px-16 sm:py-0 lg:px-24">
@@ -1028,7 +1040,7 @@ function ModestCollectionBanner() {
 
         <motion.div
           className="relative w-full"
-          style={{ aspectRatio: '1/1' }}
+          style={{ aspectRatio: '4/5' }}
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
@@ -1036,8 +1048,9 @@ function ModestCollectionBanner() {
         >
           <div className="absolute inset-0" style={{
             backgroundImage: 'url(/modest-collection.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center 30%',
+            backgroundSize: '135% auto',
+            backgroundPosition: 'center 18%',
+            backgroundRepeat: 'no-repeat',
             backgroundColor: '#8B94AE',
           }} />
         </motion.div>
