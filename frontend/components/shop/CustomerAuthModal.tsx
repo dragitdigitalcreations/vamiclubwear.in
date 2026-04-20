@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCustomerAuthStore } from '@/stores/customerAuthStore'
@@ -67,12 +68,12 @@ export function CustomerAuthModal() {
       btnRef.current.innerHTML = ''
       g.accounts.id.renderButton(btnRef.current, {
         type:  'standard',
-        theme: 'outline',
+        theme: 'filled_black',
         size:  'large',
-        text:  'signin_with',
+        text:  'continue_with',
         shape: 'rectangular',
         logo_alignment: 'left',
-        width: 300,
+        width: 320,
       })
     }
     init()
@@ -91,7 +92,7 @@ export function CustomerAuthModal() {
           onClick={closePrompt}
         >
           <motion.div
-            className="relative w-full max-w-[400px] rounded-lg bg-[#121212] px-7 py-10 text-white shadow-2xl"
+            className="relative w-full max-w-[420px] rounded-2xl bg-[#121212] px-8 py-12 text-white shadow-[0_24px_64px_rgba(0,0,0,0.55)]"
             initial={{ opacity: 0, y: 20, scale: 0.96 }}
             animate={{ opacity: 1, y: 0,  scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.96 }}
@@ -100,22 +101,35 @@ export function CustomerAuthModal() {
             <button
               onClick={closePrompt}
               aria-label="Close"
-              className="absolute right-4 top-4 text-white/50 transition-colors hover:text-white"
+              className="absolute right-5 top-5 text-white/40 transition-colors hover:text-white"
             >
               <X className="h-4 w-4" />
             </button>
 
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/50">
-              Vami Clubwear
-            </p>
-            <h2 className="mt-2 font-display text-2xl">Sign in to continue</h2>
-            <p className="mt-3 text-[13px] leading-relaxed text-white/65">
-              {promptReason ?? 'Sign in with your Google account to save your cart, track orders, and personalize your profile.'}
+            {/* Logo */}
+            <div className="flex justify-center">
+              <Image
+                src="/logo.svg"
+                alt="Vami Clubwear"
+                width={120}
+                height={48}
+                className="h-12 w-auto invert"
+                priority
+              />
+            </div>
+
+            {/* Heading */}
+            <h2 className="mt-7 text-center font-display text-[30px] font-bold leading-tight tracking-tight text-white">
+              Welcome Back!
+            </h2>
+            <p className="mt-3 text-center text-[14px] leading-relaxed text-white/65">
+              {promptReason ?? 'Sign in to add items to your cart and complete your purchase'}
             </p>
 
-            <div className="mt-7 flex flex-col items-center gap-3">
+            {/* Google button */}
+            <div className="mt-8 flex flex-col items-center gap-3">
               {clientId ? (
-                <div ref={btnRef} className="flex min-h-[44px] items-center justify-center" />
+                <div ref={btnRef} className="flex min-h-[44px] w-full items-center justify-center [&>div]:w-full [&_iframe]:!w-full" />
               ) : (
                 <p className="text-[12px] text-red-400">
                   Google Sign-In not configured. Set <code>NEXT_PUBLIC_GOOGLE_CLIENT_ID</code>.
@@ -125,9 +139,13 @@ export function CustomerAuthModal() {
               {error   && <p className="text-[11px] text-red-400">{error}</p>}
             </div>
 
-            <p className="mt-8 text-center text-[10px] leading-relaxed text-white/40">
-              By continuing you agree to our Terms and acknowledge the Privacy Policy.
-            </p>
+            {/* Maybe later */}
+            <button
+              onClick={closePrompt}
+              className="mt-5 w-full text-center text-[13px] text-white/60 transition-colors hover:text-white"
+            >
+              Maybe later
+            </button>
           </motion.div>
         </motion.div>
       )}
