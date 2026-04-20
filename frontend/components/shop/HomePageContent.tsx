@@ -76,22 +76,29 @@ function ScrollDownMarquee() {
 // ─── Hero Section ─────────────────────────────────────────────────────────────
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden w-full" style={{ aspectRatio: '2784/1536' }}>
+    <section
+      className="relative overflow-hidden w-full aspect-[3/5] sm:aspect-auto"
+      style={{ ['--desktop-ratio' as any]: '2784/1536' }}
+    >
+      {/* Desktop keeps the original wide aspect; mobile uses aspect-[3/5] via Tailwind above */}
+      <div className="hidden sm:block" style={{ aspectRatio: '2784/1536' }} />
 
       <div
         className="absolute inset-0"
         style={{
           backgroundImage: 'url(/hero-models.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundPosition: 'right bottom',
           backgroundColor: '#BAB3B4',
         }}
       />
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
+      {/* Left-side wash: stronger on mobile so black text stays legible; centered on desktop */}
+      <div className="pointer-events-none absolute inset-0 sm:hidden bg-gradient-to-b from-[#FAF8F5]/95 via-[#FAF8F5]/60 to-[#FAF8F5]/10" />
+      <div className="pointer-events-none absolute inset-0 hidden sm:block bg-gradient-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
 
-      <div className="relative z-10 flex h-full items-center px-8 md:px-16 lg:px-24">
-        <div className="max-w-[560px]">
+      <div className="relative z-10 flex h-full items-start sm:items-center px-6 pt-10 pb-10 sm:px-16 sm:py-0 lg:px-24">
+        <div className="max-w-[560px] w-full flex flex-col">
 
           <motion.h1
             initial={{ opacity: 0, y: 36 }}
@@ -101,7 +108,7 @@ function HeroSection() {
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
               fontWeight: 400,
-              fontSize: 'clamp(46px, 5.2vw, 72px)',
+              fontSize: 'clamp(38px, 10.5vw, 72px)',
               letterSpacing: '-0.01em',
             }}
           >
@@ -112,12 +119,13 @@ function HeroSection() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-            className="mt-6 text-fg-3"
+            className="mt-5 sm:mt-6 text-fg-3"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
               fontWeight: 300,
-              fontSize: '16px',
+              fontSize: 'clamp(13px, 3.8vw, 16px)',
               lineHeight: 1.7,
+              maxWidth: '14em',
             }}
           >
             Get up to 50% on our biggest sale yet
@@ -127,14 +135,15 @@ function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.38 }}
+            className="mt-auto sm:mt-8 pt-10 sm:pt-0"
           >
             <Link
               href="/products"
-              className="group mt-8 inline-flex items-center gap-3 bg-fg-1 px-9 py-4 text-white transition-all duration-300 hover:bg-black hover:gap-5"
+              className="group inline-flex items-center gap-3 bg-fg-1 px-7 py-3.5 sm:px-9 sm:py-4 text-white transition-all duration-300 hover:bg-black hover:gap-5"
               style={{
                 fontFamily: 'var(--font-poppins), Poppins, sans-serif',
                 fontWeight: 400,
-                fontSize: '16px',
+                fontSize: 'clamp(13px, 3.8vw, 16px)',
               }}
             >
               Shop Now
