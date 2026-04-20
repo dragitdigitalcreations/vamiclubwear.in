@@ -77,12 +77,8 @@ function ScrollDownMarquee() {
 function HeroSection() {
   return (
     <section
-      className="relative overflow-hidden w-full aspect-[3/5] sm:aspect-auto"
-      style={{ ['--desktop-ratio' as any]: '2784/1536' }}
+      className="relative overflow-hidden w-full aspect-[3/5] sm:aspect-auto sm:h-[793px]"
     >
-      {/* Desktop keeps the original wide aspect; mobile uses aspect-[3/5] via Tailwind above */}
-      <div className="hidden sm:block" style={{ aspectRatio: '2784/1536' }} />
-
       {/* Mobile background — image at natural cover size, no extra zoom */}
       <div
         className="absolute inset-0 block sm:hidden"
@@ -94,13 +90,14 @@ function HeroSection() {
           backgroundColor: '#BAB3B4',
         }}
       />
-      {/* Desktop background — original cover */}
+      {/* Desktop background — contain so every model is fully visible in frame */}
       <div
         className="absolute inset-0 hidden sm:block"
         style={{
           backgroundImage: 'url(/hero-models.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundSize: 'contain',
+          backgroundPosition: 'right center',
+          backgroundRepeat: 'no-repeat',
           backgroundColor: '#BAB3B4',
         }}
       />
@@ -109,7 +106,7 @@ function HeroSection() {
       <div className="pointer-events-none absolute inset-0 sm:hidden bg-gradient-to-b from-[#FAF8F5]/95 via-[#FAF8F5]/45 to-transparent" />
       <div className="pointer-events-none absolute inset-0 hidden sm:block bg-gradient-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
 
-      <div className="relative z-10 flex h-full items-start sm:items-center px-6 pt-10 pb-10 sm:px-16 sm:py-0 lg:px-24">
+      <div className="relative z-10 flex h-full items-center px-6 py-10 sm:px-16 sm:py-0 lg:px-24">
         <div className="max-w-[560px] w-full flex flex-col">
 
           <motion.h1
@@ -147,7 +144,7 @@ function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.38 }}
-            className="mt-auto sm:mt-8 pt-10 sm:pt-0"
+            className="mt-8"
           >
             <Link
               href="/products"

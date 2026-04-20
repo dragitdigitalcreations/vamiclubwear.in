@@ -109,7 +109,11 @@ export function filterMediaByColor(
   color: string | null | undefined,
 ): ProductMedia[] {
   if (!color) return media
-  const matched = media.filter((m) => parseMediaColor(m.altText).color === color)
+  const target = color.trim().toLowerCase()
+  const matched = media.filter((m) => {
+    const c = parseMediaColor(m.altText).color
+    return c !== null && c.trim().toLowerCase() === target
+  })
   if (matched.length === 0) return media                // graceful fallback: no tagged images for this colour
   // Include untagged media too, after the colour-specific ones, so the
   // gallery still has supplementary content (e.g. lifestyle shots).
