@@ -1517,7 +1517,7 @@ function VideoShowcase() {
 // ─── Export ───────────────────────────────────────────────────────────────────
 export function HomePageContent() {
   return (
-    <>
+    <div className="landing-page">
       <AnnouncementBar />
       <HeroSection />
       <ThisJustIn />
@@ -1530,6 +1530,6 @@ export function HomePageContent() {
       <CustomerReviewsSection />
       <AboutSection />
       <BenefitsCards />
-    </>
+    </div>
   )
 }

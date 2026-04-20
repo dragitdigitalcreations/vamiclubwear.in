@@ -105,6 +105,20 @@
 
   /* ── Navbar transparent state ── */
   .vami-nav-transparent { background: transparent; }
+
+  /* ── Baseline 5px radius for rectangular UI primitives ─────────────────────
+     Applied at the base layer so utility classes (rounded-full, rounded-none,
+     rounded-lg, etc.) still win via normal cascade. Image/media containers on
+     the landing page don't use these selectors, so they stay sharp. */
+  button,
+  input,
+  select,
+  textarea { border-radius: 5px; }
+
+  .bg-surface,
+  .bg-surface-raised,
+  .bg-surface-elevated,
+  .bg-surface-overlay { border-radius: 5px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -373,6 +387,24 @@
   from { opacity: 0; transform: scale(1.02); }
   to   { opacity: 1; transform: scale(1); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTENT BOX VISIBILITY — pure white strokes on every non-landing page
+   ───────────────────────────────────────────────────────────────────────
+   Storefront pages (PDP, cart, checkout, profile, track, etc.) are on a
+   cream background and the subtle grey border tokens were washing out.
+   Pure white borders on the cream bg give a clean "card lifted" feel.
+   Landing page keeps its original borders via the .landing-page scope. */
+
+body:not(:has(.landing-page)) .border-border,
+body:not(:has(.landing-page)) .border { border-color: #FFFFFF !important; }
+
+.landing-page .border-border,
+.landing-page .border { border-color: var(--border) !important; }
+
+/* Admin panel already has its own dark border token; don't force white there. */
+.admin-theme .border-border,
+.admin-theme .border { border-color: var(--border) !important; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ADMIN DARK THEME — scoped to .admin-theme root

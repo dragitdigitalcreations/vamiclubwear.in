@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 import { X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCustomerAuthStore } from '@/stores/customerAuthStore'
@@ -106,15 +105,23 @@ export function CustomerAuthModal() {
               <X className="h-4 w-4" />
             </button>
 
-            {/* Logo */}
-            <div className="flex justify-center">
-              <Image
-                src="/logo.svg"
-                alt="Vami Clubwear"
-                width={120}
-                height={48}
-                className="h-12 w-auto invert"
-                priority
+            {/* Logo — gold, via CSS mask */}
+            <div className="flex justify-center" aria-label="Vami Clubwear">
+              <span
+                role="img"
+                aria-label="Vami Clubwear"
+                className="block h-14 w-32"
+                style={{
+                  backgroundColor: '#C4956A',
+                  WebkitMaskImage: 'url(/logo.svg)',
+                  maskImage: 'url(/logo.svg)',
+                  WebkitMaskRepeat: 'no-repeat',
+                  maskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'center',
+                  maskPosition: 'center',
+                  WebkitMaskSize: 'contain',
+                  maskSize: 'contain',
+                }}
               />
             </div>
 
