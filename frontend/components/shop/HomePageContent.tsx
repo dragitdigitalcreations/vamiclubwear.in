@@ -1049,7 +1049,7 @@ function ModestCollectionBanner() {
           <div className="absolute inset-0" style={{
             backgroundImage: 'url(/modest-collection.png)',
             backgroundSize: 'cover',
-            backgroundPosition: '60% 25%',
+            backgroundPosition: '80% 25%',
             backgroundRepeat: 'no-repeat',
             backgroundColor: '#8B94AE',
           }} />
