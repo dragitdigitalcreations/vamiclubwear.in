@@ -12,6 +12,9 @@ const FABRIC_CODES: Record<string, string> = {
   Net: 'NET',
   Organza: 'ORGZ',
   'Lycra Blend': 'LYCR',
+  Chinon: 'CHIN',
+  'Mal Cotton': 'MCTN',
+  Shimmer: 'SHIM',
 }
 
 const EMBROIDERY_CODES: Record<string, string> = {

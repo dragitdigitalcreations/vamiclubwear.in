@@ -30,7 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (checking || !isAuthenticated) return null
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="admin-theme flex h-screen overflow-hidden bg-background">
       <AdminSidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto">

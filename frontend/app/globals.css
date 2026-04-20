@@ -373,3 +373,102 @@
   from { opacity: 0; transform: scale(1.02); }
   to   { opacity: 1; transform: scale(1); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN DARK THEME — scoped to .admin-theme root
+═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-theme {
+  --bg:               #121212;
+  --surface:          #1A1A1C;
+  --surface-raised:   #202023;
+  --surface-elevated: #26262A;
+  --surface-overlay:  #2E2E33;
+
+  --fg-1: #F1F1F1;
+  --fg-2: #D0D0D0;
+  --fg-3: #A0A0A0;
+  --fg-4: #808080;
+  --fg-5: #606060;
+
+  --border:        #2F2F33;
+  --border-strong: #4A4A50;
+  --ring:          #8B6B47;
+
+  color-scheme: dark;
+  color: var(--fg-1);
+  background-color: var(--bg);
+  background-image: none;
+}
+
+/* Core text tokens */
+.admin-theme .text-on-background { color: var(--fg-1) !important; }
+.admin-theme .text-on-surface    { color: var(--fg-2) !important; }
+.admin-theme .text-muted         { color: var(--fg-3) !important; }
+.admin-theme .text-foreground    { color: var(--fg-1) !important; }
+
+/* Borders (Tailwind baked hex → rewrite to var) */
+.admin-theme .border-border      { border-color: var(--border) !important; }
+.admin-theme .border-input       { border-color: var(--border) !important; }
+.admin-theme *                   { border-color: var(--border); }
+
+/* Inputs & textareas — form surfaces */
+.admin-theme .bg-input           { background-color: var(--surface-raised) !important; }
+.admin-theme input,
+.admin-theme textarea,
+.admin-theme select {
+  background-color: var(--surface-raised);
+  color: var(--fg-1);
+  border-color: var(--border);
+}
+.admin-theme input::placeholder,
+.admin-theme textarea::placeholder { color: var(--fg-5); }
+.admin-theme input:focus,
+.admin-theme textarea:focus,
+.admin-theme select:focus { border-color: var(--ring); }
+
+/* Light-hex backgrounds that sneak in via Tailwind */
+.admin-theme .bg-white           { background-color: var(--surface) !important; }
+.admin-theme .bg-white\/70       { background-color: rgba(26,26,28,0.7) !important; }
+.admin-theme .focus\:bg-white:focus { background-color: var(--surface) !important; }
+.admin-theme .bg-gray-50         { background-color: var(--surface-raised) !important; }
+.admin-theme .bg-gray-100        { background-color: var(--surface-elevated) !important; }
+.admin-theme .bg-gray-200        { background-color: var(--surface-overlay) !important; }
+.admin-theme .hover\:bg-gray-50:hover  { background-color: var(--surface-raised) !important; }
+.admin-theme .hover\:bg-gray-100:hover { background-color: var(--surface-elevated) !important; }
+
+/* Primary + accents stay brand-appropriate on dark */
+.admin-theme .bg-primary                  { background-color: #5C4033 !important; }
+.admin-theme .text-primary                { color: #C4956A !important; }
+.admin-theme .text-primary-light          { color: #DDB896 !important; }
+.admin-theme .text-primary-foreground     { color: #FFFFFF !important; }
+.admin-theme .border-primary              { border-color: #8B6B47 !important; }
+.admin-theme .bg-primary\/10              { background-color: rgba(139,107,71,0.18) !important; }
+
+/* Destructive / state colours */
+.admin-theme .text-destructive            { color: #F87171 !important; }
+.admin-theme .bg-destructive              { background-color: #7F1D1D !important; }
+.admin-theme .text-red-500,
+.admin-theme .text-red-600                { color: #F87171 !important; }
+.admin-theme .bg-red-50                   { background-color: rgba(248,113,113,0.08) !important; }
+.admin-theme .bg-green-50                 { background-color: rgba(34,197,94,0.10) !important; }
+.admin-theme .text-green-600,
+.admin-theme .text-green-700              { color: #4ADE80 !important; }
+.admin-theme .bg-amber-50                 { background-color: rgba(251,191,36,0.10) !important; }
+.admin-theme .text-amber-600,
+.admin-theme .text-amber-700              { color: #FBBF24 !important; }
+
+/* Skeleton shimmer — dark gradient */
+.admin-theme .skeleton {
+  background: linear-gradient(90deg, #26262A 25%, #2E2E33 50%, #26262A 75%);
+  background-size: 200% 100%;
+}
+
+/* Scrollbar */
+.admin-theme ::-webkit-scrollbar-track { background: var(--surface-elevated); }
+.admin-theme ::-webkit-scrollbar-thumb { background: #4A4A50; }
+.admin-theme ::-webkit-scrollbar-thumb:hover { background: var(--brand-light); }
+
+/* Headings inherit dark fg */
+.admin-theme h1, .admin-theme h2, .admin-theme h3,
+.admin-theme h4, .admin-theme h5, .admin-theme h6 { color: var(--fg-1); }

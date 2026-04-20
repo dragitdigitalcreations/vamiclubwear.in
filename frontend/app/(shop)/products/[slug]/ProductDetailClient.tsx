@@ -13,6 +13,8 @@ import {
   getVariantsBySize,
   getVariantsByColor,
   getAvailableStock,
+  parseMediaColor,
+  filterMediaByColor,
 } from '@/types/product'
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
@@ -23,10 +25,17 @@ import { productsApi } from '@/lib/api'
 import { ProductCard } from '@/components/shop/ProductCard'
 
 // ─── Media Gallery ─────────────────────────────────────────────────────────────
-function MediaGallery({ media }: { media: ProductMedia[] }) {
+function MediaGallery({ media, selectedColor }: { media: ProductMedia[]; selectedColor: string | null }) {
+  const filtered = filterMediaByColor(media, selectedColor)
+  const sorted   = [...filtered].sort((a, b) => a.sortOrder - b.sortOrder)
   const [active, setActive] = useState(0)
-  const sorted = [...media].sort((a, b) => a.sortOrder - b.sortOrder)
-  const current = sorted[active]
+
+  // When the colour changes the filtered list may shorten — clamp the index.
+  useEffect(() => {
+    setActive(0)
+  }, [selectedColor])
+
+  const current = sorted[active] ?? sorted[0]
   const touchStartX = useRef<number | null>(null)
 
   function prev() { setActive((i) => (i - 1 + sorted.length) % sorted.length) }
@@ -170,6 +179,15 @@ function VariantSelector({ product, selected, onChange }: VariantSelectorProps) 
 
   useEffect(() => { resolveVariant(selectedSize, selectedColor) }, [selectedSize, selectedColor, resolveVariant])
 
+  // ── Availability = variant isActive AND in-stock (inventory > reserved) ──
+  const isCombinationInStock = (size: string | null, color: string | null) =>
+    product.variants.some((v) => {
+      if (!v.isActive) return false
+      if (size  && v.size  !== size)  return false
+      if (color && v.color !== color) return false
+      return getAvailableStock(v) > 0
+    })
+
   return (
     <div className="space-y-6">
       {colors.length > 0 && (
@@ -178,18 +196,35 @@ function VariantSelector({ product, selected, onChange }: VariantSelectorProps) 
             Color — <span className="text-on-background">{selectedColor ?? '—'}</span>
           </p>
           <div className="flex flex-wrap gap-2.5">
-            {colors.map((c) => (
-              <button
-                key={c.color}
-                onClick={() => setSelectedColor(c.color)}
-                title={c.color}
-                className={`relative h-7 w-7 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
-                  selectedColor === c.color ? 'border-on-background scale-110' : 'border-transparent'
-                }`}
-              >
-                <span className="absolute inset-1 rounded-full" style={{ backgroundColor: c.colorHex ?? '#888' }} />
-              </button>
-            ))}
+            {colors.map((c) => {
+              const available = isCombinationInStock(selectedSize, c.color)
+              const isSelected = selectedColor === c.color
+              return (
+                <button
+                  key={c.color}
+                  onClick={() => available && setSelectedColor(c.color)}
+                  disabled={!available}
+                  title={`${c.color}${available ? '' : ' — unavailable'}`}
+                  className={`relative h-7 w-7 rounded-full border-2 transition-all duration-200 ${
+                    available ? 'hover:scale-110' : 'cursor-not-allowed opacity-55'
+                  } ${isSelected ? 'border-on-background scale-110' : 'border-transparent'}`}
+                >
+                  <span
+                    className="absolute inset-1 rounded-full"
+                    style={{ backgroundColor: c.colorHex ?? '#888' }}
+                  />
+                  {/* Diagonal strike-through when unavailable */}
+                  {!available && (
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                    >
+                      <span className="block h-[1.5px] w-[130%] rotate-45 bg-red-400/90" />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
@@ -204,20 +239,19 @@ function VariantSelector({ product, selected, onChange }: VariantSelectorProps) 
           </div>
           <div className="flex flex-wrap gap-2">
             {sizes.map((size) => {
-              const available = product.variants.some(
-                (v) => v.isActive && v.size === size && (!selectedColor || v.color === selectedColor)
-              )
+              const available = isCombinationInStock(size, selectedColor)
               return (
                 <button
                   key={size}
                   onClick={() => available && setSelectedSize(size)}
                   disabled={!available}
+                  title={available ? size : `${size} — unavailable`}
                   className={`min-w-[3rem] border px-3 py-2 text-xs font-medium uppercase tracking-wider transition-all duration-200 ${
                     selectedSize === size
                       ? 'border-on-background bg-on-background text-background'
                       : available
                       ? 'border-border text-muted hover:border-on-background hover:text-on-background'
-                      : 'border-border text-muted/30 cursor-not-allowed line-through'
+                      : 'border-border/60 text-muted/40 cursor-not-allowed line-through decoration-red-400/80 decoration-[1.5px]'
                   }`}
                 >
                   {size}
@@ -442,8 +476,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
         </nav>
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
-          {/* Media */}
-          <MediaGallery media={product.media} />
+          {/* Media — swaps to the colour-specific set when a colour is selected */}
+          <MediaGallery media={product.media} selectedColor={variant?.color ?? null} />
 
           {/* Info */}
           <div className="flex flex-col">

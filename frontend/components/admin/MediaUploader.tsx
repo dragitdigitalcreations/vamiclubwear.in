@@ -41,9 +41,16 @@ export interface MediaItem {
   error?:    string
 }
 
+interface ColorOption {
+  color:    string
+  colorHex?: string | null
+}
+
 interface MediaUploaderProps {
-  value:    MediaItem[]
-  onChange: (items: MediaItem[]) => void
+  value:     MediaItem[]
+  onChange:  (items: MediaItem[]) => void
+  /** Distinct colours defined on the variants — used to tag each image. */
+  colorOptions?: ColorOption[]
 }
 
 function generateId() { return Math.random().toString(36).slice(2) }
@@ -73,7 +80,22 @@ async function uploadFile(file: File): Promise<{ url: string; type: 'IMAGE' | 'V
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function MediaUploader({ value, onChange }: MediaUploaderProps) {
+// ── Parse altText of the form `color:<Name>|<rest>` — matches types/product.ts ──
+function splitAlt(altText: string): { color: string; text: string } {
+  const m = altText.match(/^color:([^|]+)(?:\|(.*))?$/)
+  if (!m) return { color: '', text: altText }
+  return { color: m[1].trim(), text: (m[2] ?? '').trim() }
+}
+
+function joinAlt(color: string, text: string): string {
+  const c = color.trim()
+  const t = text.trim()
+  if (!c && !t) return ''
+  if (!c) return t
+  return `color:${c}${t ? `|${t}` : ''}`
+}
+
+export function MediaUploader({ value, onChange, colorOptions = [] }: MediaUploaderProps) {
   const inputRef   = useRef<HTMLInputElement>(null)
   const valueRef   = useRef<MediaItem[]>(value)
   valueRef.current = value   // keep ref in sync without re-render
@@ -173,8 +195,24 @@ export function MediaUploader({ value, onChange }: MediaUploaderProps) {
     onChange(value.map((i) => ({ ...i, isPrimary: i.id === id && i.type === 'IMAGE' })))
   }
 
-  const updateAlt = (id: string, altText: string) => {
-    onChange(value.map((i) => i.id === id ? { ...i, altText } : i))
+  const updateTagColor = (id: string, color: string) => {
+    onChange(
+      value.map((i) => {
+        if (i.id !== id) return i
+        const { text } = splitAlt(i.altText)
+        return { ...i, altText: joinAlt(color, text) }
+      })
+    )
+  }
+
+  const updateTagText = (id: string, text: string) => {
+    onChange(
+      value.map((i) => {
+        if (i.id !== id) return i
+        const { color } = splitAlt(i.altText)
+        return { ...i, altText: joinAlt(color, text) }
+      })
+    )
   }
 
   const isUploading = value.some((i) => i.uploading)
@@ -292,15 +330,46 @@ export function MediaUploader({ value, onChange }: MediaUploaderProps) {
                           {item.uploading ? 'Uploading…' : item.error ? `Error: ${item.error}` : item.url.split('/').pop()}
                         </span>
                       </div>
-                      {!item.uploading && !item.error && (
-                        <input
-                          type="text"
-                          value={item.altText}
-                          onChange={(e) => updateAlt(item.id, e.target.value)}
-                          placeholder="Alt text (optional)"
-                          className="w-full border-b border-border bg-transparent text-xs text-on-background placeholder:text-muted focus:outline-none focus:border-on-background pb-0.5 transition-colors"
-                        />
-                      )}
+                      {!item.uploading && !item.error && (() => {
+                        const { color: tagColor, text: tagText } = splitAlt(item.altText)
+                        const swatchHex =
+                          colorOptions.find((c) => c.color === tagColor)?.colorHex ?? null
+                        return (
+                          <div className="flex flex-col gap-1.5">
+                            {colorOptions.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                {swatchHex && (
+                                  <span
+                                    className="h-3 w-3 flex-shrink-0 rounded-full border border-border"
+                                    style={{ backgroundColor: swatchHex }}
+                                    aria-hidden
+                                  />
+                                )}
+                                <select
+                                  value={tagColor}
+                                  onChange={(e) => updateTagColor(item.id, e.target.value)}
+                                  className="flex-1 min-w-0 border-b border-border bg-transparent text-[11px] text-on-background focus:outline-none focus:border-on-background pb-0.5 transition-colors"
+                                  title="Bind this image to a colour variant"
+                                >
+                                  <option value="">No colour binding — shown for every colour</option>
+                                  {colorOptions.map((c) => (
+                                    <option key={c.color} value={c.color}>
+                                      Colour: {c.color}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+                            <input
+                              type="text"
+                              value={tagText}
+                              onChange={(e) => updateTagText(item.id, e.target.value)}
+                              placeholder="Alt text (optional)"
+                              className="w-full border-b border-border bg-transparent text-xs text-on-background placeholder:text-muted focus:outline-none focus:border-on-background pb-0.5 transition-colors"
+                            />
+                          </div>
+                        )
+                      })()}
                     </div>
 
                     {/* Actions */}

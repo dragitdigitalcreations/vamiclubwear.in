@@ -65,6 +65,7 @@ const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', '5XL', '6
 const FABRIC_OPTIONS = [
   'Pure Silk', 'Georgette', 'Chiffon', 'Velvet', 'Cotton', 'Linen',
   'Crepe', 'Net', 'Organza', 'Brocade', 'Satin', 'Rayon',
+  'Chinon', 'Mal Cotton', 'Shimmer',
 ]
 const STYLE_OPTIONS = [
   'Anarkali', 'Straight Cut', 'A-Line', 'Lehenga', 'Palazzo Set',

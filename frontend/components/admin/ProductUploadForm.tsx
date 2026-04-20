@@ -148,6 +148,19 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
   const basePrice  = useWatch({ control, name: 'basePrice' }) ?? 0
   const isFeatured = useWatch({ control, name: 'isFeatured' })
   const isActive   = useWatch({ control, name: 'isActive' })
+  const variantRows = useWatch({ control, name: 'variants' }) ?? []
+
+  // Distinct (colour, colorHex) pairs defined on the current variants — used
+  // by MediaUploader so admins can bind images to a specific colour variant.
+  const colorOptions = (() => {
+    const seen = new Map<string, string | null>()
+    for (const v of variantRows) {
+      const name = (v?.color ?? '').trim()
+      if (!name || seen.has(name)) continue
+      seen.set(name, v?.colorHex ?? null)
+    }
+    return Array.from(seen.entries()).map(([color, colorHex]) => ({ color, colorHex }))
+  })()
 
   const onSubmit = async (data: ProductFormValues) => {
     setSubmitError(null)
@@ -366,9 +379,9 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
         {/* ── 3. Media ── */}
         <Section
           title="Product Media"
-          description="Upload images and MP4 videos. Drag to reorder. Star marks the primary listing image."
+          description="Upload images and MP4 videos. Drag to reorder. Star marks the primary listing image. Bind an image to a colour variant below so the storefront swaps the preview when a customer selects that colour."
         >
-          <MediaUploader value={mediaItems} onChange={setMediaItems} />
+          <MediaUploader value={mediaItems} onChange={setMediaItems} colorOptions={colorOptions} />
         </Section>
 
         {/* ── 4. Variants (5-Dimension) — main focus ── */}

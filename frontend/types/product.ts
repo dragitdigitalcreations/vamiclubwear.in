@@ -80,6 +80,43 @@ export function getVariantsByColor(variants: ProductVariant[]): Array<{ color: s
     .map((v) => ({ color: v.color!, colorHex: v.colorHex }))
 }
 
+// ─── Per-media colour association ───────────────────────────────────────────
+// We carry the associated colour inside altText using the prefix
+// `color:<Name>|<rest of alt text>`. This lets admins tag images with a
+// specific colour variant (so the storefront can show the right photos when
+// a customer selects a colour) without requiring a DB schema change.
+
+export function parseMediaColor(altText: string | null | undefined): {
+  color: string | null
+  text:  string
+} {
+  if (!altText) return { color: null, text: '' }
+  const m = altText.match(/^color:([^|]+)(?:\|(.*))?$/)
+  if (!m) return { color: null, text: altText }
+  return { color: m[1].trim() || null, text: (m[2] ?? '').trim() }
+}
+
+export function encodeMediaAlt(color: string | null | undefined, text: string | null | undefined): string | undefined {
+  const c = (color ?? '').trim()
+  const t = (text  ?? '').trim()
+  if (!c && !t) return undefined
+  if (!c) return t
+  return `color:${c}${t ? `|${t}` : ''}`
+}
+
+export function filterMediaByColor(
+  media: ProductMedia[],
+  color: string | null | undefined,
+): ProductMedia[] {
+  if (!color) return media
+  const matched = media.filter((m) => parseMediaColor(m.altText).color === color)
+  if (matched.length === 0) return media                // graceful fallback: no tagged images for this colour
+  // Include untagged media too, after the colour-specific ones, so the
+  // gallery still has supplementary content (e.g. lifestyle shots).
+  const untagged = media.filter((m) => parseMediaColor(m.altText).color === null)
+  return [...matched, ...untagged]
+}
+
 // Cart types (also used in cart store)
 
 export interface CartItem {

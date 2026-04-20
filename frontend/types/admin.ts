@@ -43,6 +43,9 @@ export type FabricType =
   | 'Net'
   | 'Organza'
   | 'Lycra Blend'
+  | 'Chinon'
+  | 'Mal Cotton'
+  | 'Shimmer'
 
 export type FabricWeight = 'Light' | 'Medium' | 'Heavy'
 

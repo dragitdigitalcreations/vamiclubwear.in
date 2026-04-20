@@ -65,7 +65,7 @@ function ImageUploadCell({
           </div>
         )}
         {uploading && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-[8px] bg-white/70">
+          <div className="absolute inset-0 flex items-center justify-center rounded-[8px] bg-background/70">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         )}
@@ -110,7 +110,7 @@ function BannerRow({
     }
   }
 
-  const inputCls = 'w-full rounded-[8px] border border-border bg-surface-elevated px-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-ring focus:bg-white transition-colors'
+  const inputCls = 'w-full rounded-[8px] border border-border bg-surface-elevated px-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-ring focus:bg-surface transition-colors'
 
   return (
     <div className={`rounded-[10px] border ${banner.isActive ? 'border-border' : 'border-border/50 opacity-60'} bg-surface overflow-hidden`}>
