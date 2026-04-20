@@ -430,9 +430,8 @@ function PromoSection() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // ── RAF + lerp — drives only rightBgY ────────────────────────────────────
+  // ── RAF + lerp — drives rightBgY on both desktop and mobile ──────────────
   useEffect(() => {
-    if (isMobile) return
     let raf: number
     let current = 0
     let initialized = false
@@ -441,7 +440,9 @@ function PromoSection() {
     const tick = () => {
       const el = sectionRef.current
       if (!el) { raf = requestAnimationFrame(tick); return }
-      const target = -el.getBoundingClientRect().top
+      // On mobile scale travel down so it stays inside the shorter tile
+      const factor = isMobile ? 0.25 : 1
+      const target = -el.getBoundingClientRect().top * factor
       if (!initialized) { current = target; initialized = true }
       current = lerp(current, target, 0.15)
       rightBgY.set(current)
@@ -462,10 +463,10 @@ function PromoSection() {
     rawMY.set(0)
   }, [rawMY])
 
-  // ── Mobile: three-tile editorial stack (reference layout) ────────────────
+  // ── Mobile: two-tile editorial with floating accent corner + parallax ────
   if (isMobile) {
     return (
-      <section className="relative w-full bg-[#FAF8F5]">
+      <section ref={sectionRef} className="relative w-full bg-[#FAF8F5]">
         {/* ── Tile 1: promo-a with top-right text overlay ── */}
         <motion.div
           className="relative w-full overflow-hidden"
@@ -506,38 +507,49 @@ function PromoSection() {
           </div>
         </motion.div>
 
-        {/* ── Tile 2: accent square on cream tone ── */}
-        <motion.div
-          className="relative w-full overflow-hidden bg-[#F2EBE0]"
-          style={{ aspectRatio: '4/3' }}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-          viewport={{ once: true }}
-        >
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'url(/promo-accent.png)',
-            backgroundSize: 'cover', backgroundPosition: 'center',
-          }} />
-        </motion.div>
-
-        {/* ── Tile 3: promo-b with bottom-left text overlay ── */}
+        {/* ── Tile 2: promo-b with scroll parallax + small accent floating flush in top-left ── */}
         <motion.div
           className="relative w-full overflow-hidden"
           style={{ aspectRatio: '3/4' }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
           viewport={{ once: true }}
         >
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'url(/promo-b.png)',
-            backgroundSize: 'cover', backgroundPosition: '50% 30%',
-            backgroundColor: '#3A2A22',
-          }} />
+          {/* Parallaxed brown background — taller div gives Y travel head-room */}
+          <motion.div
+            className="absolute"
+            style={{
+              left: 0, right: 0,
+              top: '-40%',
+              height: '180%',
+              y: rightBgFinalY,
+              willChange: 'transform',
+            }}
+          >
+            <div className="w-full h-full" style={{
+              backgroundImage: 'url(/promo-b.png)',
+              backgroundSize: 'cover', backgroundPosition: '50% center',
+              backgroundColor: '#3A2A22',
+            }} />
+          </motion.div>
+
           <div className="pointer-events-none absolute inset-0"
             style={{ background: 'linear-gradient(to top, rgba(24,16,12,0.85) 0%, rgba(24,16,12,0.25) 55%, transparent 100%)' }} />
 
+          {/* Floating accent tile — flush top-left, no padding on edges */}
+          <div
+            className="absolute overflow-hidden"
+            style={{ top: 0, left: 0, width: '42%', aspectRatio: '1/1', zIndex: 3 }}
+          >
+            <div className="w-full h-full" style={{
+              backgroundImage: 'url(/promo-accent.png)',
+              backgroundSize: 'cover', backgroundPosition: 'center',
+              backgroundColor: '#F2EBE0',
+            }} />
+          </div>
+
+          {/* Bottom-left text overlay */}
           <div className="relative z-10 flex h-full flex-col justify-end px-6 pb-8">
             <h3 className="text-white leading-[1.05]" style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
