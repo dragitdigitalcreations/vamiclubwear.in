@@ -14,6 +14,7 @@ import shippingRoutes    from '../modules/shipping/shipping.routes'
 import bannerRoutes      from '../modules/banner/banner.routes'
 import returnsRoutes     from '../modules/returns/returns.routes'
 import reviewRoutes      from '../modules/review/review.routes'
+import customerRoutes    from '../modules/customer/customer.routes'
 
 const router = Router()
 
@@ -31,5 +32,6 @@ router.use('/stats',        statsRoutes)
 router.use('/banners',      bannerRoutes)
 router.use('/returns',      returnsRoutes)       // damage return requests
 router.use('/reviews',      reviewRoutes)        // customer testimonial carousel
+router.use('/customer',     customerRoutes)      // Google OAuth storefront auth
 
 export default router

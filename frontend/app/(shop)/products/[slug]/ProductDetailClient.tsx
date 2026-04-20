@@ -16,6 +16,7 @@ import {
 } from '@/types/product'
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
+import { useCustomerAuthStore } from '@/stores/customerAuthStore'
 import { toast } from '@/stores/toastStore'
 import { cloudinaryUrl } from '@/lib/cloudinary'
 import { productsApi } from '@/lib/api'
@@ -363,6 +364,8 @@ function RelatedProducts({ categorySlug, excludeId }: { categorySlug: string; ex
 export function ProductDetailClient({ product }: { product: Product }) {
   const { addItem }                    = useCartStore()
   const { toggleItem, isWishlisted }   = useWishlistStore()
+  const customerAuthed                 = useCustomerAuthStore((s) => !!s.token && !!s.user)
+  const openPrompt                     = useCustomerAuthStore((s) => s.openPrompt)
   const router                         = useRouter()
   const addToCartRef                   = useRef<HTMLButtonElement>(null)
 
@@ -386,6 +389,10 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
   function handleAddToCart() {
     if (!product || !variant) return
+    if (!customerAuthed) {
+      openPrompt('Sign in to save items to your cart and checkout seamlessly.')
+      return
+    }
     const imageUrl = product.media.find((m) => m.isPrimary && m.type === 'IMAGE')?.url
                   ?? product.media.find((m) => m.type === 'IMAGE')?.url
                   ?? null

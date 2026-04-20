@@ -6,6 +6,7 @@ import { WishlistDrawer }   from '@/components/shop/WishlistDrawer'
 import { FilterDrawer }     from '@/components/shop/FilterDrawer'
 import { PageTransition }   from '@/components/shop/PageTransition'
 import { LenisProvider }    from '@/components/shop/LenisProvider'
+import { CustomerAuthModal } from '@/components/shop/CustomerAuthModal'
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,6 +18,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       <Footer />
       <WishlistDrawer />
       <FilterDrawer />
+      <CustomerAuthModal />
     </LenisProvider>
   )
 }

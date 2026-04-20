@@ -29,6 +29,19 @@ function getToken(): string | null {
   }
 }
 
+// Customer (storefront) token — Google-authenticated buyers
+function getCustomerToken(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const stored = localStorage.getItem('vami-customer-auth')
+    if (!stored) return null
+    const parsed = JSON.parse(stored)
+    return parsed?.state?.token ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken()
 
@@ -505,6 +518,68 @@ export const returnsApi = {
       method: 'PATCH',
       body:   JSON.stringify(data),
     }),
+}
+
+// ── Customer Auth (Google Sign-In) ────────────────────────────────────────────
+
+export interface CustomerProfile {
+  id:      string
+  email:   string
+  name:    string
+  picture: string | null
+}
+
+async function customerRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getCustomerToken()
+  const res = await fetch(`${BASE_URL}/api${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
+    ...init,
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: res.statusText }))
+    throw new ApiError(res.status, body.error ?? 'Request failed')
+  }
+  return res.json() as Promise<T>
+}
+
+export const customerAuthApi = {
+  google: (credential: string) =>
+    customerRequest<{ token: string; user: CustomerProfile }>('/customer/google', {
+      method: 'POST',
+      body:   JSON.stringify({ credential }),
+    }),
+
+  me: () => customerRequest<{ user: CustomerProfile }>('/customer/me'),
+
+  orders: () =>
+    customerRequest<{
+      orders: Array<{
+        orderNumber:    string
+        status:         string
+        paymentStatus:  string
+        shippingStatus: string
+        awbNumber:      string | null
+        trackingUrl:    string | null
+        total:          number
+        createdAt:      string
+        customerName:   string | null
+        items: Array<{
+          quantity:  number
+          unitPrice: number
+          variant: {
+            sku:     string
+            size:    string | null
+            color:   string | null
+            product: { name: string; slug: string }
+          }
+        }>
+      }>
+      count: number
+    }>('/customer/orders'),
 }
 
 // ── Customer Reviews ──────────────────────────────────────────────────────────

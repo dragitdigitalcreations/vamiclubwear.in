@@ -398,6 +398,24 @@ model InventoryHistory {
 // One review per email (enforced by unique index).
 // ─────────────────────────────────────────────
 
+// ─────────────────────────────────────────────
+// CUSTOMERS — storefront users authenticated via Google Sign-In.
+// Separate from AdminUser (staff), identified by Google `sub`.
+// ─────────────────────────────────────────────
+
+model Customer {
+  id          String    @id @default(cuid())
+  googleId    String    @unique
+  email       String    @unique
+  name        String
+  picture     String?
+  createdAt   DateTime  @default(now())
+  lastLoginAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@index([email])
+}
+
 model CustomerReview {
   id           String   @id @default(cuid())
   customerName String

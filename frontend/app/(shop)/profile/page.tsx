@@ -8,13 +8,15 @@ import {
   ExternalLink, Truck, Clock, CheckCircle, XCircle,
   MessageCircle, ArrowRight, MapPin, Pencil, Trash2, Save,
 } from 'lucide-react'
-import { ordersApi } from '@/lib/api'
+import { ordersApi, customerAuthApi } from '@/lib/api'
 import { useSavedAddress, type SavedAddress } from '@/hooks/useSavedAddress'
+import { useCustomerAuthStore } from '@/stores/customerAuthStore'
+import { LogIn, LogOut } from 'lucide-react'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 type Order = Awaited<ReturnType<typeof ordersApi.lookup>>['orders'][number]
-type LookupMode = 'phone' | 'email'
+type CustomerOrder = Awaited<ReturnType<typeof customerAuthApi.orders>>['orders'][number]
 
 const STATUS_COLOR: Record<string, string> = {
   PENDING:    'bg-amber-500/15 text-amber-400',
@@ -47,7 +49,7 @@ const WHATSAPP_MSG    = 'Hi Vami Clubwear! I need help with my order.'
 
 // ─── Order row (expandable) ────────────────────────────────────────────────────
 
-function OrderRow({ order }: { order: Order }) {
+function OrderRow({ order }: { order: Order | CustomerOrder }) {
   const [open, setOpen] = useState(false)
   const items = order.items.reduce((s, i) => s + i.quantity, 0)
 
@@ -286,145 +288,127 @@ function TrackSection() {
   )
 }
 
-// ─── Profile page ──────────────────────────────────────────────────────────────
+// ─── Profile page (Google-authenticated) ──────────────────────────────────────
 
 export default function ProfilePage() {
-  const [mode,     setMode]     = useState<LookupMode>('phone')
-  const [value,    setValue]    = useState('')
-  const [orders,   setOrders]   = useState<Order[] | null>(null)
+  const user        = useCustomerAuthStore((s) => s.user)
+  const token       = useCustomerAuthStore((s) => s.token)
+  const openPrompt  = useCustomerAuthStore((s) => s.openPrompt)
+  const logout      = useCustomerAuthStore((s) => s.logout)
+  const authed      = !!user && !!token
+
+  const [orders,   setOrders]   = useState<CustomerOrder[] | null>(null)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
-  const [searched, setSearched] = useState(false)
 
-  // Pre-fill last lookup
+  // Auto-fetch orders once authenticated
   useEffect(() => {
-    try {
-      const saved     = localStorage.getItem('vami-lookup-value')
-      const savedMode = localStorage.getItem('vami-lookup-mode') as LookupMode | null
-      if (saved)     setValue(saved)
-      if (savedMode) setMode(savedMode)
-    } catch {}
-  }, [])
-
-  async function handleLookup(e: React.FormEvent) {
-    e.preventDefault()
-    const q = value.trim()
-    if (!q) return
+    if (!authed) return
+    let cancelled = false
     setLoading(true)
     setError(null)
-    setSearched(false)
-    try {
-      const res = await ordersApi.lookup(mode === 'phone' ? { phone: q } : { email: q })
-      setOrders(res.orders)
-      setSearched(true)
-      localStorage.setItem('vami-lookup-value', q)
-      localStorage.setItem('vami-lookup-mode',  mode)
-    } catch {
-      setError('Could not find orders. Please check and try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  function switchMode(m: LookupMode) {
-    setMode(m)
-    setValue('')
-    setOrders(null)
-    setSearched(false)
-    setError(null)
-  }
+    customerAuthApi.orders()
+      .then((r) => { if (!cancelled) setOrders(r.orders) })
+      .catch((err) => {
+        if (cancelled) return
+        if (err?.status === 401 || err?.status === 403) {
+          logout()
+        } else {
+          setError('Could not load your orders. Please try again.')
+        }
+      })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [authed, logout])
 
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MSG)}`
 
+  // ── Signed-out state ──────────────────────────────────────────────────────
+  if (!authed) {
+    return (
+      <div className="pt-24 min-h-screen">
+        <div className="border-b border-border">
+          <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10">
+            <div className="py-10">
+              <p className="mb-1 t-micro">Account</p>
+              <h1 className="t-h1">My Profile</h1>
+            </div>
+          </div>
+        </div>
+        <div className="mx-auto flex max-w-md flex-col items-center px-6 py-20 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-border">
+            <LogIn className="h-5 w-5 text-primary-light" />
+          </div>
+          <h2 className="mt-6 font-display text-xl text-on-background">Sign in to view your profile</h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            Your orders, saved address, and cart are tied to your Google account. Sign in to continue.
+          </p>
+          <button
+            onClick={() => openPrompt('Sign in to view your orders and profile.')}
+            className="mt-7 inline-flex items-center gap-2 rounded-full border border-on-background bg-on-background px-7 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+          >
+            <LogIn className="h-3.5 w-3.5" /> Sign in with Google
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Authenticated profile ─────────────────────────────────────────────────
   return (
     <div className="pt-24 min-h-screen">
-
-      {/* Page header */}
       <div className="border-b border-border">
         <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10">
-          <div className="py-10">
-            <p className="mb-1 t-micro">Account</p>
-            <h1 className="t-h1">My Profile</h1>
+          <div className="py-10 flex items-start gap-4">
+            {user.picture && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.picture} alt={user.name}
+                className="h-12 w-12 rounded-full border border-border object-cover" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="mb-1 t-micro">Account</p>
+              <h1 className="t-h1 truncate">{user.name}</h1>
+              <p className="mt-1 text-xs text-muted truncate">{user.email}</p>
+            </div>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted hover:text-on-background transition-colors"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Sign out
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Content — single column on mobile, 2-col on md+ */}
       <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 md:px-8 lg:px-10 py-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
 
           {/* ── Left: My Orders ── */}
           <div className="space-y-6">
-
-            {/* Section heading */}
             <div className="flex items-center gap-2">
               <Package className="h-4 w-4 text-primary-light" />
               <h2 className="text-base font-semibold text-on-background">My Orders</h2>
             </div>
 
-            {/* Mode toggle */}
-            <div className="flex gap-1 border border-border p-0.5 rounded-lg">
-              <button
-                onClick={() => switchMode('phone')}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-2 text-xs font-semibold transition-colors ${
-                  mode === 'phone' ? 'bg-primary text-white' : 'text-muted hover:text-on-background'
-                }`}
-              >
-                <Phone className="h-3 w-3" /> Phone
-              </button>
-              <button
-                onClick={() => switchMode('email')}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-2 text-xs font-semibold transition-colors ${
-                  mode === 'email' ? 'bg-primary text-white' : 'text-muted hover:text-on-background'
-                }`}
-              >
-                <Mail className="h-3 w-3" /> Email
-              </button>
-            </div>
-
-            {/* Lookup form */}
-            <form onSubmit={handleLookup} className="flex gap-2">
-              <input
-                type={mode === 'email' ? 'email' : 'tel'}
-                value={value}
-                onChange={e => setValue(e.target.value)}
-                placeholder={mode === 'phone' ? 'Your phone number' : 'Your email address'}
-                className="flex-1 border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors rounded"
-              />
-              <button
-                type="submit"
-                disabled={loading || !value.trim()}
-                className="flex items-center justify-center gap-1.5 bg-primary px-5 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:opacity-90 transition-opacity rounded"
-              >
-                {loading
-                  ? <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  : <Search className="h-3.5 w-3.5" />
-                }
-              </button>
-            </form>
+            {loading && (
+              <p className="text-xs text-muted">Loading your orders…</p>
+            )}
 
             {error && <p className="text-xs text-red-400">{error}</p>}
 
-            {!searched && !loading && (
-              <p className="text-xs text-muted">
-                Enter the {mode === 'phone' ? 'phone number' : 'email'} you used at checkout.
-              </p>
-            )}
-
-            {/* Results */}
-            {searched && orders !== null && (
+            {!loading && orders !== null && (
               <div className="space-y-2">
                 {orders.length === 0 ? (
                   <div className="rounded-lg border border-border p-6 text-center">
                     <Package className="h-8 w-8 text-muted opacity-20 mx-auto mb-2" />
                     <p className="text-xs text-muted">
-                      No orders found for this {mode === 'phone' ? 'phone number' : 'email'}.
+                      No orders yet — your purchases will appear here.
                     </p>
                   </div>
                 ) : (
                   <>
-                    <p className="text-[11px] text-muted">{orders.length} order{orders.length !== 1 ? 's' : ''} found</p>
-                    {orders.map(o => <OrderRow key={o.orderNumber} order={o} />)}
+                    <p className="text-[11px] text-muted">{orders.length} order{orders.length !== 1 ? 's' : ''}</p>
+                    {orders.map(o => <OrderRow key={o.orderNumber} order={o as CustomerOrder} />)}
                   </>
                 )}
               </div>
@@ -433,14 +417,12 @@ export default function ProfilePage() {
 
           {/* ── Right: Address + Track + Help ── */}
           <div className="space-y-10">
-
             <AddressSection />
 
             <div className="border-t border-border pt-8">
               <TrackSection />
             </div>
 
-            {/* WhatsApp help */}
             <div className="border-t border-border pt-8">
               <div className="flex items-center gap-2 mb-3">
                 <MessageCircle className="h-4 w-4 text-primary-light" />
@@ -461,7 +443,6 @@ export default function ProfilePage() {
                 Chat on WhatsApp
               </a>
             </div>
-
           </div>
         </div>
       </div>

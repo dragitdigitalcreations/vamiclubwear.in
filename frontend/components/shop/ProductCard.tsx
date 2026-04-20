@@ -8,6 +8,7 @@ import { ShoppingBag, Heart } from 'lucide-react'
 import { Product, getPrimaryImage, getVariantsByColor, getAvailableStock } from '@/types/product'
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
+import { useCustomerAuthStore } from '@/stores/customerAuthStore'
 import { cloudinaryUrl } from '@/lib/cloudinary'
 
 // ─── Price display — actual price + optional crossed-out base price ────────────
@@ -42,6 +43,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const [addedPulse, setAddedPulse] = useState(false)
   const { addItem }                    = useCartStore()
   const { toggleItem, isWishlisted }   = useWishlistStore()
+  const customerAuthed                 = useCustomerAuthStore((s) => !!s.token && !!s.user)
+  const openPrompt                     = useCustomerAuthStore((s) => s.openPrompt)
 
   const rawImageUrl   = getPrimaryImage(product)
   const imageUrl      = rawImageUrl ? cloudinaryUrl(rawImageUrl, { w: 600, q: 80 }) : null
@@ -63,6 +66,10 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   function handleQuickAdd(e: React.MouseEvent) {
     e.preventDefault()
     if (!defaultVariant) return
+    if (!customerAuthed) {
+      openPrompt('Sign in to save items to your cart and sync them across devices.')
+      return
+    }
     addItem({
       variantId:    defaultVariant.id,
       productId:    product.id,
