@@ -744,7 +744,7 @@ function CustomerReviewsSection() {
   const active = reviews[activeIdx]
 
   return (
-    <section className="w-full" style={{ height: '465px' }}>
+    <section className="w-full md:h-[465px]">
       <div className="mx-auto grid h-full max-w-[1440px] grid-cols-1 md:grid-cols-2">
         {/* ── Left: white, carousel / submit form ── */}
         <div className="flex h-full flex-col justify-center bg-white px-8 py-10 md:px-14">
@@ -899,7 +899,7 @@ function CustomerReviewsSection() {
 
 function AboutSection() {
   return (
-    <section className="relative overflow-hidden py-10 md:py-16">
+    <section className="relative overflow-hidden py-16 md:py-20">
       {/* Watermark monogram */}
       <div
         aria-hidden
