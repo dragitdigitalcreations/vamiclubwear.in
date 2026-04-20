@@ -22,7 +22,7 @@ const fadeUp = {
 function AnnouncementBar() {
   return (
     <div className="bg-[#111111] text-white" style={{ marginTop: '96px' }}>
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 md:px-10 h-9">
+      <div className="mx-auto flex max-w-[1400px] md:max-w-[1410px] items-center justify-between px-5 md:px-10 h-9">
         <p className="text-[10px] font-semibold uppercase tracking-[0.22em]">
           Get up to 50% off now
         </p>
@@ -83,13 +83,13 @@ function HeroSection() {
       {/* Desktop keeps the original wide aspect; mobile uses aspect-[3/5] via Tailwind above */}
       <div className="hidden sm:block" style={{ aspectRatio: '2784/1536' }} />
 
-      {/* Mobile background — zoomed + anchored bottom-right so the models fill the frame */}
+      {/* Mobile background — image at natural cover size, no extra zoom */}
       <div
         className="absolute inset-0 block sm:hidden"
         style={{
           backgroundImage: 'url(/hero-models.png)',
-          backgroundSize: '190% auto',
-          backgroundPosition: '78% 100%',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
           backgroundColor: '#BAB3B4',
         }}
@@ -876,7 +876,7 @@ function CustomerReviewsSection() {
 
         {/* ── Right: black, testimonial lede ── */}
         <div className="flex h-full flex-col justify-center bg-black px-8 py-10 text-white md:px-14">
-          <div className="mx-auto flex max-w-md flex-col gap-6">
+          <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/50">
               Voices of Vami
             </p>
@@ -884,15 +884,14 @@ function CustomerReviewsSection() {
               Worn. Loved. <span className="italic text-white/70">Remembered.</span>
             </h3>
             <p className="text-sm leading-[1.85] text-white/70">
-              Every piece we craft finds its story in the women who wear it — to weddings that
-              become memories, evenings that feel like poetry, mornings that deserve more than
-              ordinary. These are the voices that keep our hands and hearts at the loom.
+              Every piece finds its story in the women who wear it — each one quietly unforgettable.
             </p>
-            <div className="mt-2 flex items-center gap-4">
+            <div className="mt-2 flex items-center justify-center gap-4">
               <span className="h-px w-14 bg-white/30" />
               <span className="text-[9px] font-semibold uppercase tracking-[0.22em] text-white/50">
                 Real customers · Real words
               </span>
+              <span className="h-px w-14 bg-white/30" />
             </div>
           </div>
         </div>
