@@ -53,7 +53,7 @@ const MENU_LINKS = [
 
 const PAYMENT_METHODS = ['UPI', 'Visa', 'Mastercard', 'RuPay', 'Razorpay']
 
-const STROKE = 'border-[#C8C0B8]'
+const STROKE = 'border-black border-[3px]'
 
 function ColumnHeading({ children }: { children: React.ReactNode }) {
   return (
@@ -126,7 +126,7 @@ export function Footer() {
             {/* Centred divider — intersects top & bottom of the row (desktop only) */}
             <span
               aria-hidden
-              className={`hidden md:block absolute top-0 bottom-0 right-0 w-px bg-[#C8C0B8]`}
+              className={`hidden md:block absolute top-0 bottom-0 right-0 w-[3px] bg-black`}
             />
           </div>
 
@@ -141,7 +141,7 @@ export function Footer() {
               {PAYMENT_METHODS.map((m) => (
                 <span
                   key={m}
-                  className={`rounded-[5px] border ${STROKE} bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-2`}
+                  className={`rounded-[5px] border border-black bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-2`}
                 >
                   {m}
                 </span>

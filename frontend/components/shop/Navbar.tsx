@@ -82,10 +82,17 @@ export function Navbar() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#FAF8F5]">
 
         {/* ── ROW 1: Logo + Nav pills ── */}
-        <div className="border-b border-[#C8C0B8]">
-          <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-5 md:px-10 h-14">
+        <div className="border-b-[3px] border-black">
+          <div className="relative mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-5 md:px-10 h-14">
 
-            {/* Left: hamburger (mobile) + logo + divider */}
+            {/* Vertical divider — horizontally centred in the row, spans full height
+                so it intersects both top and bottom strokes. Desktop only. */}
+            <div
+              aria-hidden
+              className="pointer-events-none hidden md:block absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[3px] bg-black"
+            />
+
+            {/* Left: hamburger (mobile) + logo */}
             <div className="flex items-center gap-3 flex-shrink-0">
               <button
                 className="md:hidden p-1.5 -ml-1 text-fg-3 hover:text-fg-1 transition-colors"
@@ -97,8 +104,6 @@ export function Navbar() {
               <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
                 <VamiLogo size="md" />
               </Link>
-              {/* Vertical divider — desktop only, separates logo from nav pills */}
-              <div className="hidden md:block h-5 w-px bg-[#C8C0B8] ml-2" />
             </div>
 
             {/* Right: pill nav (desktop only) */}
@@ -161,7 +166,7 @@ export function Navbar() {
         </div>
 
         {/* ── ROW 2: Search icon (left) + Icons (right) ── */}
-        <div className="border-b border-[#C8C0B8]">
+        <div className="border-b-[3px] border-black">
           <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 md:px-10 h-10">
 
             {/* Search + Barcode — left */}
