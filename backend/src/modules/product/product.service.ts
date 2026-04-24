@@ -61,6 +61,32 @@ const productListInclude = {
   },
 } satisfies Prisma.ProductInclude
 
+// ─── Uniqueness helpers ─────────────────────────────────────────────────────
+// Append `-2`, `-3`... until an unused slug/SKU is found. Prevents cross-product
+// collisions without surfacing raw DB errors to the admin.
+
+async function uniqueSlug(base: string, excludeId?: string): Promise<string> {
+  let candidate = base
+  let i = 2
+  while (true) {
+    const hit = await prisma.product.findUnique({ where: { slug: candidate }, select: { id: true } })
+    if (!hit || hit.id === excludeId) return candidate
+    candidate = `${base}-${i++}`
+    if (i > 500) throw new ConflictError('Could not resolve unique slug after 500 attempts')
+  }
+}
+
+async function uniqueSku(base: string, ownerVariantId?: string): Promise<string> {
+  let candidate = base
+  let i = 2
+  while (true) {
+    const hit = await prisma.productVariant.findUnique({ where: { sku: candidate }, select: { id: true } })
+    if (!hit || hit.id === ownerVariantId) return candidate
+    candidate = `${base}-${i++}`
+    if (i > 500) throw new ConflictError('Could not resolve unique SKU after 500 attempts')
+  }
+}
+
 export const productService = {
 
   // ── Categories ─────────────────────────────────────────────────────────────
@@ -79,11 +105,21 @@ export const productService = {
   // ── Products ───────────────────────────────────────────────────────────────
 
   async createProduct(data: CreateProductInput) {
-    // Validate no duplicate SKUs within the payload
-    const skus = data.variants.map((v) => v.sku)
-    if (new Set(skus).size !== skus.length) {
-      throw new ConflictError('Duplicate SKUs in request — each variant must have a unique SKU')
-    }
+    // De-duplicate SKUs within the payload by appending -2, -3… to any repeats
+    // (prevents in-request clashes; cross-product clashes are resolved below).
+    const seen = new Map<string, number>()
+    const dedupedVariants = data.variants.map((v) => {
+      const n = (seen.get(v.sku) ?? 0) + 1
+      seen.set(v.sku, n)
+      return { ...v, sku: n === 1 ? v.sku : `${v.sku}-${n}` }
+    })
+
+    // Resolve slug + SKU uniqueness BEFORE opening the transaction so P2002 can't
+    // bubble up as a confusing "record with this slug already exists" message.
+    const uniqueProductSlug = await uniqueSlug(data.slug)
+    const resolvedVariants = await Promise.all(
+      dedupedVariants.map(async (v) => ({ ...v, sku: await uniqueSku(v.sku) })),
+    )
 
     return prisma.$transaction(async (tx) => {
       // Get or create default location so inventory can always be seeded
@@ -97,14 +133,14 @@ export const productService = {
       const product = await tx.product.create({
         data: {
           name:        data.name,
-          slug:        data.slug,
+          slug:        uniqueProductSlug,
           barcode:     data.barcode || null,
           description: data.description,
           basePrice:   new Prisma.Decimal(data.basePrice),
           categoryId:  data.categoryId,
           isFeatured:  data.isFeatured ?? false,
           variants: {
-            create: data.variants.map((v) => ({
+            create: resolvedVariants.map((v) => ({
               sku:      v.sku,
               size:     v.size,
               color:    v.color,
@@ -129,7 +165,7 @@ export const productService = {
       })
 
       // Build a SKU → stock map from input so order doesn't matter
-      const stockBySku = new Map(data.variants.map((v) => [v.sku, v.stock ?? 0]))
+      const stockBySku = new Map(resolvedVariants.map((v) => [v.sku, v.stock ?? 0]))
 
       // Auto-create inventory entries for each variant
       for (const variant of product.variants) {
@@ -273,8 +309,25 @@ export const productService = {
   },
 
   async updateProduct(id: string, data: UpdateProductInput) {
-    const existing = await prisma.product.findFirst({ where: { id, deletedAt: null }, select: { id: true } })
+    const existing = await prisma.product.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true, slug: true, variants: { select: { id: true, sku: true } } },
+    })
     if (!existing) throw new NotFoundError(`Product ${id}`)
+
+    // Resolve slug uniqueness (allow same slug to stay unchanged)
+    const resolvedSlug =
+      data.slug !== undefined && data.slug !== existing.slug
+        ? await uniqueSlug(data.slug, id)
+        : undefined
+
+    // Pre-resolve SKU uniqueness for each payload variant — allow a variant to
+    // keep its own SKU (owner check) but auto-bump if it clashes with another.
+    const resolvedVariants = data.variants
+      ? await Promise.all(
+          data.variants.map(async (v) => ({ ...v, sku: await uniqueSku(v.sku, v.id) })),
+        )
+      : undefined
 
     return prisma.$transaction(async (tx) => {
       // 1. Update product-level fields
@@ -282,7 +335,7 @@ export const productService = {
         where: { id },
         data: {
           ...(data.name        !== undefined && { name: data.name }),
-          ...(data.slug        !== undefined && { slug: data.slug }),
+          ...(resolvedSlug     !== undefined && { slug: resolvedSlug }),
           ...(data.barcode !== undefined && { barcode: data.barcode || null }),
           ...(data.description !== undefined && { description: data.description }),
           ...(data.basePrice   !== undefined && { basePrice: new Prisma.Decimal(data.basePrice) }),
@@ -305,36 +358,55 @@ export const productService = {
         },
       })
 
-      // 2. Sync variants if provided
-      if (data.variants && data.variants.length > 0) {
-        // Get default location for inventory
+      // 2. Sync variants — authoritative replace: update by id, create new,
+      //    drop omitted. Identifying by `id` means regenerated SKUs (from
+      //    dimension edits) no longer create phantom duplicates.
+      if (resolvedVariants && resolvedVariants.length > 0) {
         const location = await tx.location.findFirst({ orderBy: { createdAt: 'asc' } })
+        const payloadIds = new Set(resolvedVariants.map((v) => v.id).filter((x): x is string => !!x))
 
-        for (const v of data.variants) {
-          const existing = await tx.productVariant.findUnique({ where: { sku: v.sku } })
-
-          if (existing && existing.productId === id) {
-            // Update existing variant
+        // Drop variants not in payload. Soft-delete if referenced by orders
+        // (FK Restrict); hard-delete otherwise so they're gone from every
+        // storefront filter and the total count reflects reality.
+        const toRemove = existing.variants.filter((v) => !payloadIds.has(v.id))
+        for (const v of toRemove) {
+          const orderedCount = await tx.orderItem.count({ where: { variantId: v.id } })
+          if (orderedCount > 0) {
             await tx.productVariant.update({
-              where: { sku: v.sku },
+              where: { id: v.id },
+              data:  { isActive: false },
+            })
+            await tx.inventory.updateMany({
+              where: { variantId: v.id },
+              data:  { quantity: 0, reserved: 0 },
+            })
+          } else {
+            await tx.inventory.deleteMany({ where: { variantId: v.id } })
+            await tx.productVariant.delete({ where: { id: v.id } })
+          }
+        }
+
+        for (const v of resolvedVariants) {
+          let variantId: string
+
+          if (v.id && existing.variants.some((ev) => ev.id === v.id)) {
+            // Update existing
+            await tx.productVariant.update({
+              where: { id: v.id },
               data: {
+                sku:      v.sku,
                 size:     v.size,
                 color:    v.color,
                 colorHex: v.colorHex,
                 fabric:   v.fabric,
                 style:    v.style,
                 price:    new Prisma.Decimal(v.price),
+                isActive: true,
               },
             })
-            // Update stock if location available
-            if (location && v.stock !== undefined) {
-              await tx.inventory.updateMany({
-                where: { variantId: existing.id, locationId: location.id },
-                data:  { quantity: v.stock },
-              })
-            }
-          } else if (!existing) {
-            // Create new variant
+            variantId = v.id
+          } else {
+            // Create new
             const created = await tx.productVariant.create({
               data: {
                 productId: id,
@@ -347,12 +419,27 @@ export const productService = {
                 price:    new Prisma.Decimal(v.price),
               },
             })
-            if (location) {
+            variantId = created.id
+          }
+
+          // Upsert inventory for the default location so new variants are
+          // immediately purchasable when admin sets stock > 0, and existing
+          // variants that somehow missed a row get one.
+          if (location && v.stock !== undefined) {
+            const inv = await tx.inventory.findUnique({
+              where: { variantId_locationId: { variantId, locationId: location.id } },
+            })
+            if (inv) {
+              await tx.inventory.update({
+                where: { id: inv.id },
+                data:  { quantity: v.stock },
+              })
+            } else {
               await tx.inventory.create({
                 data: {
-                  variantId:  created.id,
+                  variantId,
                   locationId: location.id,
-                  quantity:   v.stock ?? 0,
+                  quantity:   v.stock,
                   reserved:   0,
                   version:    0,
                 },
@@ -368,7 +455,8 @@ export const productService = {
         include: productFullInclude,
       })
 
-      // Invalidate caches for this product
+      // Invalidate caches for this product (old + new slug in case it changed)
+      cache.del(`product:slug:${existing.slug}`).catch(() => {})
       cache.del(`product:slug:${updated.slug}`).catch(() => {})
       cache.delPattern('products:list:*').catch(() => {})
 

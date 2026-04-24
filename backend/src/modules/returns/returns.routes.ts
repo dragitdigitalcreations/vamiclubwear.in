@@ -27,8 +27,41 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       return
     }
     const data = parsed.data
+
+    // Guard 1: order number must exist in the system.
+    const order = await prisma.order.findUnique({
+      where:  { orderNumber: data.orderNumber.trim() },
+      select: { orderNumber: true, customerEmail: true, customerPhone: true, status: true },
+    })
+    if (!order) {
+      res.status(404).json({ error: `Order number "${data.orderNumber}" not found. Please check your order confirmation email.` })
+      return
+    }
+
+    // Guard 2: requester must match the buyer on file (email OR phone digits).
+    const normalisedPhone = (p?: string | null) => (p ?? '').replace(/\D/g, '')
+    const emailMatches = order.customerEmail && order.customerEmail.toLowerCase() === data.customerEmail.toLowerCase()
+    const phoneMatches = order.customerPhone && normalisedPhone(order.customerPhone) === normalisedPhone(data.customerPhone)
+    if (!emailMatches && !phoneMatches) {
+      res.status(403).json({ error: 'The email or phone you entered does not match the contact details on this order.' })
+      return
+    }
+
+    // Guard 3: one open request per order to prevent spam.
+    const pending = await prisma.returnRequest.findFirst({
+      where: {
+        orderNumber: order.orderNumber,
+        status:      { in: ['PENDING', 'UNDER_REVIEW'] },
+      },
+      select: { id: true },
+    })
+    if (pending) {
+      res.status(409).json({ error: 'A return request for this order is already under review. Please wait for our team to reach out.' })
+      return
+    }
+
     const request = await prisma.returnRequest.create({
-      data: { ...data, reason: 'damaged' },
+      data: { ...data, orderNumber: order.orderNumber, reason: 'damaged' },
     })
     res.status(201).json({ id: request.id, status: request.status })
   } catch (err) { next(err) }

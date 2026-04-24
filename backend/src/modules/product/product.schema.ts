@@ -3,6 +3,7 @@ import { z } from 'zod'
 // ── Variant ──────────────────────────────────────────────────────────────────
 
 export const createVariantSchema = z.object({
+  id:       z.string().optional(),
   sku:      z.string().min(1, 'SKU is required').max(64),
   size:     z.string().max(20).optional(),
   color:    z.string().max(50).optional(),

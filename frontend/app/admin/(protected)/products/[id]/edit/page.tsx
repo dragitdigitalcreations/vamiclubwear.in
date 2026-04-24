@@ -43,6 +43,7 @@ export default function EditProductPage() {
           isFeatured:  p.isFeatured,
           isActive:    p.isActive,
           variants:    (p.variants ?? []).map((v: any) => ({
+            id:       v.id,
             sku:      v.sku,
             size:     v.size     ?? '',
             color:    v.color    ?? '',

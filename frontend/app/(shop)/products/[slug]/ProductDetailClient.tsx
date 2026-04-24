@@ -540,6 +540,56 @@ export function ProductDetailClient({ product }: { product: Product }) {
               </motion.p>
             )}
 
+            {/* Product Details — fabric, style, category, sku, price range */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.22, duration: 0.5 }}
+              className="mt-6 border-t border-border pt-6"
+            >
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-on-background">Product Details</p>
+              <dl className="grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-[140px_1fr]">
+                {variant?.fabric && (
+                  <>
+                    <dt className="text-muted uppercase tracking-wider text-[11px]">Fabric</dt>
+                    <dd className="text-on-background">{variant.fabric}</dd>
+                  </>
+                )}
+                {variant?.style && (
+                  <>
+                    <dt className="text-muted uppercase tracking-wider text-[11px]">Style / Cut</dt>
+                    <dd className="text-on-background">{variant.style}</dd>
+                  </>
+                )}
+                <dt className="text-muted uppercase tracking-wider text-[11px]">Category</dt>
+                <dd className="text-on-background">{product.category.name}</dd>
+                {variant?.size && (
+                  <>
+                    <dt className="text-muted uppercase tracking-wider text-[11px]">Size</dt>
+                    <dd className="text-on-background">{variant.size}</dd>
+                  </>
+                )}
+                {variant?.color && (
+                  <>
+                    <dt className="text-muted uppercase tracking-wider text-[11px]">Colour</dt>
+                    <dd className="text-on-background">{variant.color}</dd>
+                  </>
+                )}
+              </dl>
+              {(() => {
+                const fabrics = Array.from(new Set(product.variants.filter(v => v.isActive && v.fabric).map(v => v.fabric as string)))
+                const styles  = Array.from(new Set(product.variants.filter(v => v.isActive && v.style ).map(v => v.style  as string)))
+                const extras: string[] = []
+                if (fabrics.length > 1) extras.push(`Fabrics: ${fabrics.join(', ')}`)
+                if (styles.length  > 1) extras.push(`Styles: ${styles.join(', ')}`)
+                return extras.length ? (
+                  <p className="mt-3 text-[11px] text-muted leading-relaxed">
+                    {extras.join(' · ')}
+                  </p>
+                ) : null
+              })()}
+            </motion.div>
+
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}

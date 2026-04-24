@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 // ─── Zod Schema (aligned with backend: 4 dimensions) ─────────────────────────
 
 const variantSchema = z.object({
+  id:       z.string().optional(),
   sku:      z.string().min(1, 'SKU is required'),
   size:     z.string().optional(),
   color:    z.string().optional(),
@@ -196,22 +197,7 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
       router.refresh()
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : 'An unexpected error occurred.'
-
-      // Auto-fix slug conflict: suggest slug-2, slug-3, etc.
-      if (err instanceof ApiError && err.message.toLowerCase().includes('slug')) {
-        const currentSlug = data.slug
-        const match = currentSlug.match(/^(.*?)(-(\d+))?$/)
-        const base = match?.[1] ?? currentSlug
-        const num  = match?.[3] ? parseInt(match[3]) + 1 : 2
-        const suggested = `${base}-${num}`
-        setValue('slug', suggested, { shouldValidate: true })
-        setSlugManuallyEdited(true)
-        setSlugConflict(true)
-        setSubmitError(`URL slug "${currentSlug}" is already taken — changed to "${suggested}". Click Save again to confirm.`)
-        return
-      }
       setSlugConflict(false)
-
       setSubmitError(msg)
       toast.error(msg)
     }

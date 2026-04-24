@@ -99,6 +99,7 @@ function generateSku(
 // ─── Form shape (matches ProductUploadForm's productSchema) ────────────────────
 
 interface VariantFormRow {
+  id?:      string
   sku:      string
   size?:    string
   color?:   string
@@ -369,7 +370,9 @@ export function VariantBuilder({ productSlug, basePrice: _basePrice }: { product
         onClick={() => {
           const all = getValues('variants')
           const last = all.length > 0 ? all[all.length - 1] : null
-          append(last ? { ...last, sku: '' } : { ...BLANK_VARIANT })
+          // Clone dimensions but drop id + sku so the new row is clearly a fresh
+          // variant (backend creates it; no accidental match against the sibling).
+          append(last ? { ...last, id: undefined, sku: '' } : { ...BLANK_VARIANT })
         }}
       >
         <Plus className="h-4 w-4" />

@@ -1444,21 +1444,22 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
     <Link
       href={`/products/${item.slug}`}
       ref={containerRef as any}
-      className="group flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]"
+      className="group flex-shrink-0 flex flex-col snap-start w-[72vw] sm:w-[240px]"
     >
-      <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
+      {/* aspect-[4/7] matches ProductCard on the Collections grid */}
+      <div className="relative overflow-hidden bg-[#F5F1EC] aspect-[4/7] rounded-[4px]">
         {!loaded && <div className="absolute inset-0 skeleton" />}
         <video
           ref={videoRef}
           src={item.media[0]?.url}
           muted loop playsInline preload="metadata"
           onCanPlay={() => setLoaded(true)}
-          className={`h-full w-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.04] ${loaded ? 'opacity-100' : 'opacity-0'}`}
         />
       </div>
-      <div className="pt-2">
-        <p className="truncate text-[11px] text-fg-2">{item.name}</p>
-        <p className="mt-0.5 text-[11px] font-semibold text-fg-1">₹{displayPrice.toLocaleString('en-IN')}</p>
+      <div className="pt-3 px-1">
+        <p className="truncate text-[12px] text-fg-2">{item.name}</p>
+        <p className="mt-1 text-[12px] font-semibold text-fg-1">₹{displayPrice.toLocaleString('en-IN')}</p>
       </div>
     </Link>
   )
@@ -1484,7 +1485,7 @@ function VideoShowcase() {
   return (
     <section
       style={{ backgroundColor: '#F7F2EC' }}
-      className="flex flex-col justify-center overflow-hidden min-h-[580px] sm:h-[810px] py-14 sm:py-0"
+      className="flex flex-col justify-center overflow-hidden py-14 sm:py-20"
     >
       {/* ── ZONE 1: Header ── */}
       <div className="mx-auto w-full max-w-[1242px] px-5">
@@ -1526,9 +1527,9 @@ function VideoShowcase() {
           >
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
-                    <div className="bg-[#F5F1EC]" style={{ height: '315px' }}><HomeCardSkeleton /></div>
-                    <div className="pt-2 space-y-1.5">
+                  <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[72vw] sm:w-[240px]">
+                    <div className="bg-[#F5F1EC] aspect-[4/7] rounded-[4px]"><HomeCardSkeleton /></div>
+                    <div className="pt-3 px-1 space-y-1.5">
                       <div className="skeleton h-2.5 w-3/4 rounded" />
                       <div className="skeleton h-2.5 w-1/3 rounded" />
                     </div>
@@ -1536,12 +1537,12 @@ function VideoShowcase() {
                 ))
               : items.length === 0
                 ? Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
-                      <div className="flex h-[315px] w-full items-center justify-center bg-[#EFE9E1] text-[11px] font-medium uppercase tracking-[0.18em] text-fg-3/70">
+                    <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[72vw] sm:w-[240px]">
+                      <div className="flex aspect-[4/7] w-full items-center justify-center bg-[#EFE9E1] text-[11px] font-medium uppercase tracking-[0.18em] text-fg-3/70 rounded-[4px]">
                         Videos coming soon
                       </div>
-                      <div className="pt-2">
-                        <p className="truncate text-[11px] text-fg-3/60">Vami Clubwear</p>
+                      <div className="pt-3 px-1">
+                        <p className="truncate text-[12px] text-fg-3/60">Vami Clubwear</p>
                       </div>
                     </div>
                   ))
@@ -1581,11 +1582,11 @@ export function HomePageContent() {
       <ThisJustIn />
       <CategorySection />
       <PromoSection />
+      <VideoShowcase />
       <ModestCollectionBanner />
       <FeaturedProducts />
       <TrendingSection />
       <CustomerReviewsSection />
-      <VideoShowcase />
       <AboutSection />
       <BenefitsCards />
     </div>

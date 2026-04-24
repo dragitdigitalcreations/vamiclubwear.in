@@ -47,7 +47,14 @@ export default function ReturnsPage() {
       const res = await returnsApi.submit(form)
       setSubmitted(res.id)
     } catch (err: any) {
-      toast.error(err.message ?? 'Submission failed. Please try again.')
+      const msg = err?.message ?? 'Submission failed. Please try again.'
+      // Surface order-specific errors on the order-number field for clarity
+      if (/order.*not found/i.test(msg) || /order number/i.test(msg)) {
+        setErrors(prev => ({ ...prev, orderNumber: msg }))
+      } else if (/email or phone/i.test(msg) || /contact details/i.test(msg)) {
+        setErrors(prev => ({ ...prev, customerEmail: msg, customerPhone: msg }))
+      }
+      toast.error(msg)
     } finally {
       setSubmitting(false)
     }
@@ -117,11 +124,11 @@ export default function ReturnsPage() {
 
       <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 md:px-8 py-10">
 
-        {/* Notice */}
-        <div className="flex gap-3 bg-amber-900/20 border border-amber-700/40 p-4 mb-8">
-          <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-200/80">
-            Returns are accepted only for <strong className="text-amber-300">damaged goods</strong>.
+        {/* Notice — light-theme friendly: solid cream-yellow bg + deep amber text for AA contrast */}
+        <div className="flex gap-3 bg-[#FFF3D4] border border-[#D79B16] p-4 mb-8 rounded-[4px]">
+          <AlertTriangle className="h-4 w-4 text-[#8A5A00] shrink-0 mt-0.5" />
+          <p className="text-sm leading-relaxed text-[#4A3100]">
+            Returns are accepted only for <strong className="text-[#2A1B00]">damaged goods</strong>.
             Please provide your order number and a clear description of the damage.
             Our team will verify and contact you within 2–3 business days.
           </p>

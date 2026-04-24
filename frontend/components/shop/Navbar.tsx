@@ -82,14 +82,14 @@ export function Navbar() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#FAF8F5]">
 
         {/* ── ROW 1: Logo + Nav pills ── */}
-        <div className="border-b-[2px] border-black">
+        <div className="border-b-[1.5px] border-black">
           <div className="relative mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-5 md:px-10 h-14">
 
             {/* Vertical divider — horizontally centred in the row, spans full height
                 so it intersects both top and bottom strokes. Desktop only. */}
             <div
               aria-hidden
-              className="pointer-events-none hidden md:block absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[2px] bg-black"
+              className="pointer-events-none hidden md:block absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[1.5px] bg-black"
             />
 
             {/* Left: hamburger (mobile) + logo */}
@@ -166,7 +166,7 @@ export function Navbar() {
         </div>
 
         {/* ── ROW 2: Search icon (left) + Icons (right) ── */}
-        <div className="border-b-[2px] border-black">
+        <div className="border-b-[1.5px] border-black">
           <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 md:px-10 h-10">
 
             {/* Search + Barcode — left */}
