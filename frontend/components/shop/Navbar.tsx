@@ -9,17 +9,7 @@ import { cn } from '@/lib/utils'
 import { useCartStore, selectTotalItems } from '@/stores/cartStore'
 import { useWishlistStore, selectWishlistCount } from '@/stores/wishlistStore'
 import { VamiLogo } from '@/components/shop/VamiLogo'
-
-const CATEGORIES = [
-  { slug: 'anarkali',      label: 'Anarkali'      },
-  { slug: 'salwar',        label: 'Salwar'        },
-  { slug: 'sharara-set',   label: 'Sharara Set'   },
-  { slug: 'churidar-bit',  label: 'Churidar Bit'  },
-  { slug: 'cotton-salwar', label: 'Cotton Salwar' },
-  { slug: 'modest-wear',   label: 'Modest Wear'   },
-  { slug: 'pants',         label: 'Pants'         },
-  { slug: 'duppatta',      label: 'Duppatta'      },
-]
+import { CATEGORIES } from '@/lib/categories'
 
 const NAV_PILLS = [
   { href: '/',                           label: 'Home'     },

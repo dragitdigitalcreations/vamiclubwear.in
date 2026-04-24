@@ -22,6 +22,8 @@ import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import apiRoutes from './routes/index'
 import { errorHandler } from './middleware/errorHandler'
+import { prisma } from './lib/prisma'
+import { ensureCategories } from './lib/ensureCategories'
 
 const app = express()
 const PORT = process.env.PORT ?? 3001
@@ -82,8 +84,10 @@ app.use((_req: Request, res: Response) => {
 app.use(errorHandler as (err: Error, req: Request, res: Response, next: NextFunction) => void)
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`\n[server] Vami Clubwear backend → http://localhost:${PORT}`)
+  // Keep the admin Category dropdown in sync with the storefront Nav.
+  ensureCategories(prisma).catch(() => {})
   console.log('[server] Endpoints:')
   console.log(`  GET  http://localhost:${PORT}/health`)
   console.log(`  *    http://localhost:${PORT}/api/products`)

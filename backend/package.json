@@ -14,7 +14,8 @@
     "db:studio": "dotenv -e .env.local -- prisma studio",
     "seed:admin": "dotenv -e .env.local -- tsx scripts/seed-admin.ts",
     "seed:data": "dotenv -e .env.local -- tsx scripts/seed-data.ts",
-    "seed": "npm run seed:admin && npm run seed:data"
+    "seed": "npm run seed:admin && npm run seed:data",
+    "ensure:categories": "dotenv -e .env.local -- tsx scripts/ensure-categories.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

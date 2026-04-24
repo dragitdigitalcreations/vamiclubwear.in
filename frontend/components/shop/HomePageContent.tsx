@@ -8,6 +8,7 @@ import { ArrowRight, ChevronLeft, ChevronRight, Truck, RotateCcw, Zap } from 'lu
 import { productsApi, reviewsApi, type CustomerReview } from '@/lib/api'
 import { getPrimaryImage } from '@/types/product'
 import type { Product } from '@/types/product'
+import { CATEGORIES } from '@/lib/categories'
 
 // ─── Shared animation ─────────────────────────────────────────────────────────
 const fadeUp = {
@@ -303,17 +304,32 @@ function ThisJustIn() {
   )
 }
 
-// ─── Category Section — violet (#ADAEF1), 4-card strip ───────────────────────
+// ─── Category Section — violet (#ADAEF1), mirrors Navbar Collections list ────
 function CategorySection() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading,  setLoading]  = useState(true)
+  // One representative image per category slug, sourced from the most recent
+  // active product in that category. If a category has no products yet we
+  // just show a soft placeholder — the card still links correctly.
+  const [imageBySlug, setImageBySlug] = useState<Record<string, string | null>>({})
+  const [loading,     setLoading]     = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    productsApi.list({ isActive: 'true', limit: 4 })
-      .then((res) => setProducts(((res as any).data ?? []).slice(0, 4)))
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false))
+    let cancelled = false
+    Promise.all(
+      CATEGORIES.map((c) =>
+        productsApi.list({ isActive: 'true', category: c.slug, limit: 1 })
+          .then((res) => {
+            const prod: Product | undefined = (res as any).data?.[0]
+            return [c.slug, prod ? getPrimaryImage(prod) : null] as const
+          })
+          .catch(() => [c.slug, null] as const)
+      )
+    ).then((pairs) => {
+      if (cancelled) return
+      setImageBySlug(Object.fromEntries(pairs))
+      setLoading(false)
+    })
+    return () => { cancelled = true }
   }, [])
 
   const scroll = useCallback((dir: 'left' | 'right') => {
@@ -350,7 +366,7 @@ function CategorySection() {
           </p>
         </motion.div>
 
-        {/* Card strip with arrows — 236×315 cards */}
+        {/* Card strip with arrows — 236×315 cards, one per CATEGORIES entry */}
         <div className="flex items-center gap-3">
 
           <button
@@ -366,36 +382,39 @@ function CategorySection() {
             className="flex flex-1 overflow-x-auto no-scrollbar snap-x snap-mandatory gap-3 sm:gap-[78px]"
           >
             {loading
-              ? Array.from({ length: 4 }).map((_, i) => (
+              ? Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
                     <div className="bg-[#F5F1EC]" style={{ height: '315px' }}><HomeCardSkeleton /></div>
                     <div className="pt-2 space-y-1.5">
                       <div className="skeleton h-2.5 w-2/3 rounded" />
-                      <div className="skeleton h-2.5 w-1/2 rounded" />
                     </div>
                   </div>
                 ))
-              : products.map((product) => {
-                  const imgUrl = getPrimaryImage(product)
+              : CATEGORIES.map((cat) => {
+                  const imgUrl = imageBySlug[cat.slug]
                   return (
                     <Link
-                      key={product.id}
-                      href={`/products?category=${product.category.slug}`}
+                      key={cat.slug}
+                      href={`/products?category=${cat.slug}`}
                       className="group flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]"
                     >
                       <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
-                        {imgUrl && (
+                        {imgUrl ? (
                           <Image
                             src={imgUrl}
-                            alt={product.category.name}
+                            alt={cat.label}
                             fill
                             className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                             sizes="236px"
                           />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-[#E8E4DE] text-[11px] font-medium uppercase tracking-[0.18em] text-fg-3/70">
+                            Coming soon
+                          </div>
                         )}
                       </div>
                       <div className="pt-2">
-                        <p className="truncate font-sans font-medium uppercase text-fg-1 transition-colors group-hover:text-black" style={{ fontSize: '20px', letterSpacing: '0.05em' }}>{product.category.name}</p>
+                        <p className="truncate font-sans font-medium uppercase text-fg-1 transition-colors group-hover:text-black" style={{ fontSize: '20px', letterSpacing: '0.05em' }}>{cat.label}</p>
                       </div>
                     </Link>
                   )
@@ -1408,11 +1427,9 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
         const e = entries[0]
         if (e.isIntersecting) {
           videoRef.current?.play().catch(() => {})
-        } else {
-          if (videoRef.current) {
-            videoRef.current.pause()
-            if (e.intersectionRatio === 0) videoRef.current.currentTime = 0
-          }
+        } else if (videoRef.current) {
+          videoRef.current.pause()
+          if (e.intersectionRatio === 0) videoRef.current.currentTime = 0
         }
       },
       { threshold: [0, 0.5] }
@@ -1424,34 +1441,26 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
   const displayPrice = item.lowestPrice ?? item.basePrice
 
   return (
-    <div
-      ref={containerRef}
-      className="group relative flex-shrink-0 w-[44vw] sm:w-[30vw] md:w-[21vw] lg:w-[18vw] overflow-hidden rounded-[4px] bg-surface-elevated shadow-card hover:shadow-card-hover transition-shadow duration-300 snap-start"
+    <Link
+      href={`/products/${item.slug}`}
+      ref={containerRef as any}
+      className="group flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]"
     >
-      <div className="relative aspect-[9/16] overflow-hidden">
+      <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
         {!loaded && <div className="absolute inset-0 skeleton" />}
         <video
           ref={videoRef}
-          src={item.media[0].url}
+          src={item.media[0]?.url}
           muted loop playsInline preload="metadata"
           onCanPlay={() => setLoaded(true)}
           className={`h-full w-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         />
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-10 pb-10 pt-16">
-          <p className="mb-1 text-[9px] font-medium uppercase tracking-[0.3em] text-white/55">Vami Clubwear</p>
-          <h3 className="text-xs font-medium text-white/75 leading-snug line-clamp-2">{item.name}</h3>
-          <p className="mt-1.5 text-base font-bold text-white">
-            ₹{displayPrice.toLocaleString('en-IN')}
-          </p>
-          <Link
-            href={`/products/${item.slug}`}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-white/25 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white hover:bg-primary hover:border-primary transition-all duration-300"
-          >
-            View Product <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
       </div>
-    </div>
+      <div className="pt-2">
+        <p className="truncate text-[11px] text-fg-2">{item.name}</p>
+        <p className="mt-0.5 text-[11px] font-semibold text-fg-1">₹{displayPrice.toLocaleString('en-IN')}</p>
+      </div>
+    </Link>
   )
 }
 
@@ -1462,53 +1471,102 @@ function VideoShowcase() {
 
   useEffect(() => {
     productsApi.getShowcaseVideos()
-      .then((data: any) => setItems(data))
+      .then((data: any) => setItems(Array.isArray(data) ? data : []))
       .catch(() => setItems([]))
       .finally(() => setLoading(false))
   }, [])
 
   const scroll = useCallback((dir: 'left' | 'right') => {
-    scrollRef.current?.scrollBy({ left: dir === 'right' ? 320 : -320, behavior: 'smooth' })
+    const w = scrollRef.current?.clientWidth ?? 600
+    scrollRef.current?.scrollBy({ left: dir === 'right' ? w : -w, behavior: 'smooth' })
   }, [])
 
-  if (!loading && items.length === 0) return null
-
   return (
-    <section className="py-10">
-      <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10">
-        <motion.div variants={fadeUp} initial="hidden" whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-          className="mb-10 flex items-end justify-between">
-          <div>
-            <p className="mb-1 t-micro">In Motion</p>
-            <h2 className="t-h1">Shop the Look</h2>
-            <p className="mt-2 text-[12px] text-muted">Scroll to preview each piece in motion</p>
-          </div>
-          {items.length > 4 && (
-            <div className="hidden md:flex items-center gap-2">
-              <button onClick={() => scroll('left')}
-                className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border text-muted hover:border-on-background hover:text-on-background hover:bg-surface-elevated transition-all duration-200"
-                aria-label="Scroll left"><ChevronLeft className="h-4 w-4" /></button>
-              <button onClick={() => scroll('right')}
-                className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border text-muted hover:border-on-background hover:text-on-background hover:bg-surface-elevated transition-all duration-200"
-                aria-label="Scroll right"><ChevronRight className="h-4 w-4" /></button>
-            </div>
-          )}
+    <section
+      style={{ backgroundColor: '#F7F2EC' }}
+      className="flex flex-col justify-center overflow-hidden min-h-[580px] sm:h-[810px] py-14 sm:py-0"
+    >
+      {/* ── ZONE 1: Header ── */}
+      <div className="mx-auto w-full max-w-[1242px] px-5">
+        <motion.div
+          variants={fadeUp} initial="hidden" whileInView="visible"
+          viewport={{ once: true }}
+        >
+          <h2
+            className="text-fg-1 uppercase leading-none"
+            style={{
+              fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+              fontWeight: 400,
+              fontSize: 'clamp(40px, 5.5vw, 72px)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Shop the Look
+          </h2>
+          <p className="mt-3 text-fg-3 leading-relaxed" style={{ fontSize: '16px', fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 200, maxWidth: '260px' }}>
+            Watch each piece in motion before you buy
+          </p>
         </motion.div>
       </div>
 
-      <div
-        ref={scrollRef}
-        className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory px-4 sm:px-6 md:px-8 lg:px-10 pb-2"
-      >
-        {loading
-          ? Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-[44vw] sm:w-[30vw] md:w-[21vw] lg:w-[18vw] snap-start">
-                <div className="skeleton aspect-[9/16] w-full rounded-[4px]" />
-              </div>
-            ))
-          : items.map((item) => <VideoCard key={item.id} item={item} />)
-        }
+      {/* ── ZONE 2: Card carousel — identical alignment to ThisJustIn ── */}
+      <div className="mx-auto w-full max-w-[1242px] mt-8">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => scroll('left')}
+            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="flex flex-1 gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory"
+          >
+            {loading
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                    <div className="bg-[#F5F1EC]" style={{ height: '315px' }}><HomeCardSkeleton /></div>
+                    <div className="pt-2 space-y-1.5">
+                      <div className="skeleton h-2.5 w-3/4 rounded" />
+                      <div className="skeleton h-2.5 w-1/3 rounded" />
+                    </div>
+                  </div>
+                ))
+              : items.length === 0
+                ? Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                      <div className="flex h-[315px] w-full items-center justify-center bg-[#EFE9E1] text-[11px] font-medium uppercase tracking-[0.18em] text-fg-3/70">
+                        Videos coming soon
+                      </div>
+                      <div className="pt-2">
+                        <p className="truncate text-[11px] text-fg-3/60">Vami Clubwear</p>
+                      </div>
+                    </div>
+                  ))
+                : items.map((item) => <VideoCard key={item.id} item={item} />)
+            }
+          </div>
+
+          <button
+            onClick={() => scroll('right')}
+            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── ZONE 3: CTA ── */}
+      <div className="mt-10 flex justify-center">
+        <Link
+          href="/products"
+          className="rounded-full border border-fg-1 bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
+        >
+          Shop Now
+        </Link>
       </div>
     </section>
   )
@@ -1526,8 +1584,8 @@ export function HomePageContent() {
       <ModestCollectionBanner />
       <FeaturedProducts />
       <TrendingSection />
-      <VideoShowcase />
       <CustomerReviewsSection />
+      <VideoShowcase />
       <AboutSection />
       <BenefitsCards />
     </div>
