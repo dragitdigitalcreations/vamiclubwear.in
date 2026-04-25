@@ -77,7 +77,7 @@
   body {
     @apply antialiased;
     background-color: var(--bg);
-    background-image: url('/vami-bg.png');
+    background-image: url('/vami-bg.webp');
     background-size: 600px auto;
     background-repeat: repeat;
     background-attachment: fixed;

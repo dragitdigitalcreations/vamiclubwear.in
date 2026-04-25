@@ -9,11 +9,12 @@
  */
 
 interface CloudinaryOptions {
-  w?: number   // width
-  h?: number   // height
-  q?: number   // quality 1-100 (default 80)
+  w?: number              // width
+  h?: number              // height
+  q?: number | 'auto'     // quality 1-100 OR 'auto' for adaptive (default 'auto')
   format?: 'auto' | 'webp' | 'avif'
   crop?: 'fill' | 'fit' | 'crop' | 'limit' | 'thumb'
+  dpr?: 'auto' | number   // device pixel ratio
 }
 
 export function cloudinaryUrl(url: string, opts: CloudinaryOptions = {}): string {
@@ -22,14 +23,16 @@ export function cloudinaryUrl(url: string, opts: CloudinaryOptions = {}): string
   const {
     w,
     h,
-    q      = 80,
+    q      = 'auto',
     format = 'auto',
     crop   = 'fill',
+    dpr    = 'auto',
   } = opts
 
   const transforms: string[] = [
     `f_${format}`,
     `q_${q}`,
+    `dpr_${dpr}`,
     ...(w ? [`w_${w}`] : []),
     ...(h ? [`h_${h}`] : []),
     ...(w || h ? [`c_${crop}`] : []),

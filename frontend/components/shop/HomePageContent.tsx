@@ -90,7 +90,7 @@ function HeroSection() {
       <div
         className="absolute inset-0 block sm:hidden"
         style={{
-          backgroundImage: 'url(/hero-models.png)',
+          backgroundImage: 'url(/hero-models.webp)',
           backgroundSize: 'cover',
           backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
@@ -101,7 +101,7 @@ function HeroSection() {
       <div
         className="absolute inset-0 hidden sm:block"
         style={{
-          backgroundImage: 'url(/hero-models.png)',
+          backgroundImage: 'url(/hero-models.webp)',
           backgroundSize: 'contain',
           backgroundPosition: 'right center',
           backgroundRepeat: 'no-repeat',
@@ -511,7 +511,7 @@ function PromoSection() {
           viewport={{ once: true }}
         >
           <div className="absolute inset-0" style={{
-            backgroundImage: 'url(/promo-a.png)',
+            backgroundImage: 'url(/promo-a.webp)',
             backgroundSize: 'cover', backgroundPosition: 'center 35%',
             backgroundColor: '#EDE8E1',
           }} />
@@ -562,7 +562,7 @@ function PromoSection() {
             }}
           >
             <div className="w-full h-full" style={{
-              backgroundImage: 'url(/promo-b.png)',
+              backgroundImage: 'url(/promo-b.webp)',
               backgroundSize: 'cover', backgroundPosition: '50% center',
               backgroundColor: '#3A2A22',
             }} />
@@ -577,7 +577,7 @@ function PromoSection() {
             style={{ top: 0, left: 0, width: '42%', aspectRatio: '1/1', zIndex: 3 }}
           >
             <div className="w-full h-full" style={{
-              backgroundImage: 'url(/promo-accent.png)',
+              backgroundImage: 'url(/promo-accent.webp)',
               backgroundSize: 'cover', backgroundPosition: 'center',
               backgroundColor: '#F2EBE0',
             }} />
@@ -626,7 +626,7 @@ function PromoSection() {
         style={{ left: 0, top: 0, width: '50%', height: '100%', zIndex: 1 }}
       >
         <div className="w-full h-full" style={{
-          backgroundImage: 'url(/promo-a.png)',
+          backgroundImage: 'url(/promo-a.webp)',
           backgroundSize: 'cover', backgroundPosition: 'center 65%',
           backgroundColor: '#EDE8E1',
         }} />
@@ -654,7 +654,7 @@ function PromoSection() {
           }}
         >
           <div className="w-full h-full" style={{
-            backgroundImage: 'url(/promo-b.png)',
+            backgroundImage: 'url(/promo-b.webp)',
             backgroundSize: 'auto 90%', backgroundPosition: '35% center',
           }} />
         </motion.div>
@@ -669,7 +669,7 @@ function PromoSection() {
         <div
           className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"
           style={{
-            backgroundImage: 'url(/promo-accent.png)',
+            backgroundImage: 'url(/promo-accent.webp)',
             backgroundSize: 'cover', backgroundPosition: 'center',
             backgroundColor: '#F2EBE0',
           }}
@@ -1068,7 +1068,7 @@ function ModestCollectionBanner() {
           viewport={{ once: true }}
         >
           <div className="absolute inset-0" style={{
-            backgroundImage: 'url(/modest-collection.png)',
+            backgroundImage: 'url(/modest-collection.webp)',
             backgroundSize: 'cover',
             backgroundPosition: '80% 25%',
             backgroundRepeat: 'no-repeat',
@@ -1082,7 +1082,7 @@ function ModestCollectionBanner() {
         <div
           className="absolute inset-0"
           style={{
-            backgroundImage: 'url(/modest-collection.png)',
+            backgroundImage: 'url(/modest-collection.webp)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundColor: '#8B94AE',
