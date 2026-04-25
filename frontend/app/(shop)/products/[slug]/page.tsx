@@ -100,11 +100,38 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   const jsonLd = buildProductJsonLd(product)
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home',        item: `${SITE_URL}/` },
+      { '@type': 'ListItem', position: 2, name: 'Collections', item: `${SITE_URL}/products` },
+      ...(product.category?.slug
+        ? [{
+            '@type': 'ListItem',
+            position: 3,
+            name: product.category.name,
+            item: `${SITE_URL}/products?category=${product.category.slug}`,
+          }]
+        : []),
+      {
+        '@type': 'ListItem',
+        position: product.category?.slug ? 4 : 3,
+        name: product.name,
+        item: `${SITE_URL}/products/${product.slug}`,
+      },
+    ],
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <ProductDetailClient product={product} />
     </>
