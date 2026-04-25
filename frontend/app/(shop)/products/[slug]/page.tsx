@@ -15,7 +15,7 @@ interface PageProps {
   params: { slug: string }
 }
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.com'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.in'
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {

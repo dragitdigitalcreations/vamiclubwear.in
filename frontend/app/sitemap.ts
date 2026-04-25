@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 import { CATEGORIES } from '@/lib/categories'
 import { serverProductsApi } from '@/lib/server-api'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.com'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.in'
 
 export const revalidate = 3600 // refresh sitemap hourly
 
