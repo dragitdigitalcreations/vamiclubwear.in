@@ -5,6 +5,7 @@ import { ShoppingBag, ShoppingCart, Package, AlertTriangle } from 'lucide-react'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { StatsCard }   from '@/components/admin/StatsCard'
 import { SalesChart }  from '@/components/admin/SalesChart'
+import { LiveUsersCard } from '@/components/admin/LiveUsersCard'
 import { statsApi }    from '@/lib/api'
 import type { DashboardStats, SalesDataPoint } from '@/types/admin'
 
@@ -53,7 +54,8 @@ export default function DashboardPage() {
         )}
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <LiveUsersCard />
           <StatsCard
             title="Revenue (30d)"
             value={stats.totalRevenue}

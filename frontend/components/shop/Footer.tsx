@@ -6,16 +6,6 @@ const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '919XXXXXXXXX
 const WHATSAPP_MSG    = 'Hi Vami Clubwear! I have a query.'
 const IG_URL          = 'https://www.instagram.com/vami_clubwear_manjeri/'
 
-/* ──────────────────────────────────────────────────────────────────────────────
-   Footer — three-row table:
-     ROW A ─ four link columns (Policy · Customer Care · Social · Menu)
-     ROW B ─ brand + Pay Securely With + payment cards + UPI app badges
-     ROW C ─ copyright strip
-
-   Stroke rule: 1.5px uniform black. Each cell owns specific sides so adjacent
-   cells never double up to visually 3px at intersections.
-   ────────────────────────────────────────────────────────────────────────── */
-
 const POLICY_LINKS = [
   { href: '/shipping', label: 'Shipping & Returns' },
   { href: '/returns',  label: 'Returns'            },
@@ -38,25 +28,16 @@ const MENU_LINKS = [
   { href: '/wishlist',                   label: 'Wishlist'    },
 ]
 
-// ── Payment + UPI badges ─────────────────────────────────────────────────────
-// Rendered as typographic pills so the row stays crisp until admin drops real
-// SVGs into /public. Consistent dimensions + uppercase label keep the grid feel.
-const PAYMENT_CARDS: Array<{ label: string; tone?: 'light' | 'dark' }> = [
-  { label: 'Visa' },
-  { label: 'Mastercard' },
-  { label: 'RuPay' },
-  { label: 'UPI' },
-  { label: 'Razorpay' },
-  { label: 'Net Banking' },
-  { label: 'COD' },
-]
-
-const UPI_APPS = [
-  { label: 'Google Pay' },
-  { label: 'PhonePe'    },
-  { label: 'Paytm'      },
-  { label: 'BHIM'       },
-  { label: 'Amazon Pay' },
+// Real payment & UPI marks — single horizontal row.
+const PAYMENT_ICONS: Array<{ label: string; src: string }> = [
+  { label: 'Mastercard',       src: '/payments/mastercard.svg' },
+  { label: 'American Express', src: '/payments/amex.png'        },
+  { label: 'Discover',         src: '/payments/discover.png'    },
+  { label: 'Diners Club',      src: '/payments/diners.svg'      },
+  { label: 'RuPay',            src: '/payments/rupay.png'       },
+  { label: 'Google Pay',       src: '/payments/gpay.svg'        },
+  { label: 'PhonePe',          src: '/payments/phonepe.png'     },
+  { label: 'ICICI Net Banking', src: '/payments/icici.png'      },
 ]
 
 function ColumnHeading({ children }: { children: React.ReactNode }) {
@@ -108,13 +89,19 @@ function Column({
   )
 }
 
-function PaymentPill({ label }: { label: string }) {
+function PaymentMark({ label, src }: { label: string; src: string }) {
   return (
     <span
-      className="inline-flex h-8 min-w-[60px] items-center justify-center rounded-[5px] border-[1.5px] border-black bg-white px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-fg-1"
-      style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif' }}
+      className="inline-flex h-9 w-[64px] items-center justify-center rounded-[6px] border-[1.5px] border-black bg-white px-2"
+      title={label}
     >
-      {label}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={label}
+        className="h-full w-full object-contain"
+        draggable={false}
+      />
     </span>
   )
 }
@@ -122,15 +109,14 @@ function PaymentPill({ label }: { label: string }) {
 export function Footer() {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MSG)}`
 
+  // Brand cell width tracks Col 1 (1/4) so the vertical divider in ROW B
+  // lines up exactly under the Policy↔Customer Care divider in ROW A.
   return (
-    // Outer L/R edges live on the inner shell. Top edge is owned by the
-    // <ShopVamiMarquee> immediately above so the strokes don't double up.
     <footer className="bg-[#FAF8F5]">
       <div className="mx-auto w-full max-w-[1400px] px-5 md:px-10 border-l-[1.5px] border-r-[1.5px] border-black">
 
-        {/* ══════════ ROW A — 4 link columns ══════════ */}
+        {/* ROW A — 4 link columns */}
         <div className="grid grid-cols-2 md:grid-cols-4">
-          {/* Col 1 — no left border */}
           <div>
             <Column heading={<>Policy</>}>
               {POLICY_LINKS.map((link) => (
@@ -141,7 +127,6 @@ export function Footer() {
             </Column>
           </div>
 
-          {/* Col 2 — owns its left divider */}
           <div className="border-l-[1.5px] border-black">
             <Column heading={<>Customer<br />Care</>}>
               {CUSTOMER_CARE_LINKS.map((link) => (
@@ -152,7 +137,6 @@ export function Footer() {
             </Column>
           </div>
 
-          {/* Col 3 — on mobile wraps onto row 2 (top divider instead of left) */}
           <div className="md:border-l-[1.5px] md:border-black border-t-[1.5px] md:border-t-0 border-black">
             <Column heading="Social">
               <li><FooterLink href={IG_URL}      label="Instagram" external /></li>
@@ -162,7 +146,6 @@ export function Footer() {
             </Column>
           </div>
 
-          {/* Col 4 — owns its left divider */}
           <div className="border-l-[1.5px] border-black border-t-[1.5px] md:border-t-0">
             <Column heading="Menu">
               {MENU_LINKS.map((link) => (
@@ -174,45 +157,28 @@ export function Footer() {
           </div>
         </div>
 
-        {/* ══════════ ROW B — Brand + Pay Securely With ══════════ */}
-        <div className="grid grid-cols-1 md:grid-cols-[minmax(260px,340px)_1fr] border-t-[1.5px] border-black">
-
-          {/* Brand cell — logo left, divider lives on the payment cell */}
-          <div className="flex items-center justify-center md:justify-start gap-6 md:gap-8 px-6 md:px-10 py-10 md:py-12">
+        {/* ROW B — Brand cell aligned to 1 of 4 cols so its right divider
+            sits directly under the Policy↔Customer Care divider above. */}
+        <div className="grid grid-cols-1 md:grid-cols-4 border-t-[1.5px] border-black">
+          <div className="md:col-span-1 flex items-center justify-center md:justify-start gap-6 md:gap-8 px-6 md:px-8 py-10 md:py-12">
             <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
               <VamiLogo size="lg" />
             </Link>
           </div>
 
-          {/* Payment cell — owns vertical divider (desktop) */}
-          <div className="flex flex-col gap-5 md:gap-6 px-6 md:px-10 py-8 md:py-10 md:border-l-[1.5px] md:border-black text-center md:text-left">
-            {/* Sub-row 1: cards */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-              <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-fg-3 whitespace-nowrap">
-                Pay Securely With
-              </span>
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                {PAYMENT_CARDS.map((m) => (
-                  <PaymentPill key={m.label} label={m.label} />
-                ))}
-              </div>
-            </div>
-
-            {/* Sub-row 2: UPI apps */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-              <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-fg-3 whitespace-nowrap">
-                UPI Apps
-              </span>
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                {UPI_APPS.map((a) => (
-                  <PaymentPill key={a.label} label={a.label} />
-                ))}
-              </div>
+          <div className="md:col-span-3 flex flex-col gap-3 px-6 md:px-10 py-8 md:py-10 md:border-l-[1.5px] md:border-black text-center md:text-left">
+            <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-fg-3">
+              Pay Securely With
+            </span>
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+              {PAYMENT_ICONS.map((m) => (
+                <PaymentMark key={m.label} label={m.label} src={m.src} />
+              ))}
             </div>
           </div>
         </div>
 
-        {/* ══════════ ROW C — Copyright strip ══════════ */}
+        {/* ROW C — Copyright strip; bottom border sits flush with edges */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 px-6 md:px-10 py-5 border-t-[1.5px] border-b-[1.5px] border-black text-center md:text-left">
           <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-fg-3">
             &copy; {new Date().getFullYear()} Vami Clubwear. All rights reserved.

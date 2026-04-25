@@ -426,3 +426,51 @@ model CustomerReview {
 
   @@index([isApproved, createdAt])
 }
+
+// ─────────────────────────────────────────────
+// COUPON CODES — admin-issued discount / gift codes.
+// Two flavours via `type`: PERCENT (% off subtotal) or FIXED (₹ off).
+// `usageLimit` caps total redemptions; `usageCount` is server-incremented
+// inside an optimistic transaction so two parallel checkouts can't both
+// exceed the limit. `perCustomerLimit` caps redemptions per email.
+// ─────────────────────────────────────────────
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model Coupon {
+  id               String        @id @default(cuid())
+  code             String        @unique           // stored uppercase
+  description      String?
+  type             CouponType    @default(PERCENT)
+  value            Decimal       @db.Decimal(10, 2) // % or ₹ depending on type
+  minOrderAmount   Decimal       @default(0) @db.Decimal(10, 2)
+  maxDiscount      Decimal?      @db.Decimal(10, 2) // cap for PERCENT type
+  usageLimit       Int           @default(1)        // total redemptions allowed
+  usageCount       Int           @default(0)
+  perCustomerLimit Int           @default(1)        // 0 = unlimited per customer
+  startsAt         DateTime?
+  expiresAt        DateTime?
+  isActive         Boolean       @default(true)
+  redemptions      CouponRedemption[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model CouponRedemption {
+  id            String   @id @default(cuid())
+  couponId      String
+  coupon        Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  customerEmail String?
+  orderNumber   String?
+  amount        Decimal  @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+
+  @@index([couponId])
+  @@index([customerEmail])
+}

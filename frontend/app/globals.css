@@ -119,6 +119,17 @@
   .bg-surface-raised,
   .bg-surface-elevated,
   .bg-surface-overlay { border-radius: 5px; }
+
+  /* ── Pill-shape every storefront CTA ──────────────────────────────────────
+     Any anchor or button rendered with bg-primary/bg-fg-1 + text-white is a
+     CTA — pill-rounded uniformly. Targets the exact Tailwind class tokens so
+     small icon chips that don't pair the two never get rounded by accident. */
+  a[class~="bg-primary"][class~="text-white"],
+  button[class~="bg-primary"][class~="text-white"],
+  a[class~="bg-fg-1"][class~="text-white"],
+  button[class~="bg-fg-1"][class~="text-white"] {
+    border-radius: 9999px;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

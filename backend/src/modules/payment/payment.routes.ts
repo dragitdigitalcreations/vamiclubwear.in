@@ -15,6 +15,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import crypto from 'crypto'
 import { z } from 'zod'
 import { orderService } from '../order/order.service'
+import { couponService } from '../coupon/coupon.service'
 import { prisma } from '../../lib/prisma'
 import { sendOrderConfirmationToCustomer, sendOrderNotificationToStore } from '../../lib/email'
 
@@ -46,6 +47,7 @@ const customerSchema = z.object({
   state:         z.string().max(100).optional(),
   pincode:       z.string().max(10).optional(),
   notes:         z.string().max(1000).optional(),
+  couponCode:    z.string().max(60).optional(),
   items:         z.array(orderItemSchema).min(1),
 })
 
@@ -59,17 +61,30 @@ router.post('/create-order', async (req: Request, res: Response, next: NextFunct
       return
     }
 
-    const { items } = parsed.data
+    const { items, couponCode, customerEmail } = parsed.data
 
     // Compute amount from DB prices
     const variants = await prisma.productVariant.findMany({
       where: { id: { in: items.map(i => i.variantId) } },
       select: { id: true, price: true },
     })
-    const amount = items.reduce((sum, item) => {
+    const subtotal = items.reduce((sum, item) => {
       const v = variants.find(v => v.id === item.variantId)
       return sum + Number(v?.price ?? 0) * item.quantity
     }, 0)
+
+    // Apply coupon to amount before charging Razorpay
+    let discount = 0
+    if (couponCode) {
+      try {
+        const v = await couponService.validate({ code: couponCode, subtotal, customerEmail })
+        discount = v.discount
+      } catch {
+        // ignore — invalid code at the gateway step shouldn't block payment;
+        // the customer-facing /coupons/validate already informed them.
+      }
+    }
+    const amount = Math.max(0, subtotal - discount)
     const amountPaise = Math.round(amount * 100) // Razorpay uses paise
 
     const razorpay = getRazorpay()
@@ -113,7 +128,7 @@ router.post('/verify', async (req: Request, res: Response, next: NextFunction) =
       return
     }
 
-    const { rzpOrderId, rzpPaymentId, rzpSignature, items, ...customer } = parsed.data
+    const { rzpOrderId, rzpPaymentId, rzpSignature, items, couponCode, ...customer } = parsed.data
 
     // Verify Razorpay signature
     const keySecret = process.env.RAZORPAY_KEY_SECRET
@@ -136,6 +151,7 @@ router.post('/verify', async (req: Request, res: Response, next: NextFunction) =
       shippingState:   customer.state,
       shippingPincode: customer.pincode,
       notes:           customer.notes,
+      couponCode,
       items,
     })
 
@@ -164,7 +180,7 @@ router.post('/cod', async (req: Request, res: Response, next: NextFunction) => {
       return
     }
 
-    const { items, address, city, state, pincode, notes, ...customer } = parsed.data
+    const { items, address, city, state, pincode, notes, couponCode, ...customer } = parsed.data
 
     const order = await orderService.createOrder({
       customerName:    customer.customerName,
@@ -175,6 +191,7 @@ router.post('/cod', async (req: Request, res: Response, next: NextFunction) => {
       shippingState:   state,
       shippingPincode: pincode,
       notes,
+      couponCode,
       items,
     })
 

@@ -631,3 +631,63 @@ export const bannersApi = {
   delete: (id: string) =>
     request<{ ok: boolean }>(`/banners/${id}`, { method: 'DELETE' }),
 }
+
+// ── Coupons ───────────────────────────────────────────────────────────────────
+
+export interface Coupon {
+  id:               string
+  code:             string
+  description?:     string | null
+  type:             'PERCENT' | 'FIXED'
+  value:            string | number
+  minOrderAmount:   string | number
+  maxDiscount?:     string | number | null
+  usageLimit:       number
+  usageCount:       number
+  perCustomerLimit: number
+  startsAt?:        string | null
+  expiresAt?:       string | null
+  isActive:         boolean
+  createdAt:        string
+  updatedAt:        string
+}
+
+export interface CouponValidationResult {
+  ok:          boolean
+  code:        string
+  type:        'PERCENT' | 'FIXED'
+  value:       number
+  discount:    number
+  description?: string | null
+}
+
+export const couponsApi = {
+  // Public — validate a code for the current cart subtotal (no redemption)
+  validate: (code: string, subtotal: number, customerEmail?: string) =>
+    request<CouponValidationResult>('/coupons/validate', {
+      method: 'POST',
+      body: JSON.stringify({ code, subtotal, customerEmail }),
+    }),
+
+  // Admin
+  list: () => request<Coupon[]>('/coupons'),
+  create: (data: Partial<Coupon>) =>
+    request<Coupon>('/coupons', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Coupon>) =>
+    request<Coupon>(`/coupons/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    request<{ ok: boolean }>(`/coupons/${id}`, { method: 'DELETE' }),
+}
+
+// ── Presence (admin live concurrent users) ────────────────────────────────────
+
+export const presenceApi = {
+  count: () => request<{ count: number; windowMs: number; ts: number }>('/presence/count'),
+  heartbeat: (sessionId: string) =>
+    fetch(`${BASE_URL}/api/presence/heartbeat`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ sessionId }),
+      keepalive: true,
+    }).catch(() => null),
+}

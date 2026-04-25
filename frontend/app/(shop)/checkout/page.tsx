@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle, CreditCard, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle, CreditCard, ShieldCheck, Ticket, X } from 'lucide-react'
 import { useCartStore, selectSubtotal } from '@/stores/cartStore'
 import { useSavedAddress } from '@/hooks/useSavedAddress'
-import { ApiError } from '@/lib/api'
+import { ApiError, couponsApi, type CouponValidationResult } from '@/lib/api'
 import { toast } from '@/stores/toastStore'
 
 const RAZORPAY_KEY = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? ''
@@ -42,6 +42,29 @@ export default function CheckoutPage() {
   const [fieldErrors, setFieldErrors] = useState<Partial<CheckoutForm>>({})
   const [saveAddr,    setSaveAddr]    = useState(false)
   const [confirmed,   setConfirmed]   = useState<string | null>(null)
+
+  // Coupon state
+  const [couponInput,    setCouponInput]    = useState('')
+  const [coupon,         setCoupon]         = useState<CouponValidationResult | null>(null)
+  const [couponBusy,     setCouponBusy]     = useState(false)
+  const [couponMsg,      setCouponMsg]      = useState<string | null>(null)
+  const discount = coupon?.discount ?? 0
+  const grandTotal = Math.max(0, subtotal - discount)
+
+  async function applyCoupon() {
+    const code = couponInput.trim().toUpperCase()
+    if (!code) return
+    setCouponBusy(true); setCouponMsg(null)
+    try {
+      const r = await couponsApi.validate(code, subtotal, form.customerEmail || undefined)
+      setCoupon(r)
+      setCouponMsg(`Saved ₹${r.discount.toLocaleString('en-IN')} with ${r.code}`)
+    } catch (e: any) {
+      setCoupon(null)
+      setCouponMsg(e?.message ?? 'Invalid coupon')
+    } finally { setCouponBusy(false) }
+  }
+  function removeCoupon() { setCoupon(null); setCouponInput(''); setCouponMsg(null) }
 
   const { saved: savedAddress, save: persistAddress } = useSavedAddress()
   const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001')
@@ -121,6 +144,7 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
           ...form,
+          couponCode: coupon?.code,
           items: items.map(i => ({ variantId: i.variantId, quantity: i.quantity })),
         }),
       })
@@ -149,6 +173,7 @@ export default function CheckoutPage() {
               headers: { 'Content-Type': 'application/json' },
               body:    JSON.stringify({
                 ...form,
+                couponCode:   coupon?.code,
                 rzpOrderId:   data.rzpOrderId,
                 rzpPaymentId: response.razorpay_payment_id,
                 rzpSignature: response.razorpay_signature,
@@ -213,13 +238,13 @@ export default function CheckoutPage() {
           <div className="flex flex-col gap-3 w-full mt-2">
             <Link
               href={`/track?order=${encodeURIComponent(confirmed)}`}
-              className="flex w-full items-center justify-center gap-2 border border-border px-8 py-3.5 text-xs font-semibold uppercase tracking-widest text-on-background transition-colors hover:border-on-background"
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-border px-8 py-3.5 text-xs font-semibold uppercase tracking-widest text-on-background transition-colors hover:border-on-background"
             >
               Track Order <ArrowRight className="h-3.5 w-3.5" />
             </Link>
             <Link
               href="/products"
-              className="flex w-full items-center justify-center gap-2 bg-primary px-8 py-3.5 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-8 py-3.5 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
             >
               Continue Shopping <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -267,10 +292,59 @@ export default function CheckoutPage() {
                 </span>
               </div>
             ))}
+            <div className="flex justify-between text-sm">
+              <span className="text-muted">Subtotal</span>
+              <span className="text-on-background">₹{subtotal.toLocaleString('en-IN')}</span>
+            </div>
+            {coupon && (
+              <div className="flex justify-between text-sm">
+                <span className="text-green-400">Coupon ({coupon.code})</span>
+                <span className="text-green-400">−₹{discount.toLocaleString('en-IN')}</span>
+              </div>
+            )}
             <div className="border-t border-border pt-3 flex justify-between font-semibold text-on-background">
               <span>Total</span>
-              <span>₹{subtotal.toLocaleString('en-IN')}</span>
+              <span>₹{grandTotal.toLocaleString('en-IN')}</span>
             </div>
+          </div>
+
+          {/* ── Coupon / gift code ── */}
+          <div className="space-y-2">
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-on-background flex items-center gap-2">
+              <Ticket className="h-3.5 w-3.5" /> Gift / Coupon Code
+            </h2>
+            {coupon ? (
+              <div className="flex items-center justify-between gap-3 rounded-full border border-green-700/40 bg-green-900/15 px-4 py-2.5">
+                <div className="text-sm">
+                  <span className="font-semibold text-green-400">{coupon.code}</span>
+                  <span className="ml-2 text-xs text-muted">−₹{discount.toLocaleString('en-IN')} off</span>
+                </div>
+                <button type="button" onClick={removeCoupon} className="rounded-full p-1 text-muted hover:text-on-background" aria-label="Remove coupon">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
+                  placeholder="Enter code (e.g. WELCOME10)"
+                  className="flex-1 rounded-full border border-border bg-transparent px-4 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background tracking-[0.12em] uppercase"
+                />
+                <button
+                  type="button"
+                  onClick={applyCoupon}
+                  disabled={couponBusy || !couponInput.trim()}
+                  className="rounded-full bg-primary px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {couponBusy ? '…' : 'Apply'}
+                </button>
+              </div>
+            )}
+            {couponMsg && (
+              <p className={`text-xs ${coupon ? 'text-green-400' : 'text-red-400'}`}>{couponMsg}</p>
+            )}
           </div>
 
           {/* Contact */}
@@ -361,12 +435,12 @@ export default function CheckoutPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="flex w-full items-center justify-center gap-2 bg-primary py-4 text-sm font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {submitting ? (
                 <><Loader2 className="h-4 w-4 animate-spin" />Processing…</>
               ) : (
-                <>Pay ₹{subtotal.toLocaleString('en-IN')} — Razorpay</>
+                <>Pay ₹{grandTotal.toLocaleString('en-IN')} — Razorpay</>
               )}
             </button>
             <p className="text-center text-[10px] text-muted">256-bit SSL secured · No COD available</p>

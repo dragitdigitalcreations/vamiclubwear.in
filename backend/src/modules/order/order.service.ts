@@ -6,6 +6,7 @@ import { generateOrderNumber } from '../../utils/orderNumber'
 import { sendOrderConfirmationToCustomer, sendOrderNotificationToStore } from '../../lib/email'
 import { createDelhiveryShipment, mapDelhiveryStatus } from '../shipping/delhivery.service'
 import { sendShipmentCreatedEmail } from '../../lib/email'
+import { couponService } from '../coupon/coupon.service'
 
 const MAX_LOCK_RETRIES = 3
 
@@ -53,6 +54,22 @@ export const orderService = {
         return sum + Number(variant.price) * item.quantity
       }, 0)
 
+      // ── 3a. Apply coupon (if provided) ─────────────────────────────────────
+      // We validate inside the same outer flow so a fraudulent client can't
+      // submit a discount; redemption count is bumped after order create.
+      let discount = 0
+      let couponNote: string | undefined
+      if (input.couponCode) {
+        const validation = await couponService.validate({
+          code:          input.couponCode,
+          subtotal,
+          customerEmail: input.customerEmail,
+        })
+        discount = validation.discount
+        couponNote = `coupon:${validation.coupon.code}`
+      }
+      const total = Math.max(0, subtotal - discount)
+
       // ── 4. Create the order record ─────────────────────────────────────────
       const order = await tx.order.create({
         data: {
@@ -65,9 +82,10 @@ export const orderService = {
           shippingCity:    input.shippingCity,
           shippingState:   input.shippingState,
           shippingPincode: input.shippingPincode,
-          notes:           input.notes,
+          notes:           [input.notes, couponNote].filter(Boolean).join(' | ') || undefined,
           subtotal:      new Prisma.Decimal(subtotal),
-          total:         new Prisma.Decimal(subtotal),
+          discount:      new Prisma.Decimal(discount),
+          total:         new Prisma.Decimal(total),
           items: {
             create: input.items.map((item) => {
               const variant = variants.find((v) => v.id === item.variantId)!
@@ -131,6 +149,23 @@ export const orderService = {
 
       return order
     })
+
+    // ── 5b. Redeem coupon after the order transaction commits ───────────────
+    // Done outside the order tx so a coupon-step failure doesn't unwind the
+    // already-deducted inventory. The validate() inside the tx is the gate;
+    // this call atomically increments usageCount.
+    if (input.couponCode) {
+      try {
+        await couponService.redeem({
+          code:          input.couponCode,
+          subtotal:      Number(createdOrder.subtotal),
+          customerEmail: input.customerEmail,
+          orderNumber:   createdOrder.orderNumber,
+        })
+      } catch (err) {
+        console.error('[coupon] redemption recorded failure for', createdOrder.orderNumber, err)
+      }
+    }
 
     // ── 6. Send emails (fire-and-forget — never block the response) ──────────
     const emailItems = createdOrder.items.map((item) => ({

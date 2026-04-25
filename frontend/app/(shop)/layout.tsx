@@ -8,6 +8,7 @@ import { FilterDrawer }     from '@/components/shop/FilterDrawer'
 import { PageTransition }   from '@/components/shop/PageTransition'
 import { LenisProvider }    from '@/components/shop/LenisProvider'
 import { CustomerAuthModal } from '@/components/shop/CustomerAuthModal'
+import { PresencePinger }    from '@/components/shop/PresencePinger'
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,6 +22,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
       <WishlistDrawer />
       <FilterDrawer />
       <CustomerAuthModal />
+      <PresencePinger />
     </LenisProvider>
   )
 }

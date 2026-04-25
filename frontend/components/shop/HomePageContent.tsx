@@ -53,20 +53,24 @@ function AnnouncementBar() {
   )
 }
 
-// ─── Scroll Down Marquee (scroll-velocity driven) ─────────────────────────────
+// ─── Hero Shop-Vami Marquee — auto-scrolling favicon + "Shop Vami" pairs ──────
+// Transparent background so the hero artwork shows through.
 function ScrollDownMarquee() {
-  const { scrollY } = useScroll()
-  const x = useTransform(scrollY, [0, 800], [0, -420], { clamp: false })
-
   return (
     <div className="absolute left-0 right-0 overflow-hidden border-t border-black/10" style={{ bottom: '50px' }}>
-      <motion.div style={{ x }} className="flex items-center whitespace-nowrap py-3.5">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <span key={i} className="flex items-center gap-4 px-8 text-[10px] font-semibold uppercase tracking-[0.28em] text-fg-3/80">
-            Scroll Down
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
-            </svg>
+      <motion.div
+        className="flex items-center whitespace-nowrap py-3.5"
+        animate={{ x: ['0%', '-50%'] }}
+        transition={{ duration: 38, ease: 'linear', repeat: Infinity }}
+      >
+        {Array.from({ length: 24 }).map((_, i) => (
+          <span key={i} className="flex items-center gap-4 px-7">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-icon.svg" alt="" aria-hidden="true" className="h-[18px] w-auto select-none" draggable={false} />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-fg-1/85"
+              style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif' }}>
+              Shop Vami
+            </span>
           </span>
         ))}
       </motion.div>
@@ -129,10 +133,10 @@ function HeroSection() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-            className="mt-5 sm:mt-6 text-fg-3"
+            className="mt-5 sm:mt-6 text-fg-2"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-              fontWeight: 300,
+              fontWeight: 500,
               fontSize: 'clamp(13px, 3.8vw, 16px)',
               lineHeight: 1.7,
               maxWidth: '14em',
@@ -149,7 +153,7 @@ function HeroSection() {
           >
             <Link
               href="/products"
-              className="group inline-flex items-center gap-3 bg-fg-1 px-7 py-3.5 sm:px-9 sm:py-4 text-white transition-all duration-300 hover:bg-black hover:gap-5"
+              className="group inline-flex items-center gap-3 rounded-full bg-fg-1 px-7 py-3.5 sm:px-9 sm:py-4 text-white transition-all duration-300 hover:bg-black hover:gap-5"
               style={{
                 fontFamily: 'var(--font-poppins), Poppins, sans-serif',
                 fontWeight: 400,
@@ -236,7 +240,7 @@ function ThisJustIn() {
           >
             This Just In
           </h2>
-          <p className="mt-3 text-fg-3 leading-relaxed" style={{ fontSize: '16px', fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 200, maxWidth: '200px' }}>
+          <p className="mt-3 text-fg-2 leading-relaxed" style={{ fontSize: '16px', fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 400, maxWidth: '200px' }}>
             Shop the best brands from our new arrivals
           </p>
         </motion.div>
@@ -361,7 +365,7 @@ function CategorySection() {
           >
             Shop by Category
           </h2>
-          <p className="mt-3 text-fg-3 leading-relaxed" style={{ fontSize: '16px', fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 200 }}>
+          <p className="mt-3 text-fg-2 leading-relaxed" style={{ fontSize: '16px', fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 400 }}>
             Explore our curated collections
           </p>
         </motion.div>
@@ -1203,7 +1207,7 @@ function FeaturedProducts() {
             Can&rsquo;t Miss Deals
           </h2>
           <p
-            className="mt-4 text-fg-3 leading-relaxed"
+            className="mt-4 text-fg-2 leading-relaxed"
             style={{
               fontSize: '16px',
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
@@ -1330,7 +1334,7 @@ function TrendingSection() {
             Hand Picked &<br />Trending
           </h2>
           <p
-            className="mt-4 text-fg-3 leading-relaxed"
+            className="mt-4 text-fg-2 leading-relaxed"
             style={{
               fontSize: '16px',
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
@@ -1504,7 +1508,7 @@ function VideoShowcase() {
           >
             Shop the Look
           </h2>
-          <p className="mt-3 text-fg-3 leading-relaxed" style={{ fontSize: '16px', fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 200, maxWidth: '260px' }}>
+          <p className="mt-3 text-fg-2 leading-relaxed" style={{ fontSize: '16px', fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 400, maxWidth: '260px' }}>
             Watch each piece in motion before you buy
           </p>
         </motion.div>

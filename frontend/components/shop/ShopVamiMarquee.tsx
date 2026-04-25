@@ -42,7 +42,7 @@ export function ShopVamiMarquee() {
   return (
     <section
       aria-label="Shop Vami"
-      className="relative w-full overflow-hidden bg-[#FAF8F5] border-t-[1.5px] border-b-[1.5px] border-black"
+      className="relative w-full overflow-hidden bg-white border-t-[1.5px] border-b-[1.5px] border-black"
     >
       <motion.div
         className="flex items-center whitespace-nowrap py-5"
