@@ -9,6 +9,7 @@ import { productsApi, reviewsApi, type CustomerReview } from '@/lib/api'
 import { getPrimaryImage } from '@/types/product'
 import type { Product } from '@/types/product'
 import { CATEGORIES } from '@/lib/categories'
+import { ShopVamiMarquee } from '@/components/shop/ShopVamiMarquee'
 
 // ─── Shared animation ─────────────────────────────────────────────────────────
 const fadeUp = {
@@ -1594,6 +1595,7 @@ export function HomePageContent() {
       <CustomerReviewsSection />
       <AboutSection />
       <BenefitsCards />
+      <ShopVamiMarquee />
     </div>
   )
 }
