@@ -53,16 +53,17 @@ function AnnouncementBar() {
   )
 }
 
-// ─── Hero Shop-Vami Marquee — auto-scrolling favicon + "Shop Vami" pairs ──────
-// Transparent background so the hero artwork shows through.
+// ─── Hero Shop-Vami Marquee — page-scroll driven favicon + "Shop Vami" pairs ──
+// Transparent background so the hero artwork shows through. The horizontal
+// translation is bound to scrollY so the band only moves while the user
+// scrolls (no autoplay).
 function ScrollDownMarquee() {
+  const { scrollY } = useScroll()
+  const x = useTransform(scrollY, [0, 1600], ['0%', '-50%'], { clamp: false })
+
   return (
     <div className="absolute left-0 right-0 overflow-hidden border-t border-black/10" style={{ bottom: '50px' }}>
-      <motion.div
-        className="flex items-center whitespace-nowrap py-3.5"
-        animate={{ x: ['0%', '-50%'] }}
-        transition={{ duration: 38, ease: 'linear', repeat: Infinity }}
-      >
+      <motion.div className="flex items-center whitespace-nowrap py-3.5" style={{ x }}>
         {Array.from({ length: 24 }).map((_, i) => (
           <span key={i} className="flex items-center gap-4 px-7">
             {/* eslint-disable-next-line @next/next/no-img-element */}
