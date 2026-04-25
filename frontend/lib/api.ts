@@ -390,6 +390,14 @@ export const shippingApi = {
       `/shipping/${orderId}/track`
     ),
 
+  // Re-send the "shipment booked" email — used when the original auto-send
+  // failed (e.g. RESEND_API_KEY wasn't loaded), or when the customer reports
+  // they didn't receive their tracking link.
+  resendShipmentEmail: (orderId: string) =>
+    request<{ ok: true; sentTo: string }>(
+      `/shipping/${orderId}/resend-email`, { method: 'POST' }
+    ),
+
   updateInvoice: (orderId: string, data: {
     invoiceNumber?: string
     invoicePdfUrl?: string

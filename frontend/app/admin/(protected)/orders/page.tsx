@@ -233,6 +233,20 @@ function OrderDrawer({
     }
   }
 
+  const [resendingEmail, setResendingEmail] = useState(false)
+  async function handleResendShipmentEmail() {
+    if (!order) return
+    setResendingEmail(true)
+    try {
+      const result = await shippingApi.resendShipmentEmail(order.id)
+      toast.success(`Tracking email sent to ${result.sentTo}`)
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to resend tracking email')
+    } finally {
+      setResendingEmail(false)
+    }
+  }
+
   async function handleSaveInvoice(markCreated?: boolean) {
     if (!order) return
     setSavingInvoice(true)
@@ -450,6 +464,22 @@ function OrderDrawer({
                       </a>
                     )}
                   </div>
+
+                  {/* Resend tracking email — for backfilling orders whose
+                      original auto-send was skipped or to re-send on customer request */}
+                  {order.customerEmail && (
+                    <button
+                      onClick={handleResendShipmentEmail}
+                      disabled={resendingEmail}
+                      className="flex w-full items-center justify-center gap-2 rounded border border-border py-2.5 text-xs font-semibold uppercase tracking-widest text-on-background hover:bg-surface-elevated disabled:opacity-50 transition-colors"
+                    >
+                      {resendingEmail
+                        ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Sending…</>
+                        : <>Resend Tracking Email to {order.customerEmail}</>
+                      }
+                    </button>
+                  )}
+
                   <div className="rounded border border-border p-3 text-xs text-muted space-y-1">
                     <p><span className="text-on-background font-medium">Carrier:</span> Delhivery</p>
                     <p><span className="text-on-background font-medium">Status:</span> {SHIPPING_STATUS_LABELS[order.shippingStatus]}</p>

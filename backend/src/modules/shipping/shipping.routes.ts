@@ -84,6 +84,49 @@ router.post('/:orderId/create', requireAuth, async (req: Request, res: Response,
   } catch (err) { next(err) }
 })
 
+// ── POST /api/shipping/:orderId/resend-email ────────────────────────────────
+// Re-send the "Your order has been shipped" email for an order that already
+// has an AWB. Used when the original auto-send failed (e.g. RESEND_API_KEY
+// wasn't loaded at the moment the AWB was created), or when the customer
+// reports they didn't receive the tracking link.
+
+router.post('/:orderId/resend-email', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.orderId },
+      include: {
+        items: { include: { variant: { select: { sku: true, product: { select: { name: true } } } } } },
+      },
+    })
+    if (!order) { res.status(404).json({ error: 'Order not found' }); return }
+    if (!order.awbNumber || !order.trackingUrl) {
+      res.status(400).json({ error: 'No AWB / tracking URL on this order — create the shipment first' }); return
+    }
+    if (!order.customerEmail) {
+      res.status(400).json({ error: 'Order has no customer email on file' }); return
+    }
+
+    const emailItems = order.items.map((i) => ({
+      name:  i.variant.product.name,
+      sku:   i.variant.sku,
+      qty:   i.quantity,
+      price: Number(i.unitPrice),
+    }))
+
+    await sendShipmentCreatedEmail({
+      orderNumber:   order.orderNumber,
+      customerName:  order.customerName,
+      customerEmail: order.customerEmail,
+      awbNumber:     order.awbNumber,
+      trackingUrl:   order.trackingUrl,
+      items:         emailItems,
+      total:         Number(order.total),
+    })
+
+    res.json({ ok: true, sentTo: order.customerEmail })
+  } catch (err) { next(err) }
+})
+
 // ── GET /api/shipping/:orderId/track ─────────────────────────────────────────
 
 router.get('/:orderId/track', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
