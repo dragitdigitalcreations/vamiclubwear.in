@@ -45,7 +45,7 @@ router.post('/:orderId/create', requireAuth, async (req: Request, res: Response,
       state:        order.shippingState ?? '',
       pincode:      order.shippingPincode,
       totalAmount:  Number(order.total),
-      paymentMode:  order.paymentStatus === 'PAID' ? 'Prepaid' : 'COD',
+      paymentMode:  'Prepaid',
       productDesc,
     })
 
@@ -154,7 +154,6 @@ router.post('/webhook', async (req: Request, res: Response, next: NextFunction) 
         updates.status = 'SHIPPED'
       } else if (newShippingStatus === 'DELIVERED' && order.status !== 'DELIVERED') {
         updates.status = 'DELIVERED'
-        updates.paymentStatus = 'PAID'  // COD collected on delivery
       }
 
       await prisma.order.update({ where: { id: order.id }, data: updates })

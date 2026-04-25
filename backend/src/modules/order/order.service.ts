@@ -271,7 +271,7 @@ export const orderService = {
             state:        order.shippingState ?? '',
             pincode:      order.shippingPincode!,
             totalAmount:  Number(order.total),
-            paymentMode:  order.paymentStatus === 'PAID' ? 'Prepaid' : 'COD',
+            paymentMode:  'Prepaid',
             productDesc,
           })
 

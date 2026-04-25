@@ -5,11 +5,10 @@
  *   RAZORPAY_KEY_ID     — from Razorpay Dashboard → API Keys
  *   RAZORPAY_KEY_SECRET — from Razorpay Dashboard → API Keys
  *
- * Flow:
+ * Flow (online prepaid only — Vami Clubwear does not offer COD):
  *   1. POST /api/payment/create-order  — creates Razorpay order, returns {orderId, amount, currency, keyId}
  *   2. Frontend opens Razorpay checkout popup, customer pays
  *   3. POST /api/payment/verify        — verifies signature, creates DB order, deducts inventory
- *   4. POST /api/payment/cod           — COD path: skips Razorpay, creates DB order directly
  */
 import { Router, Request, Response, NextFunction } from 'express'
 import crypto from 'crypto'
@@ -170,38 +169,13 @@ router.post('/verify', async (req: Request, res: Response, next: NextFunction) =
 })
 
 // ── POST /api/payment/cod ─────────────────────────────────────────────────────
-// Cash on Delivery — no Razorpay, creates order directly
+// COD is not offered by Vami Clubwear. Endpoint kept as a hard 410 to make
+// the policy explicit if any older client still attempts to call it.
 
-router.post('/cod', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const parsed = customerSchema.safeParse(req.body)
-    if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.errors[0]?.message ?? 'Invalid input' })
-      return
-    }
-
-    const { items, address, city, state, pincode, notes, couponCode, ...customer } = parsed.data
-
-    const order = await orderService.createOrder({
-      customerName:    customer.customerName,
-      customerEmail:   customer.customerEmail,
-      customerPhone:   customer.customerPhone,
-      shippingAddress: address,
-      shippingCity:    city,
-      shippingState:   state,
-      shippingPincode: pincode,
-      notes,
-      couponCode,
-      items,
-    })
-
-    res.status(201).json({
-      orderNumber: order.orderNumber,
-      total:       order.total,
-      status:      order.status,
-      itemCount:   order.items.length,
-    })
-  } catch (err) { next(err) }
+router.post('/cod', (_req: Request, res: Response) => {
+  res.status(410).json({
+    error: 'Cash on Delivery is not supported. Please complete payment online via Razorpay.',
+  })
 })
 
 export default router

@@ -123,19 +123,19 @@ export async function sendOrderConfirmationToCustomer(data: OrderEmailData): Pro
         </tr></thead>
         <tbody>${buildOrderRows(data.items)}</tbody>
         <tfoot><tr class="total-row">
-          <td colspan="2">Total</td>
+          <td colspan="2">Total Paid</td>
           <td class="right">₹${data.total.toLocaleString('en-IN')}</td>
         </tr></tfoot>
       </table>
-      <p><span class="badge">Payment on delivery</span></p>
+      <p><span class="badge" style="background:#2e7d32;">✓ Payment Received</span></p>
       <p style="margin-top:20px;font-size:13px;color:#777;">
-        Keep this order number handy. Our team will reach out to confirm delivery details.
-        For any queries, simply reply to this email.
+        Keep this order number handy. We're preparing your order for dispatch and will email
+        your tracking link as soon as it ships. For any queries, simply reply to this email.
       </p>
     </div>
   `)
   await send(data.customerEmail, `Order Confirmed — ${data.orderNumber} | Vami Clubwear`, html,
-    `Thank you for your order ${data.orderNumber}! Total: ₹${data.total.toLocaleString('en-IN')}. Our team will contact you shortly.`)
+    `Thank you for your order ${data.orderNumber}! Payment of ₹${data.total.toLocaleString('en-IN')} received. We'll email tracking details as soon as your order ships.`)
 }
 
 export async function sendOrderNotificationToStore(data: OrderEmailData): Promise<void> {

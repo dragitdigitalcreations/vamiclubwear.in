@@ -152,7 +152,7 @@ export default function CheckoutPage() {
       if (!res.ok) throw new ApiError(res.status, data.error ?? 'Payment setup failed')
 
       if (!data.configured) {
-        toast.error('Online payment is not configured. Please use Cash on Delivery.')
+        toast.error('Online payment is temporarily unavailable. Please contact us on WhatsApp to complete your order.')
         setSubmitting(false)
         return
       }
@@ -443,7 +443,7 @@ export default function CheckoutPage() {
                 <>Pay ₹{grandTotal.toLocaleString('en-IN')} — Razorpay</>
               )}
             </button>
-            <p className="text-center text-[10px] text-muted">256-bit SSL secured · No COD available</p>
+            <p className="text-center text-[10px] text-muted">256-bit SSL secured · Online payment only — UPI, Cards, Net Banking, Wallets</p>
           </div>
 
         </form>

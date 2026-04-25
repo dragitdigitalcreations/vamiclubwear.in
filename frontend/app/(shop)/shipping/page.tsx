@@ -41,8 +41,7 @@ export default function ShippingPage() {
       </Section>
 
       <Section title="Refunds">
-        <p>Once we receive and inspect the returned item, a refund will be processed within <strong className="text-on-background">5–7 business days</strong> to your original payment method.</p>
-        <p>For Cash on Delivery orders, refunds are issued via bank transfer. Please provide your account details when initiating the return.</p>
+        <p>Once we receive and inspect the returned item, a refund will be processed within <strong className="text-on-background">5–7 business days</strong> to your original payment method (UPI, card, or net banking used at checkout).</p>
         <p>If you haven't received your refund after 10 business days, contact us at <a href="mailto:hello@vamiclubwear.in" className="text-on-background underline underline-offset-2">hello@vamiclubwear.in</a>.</p>
       </Section>
 
