@@ -13,11 +13,18 @@
 import { Resend } from 'resend'
 
 let _resend: Resend | null = null
+let _warnedMissingKey = false
 
 function getResend(): Resend | null {
   if (_resend) return _resend
   const key = process.env.RESEND_API_KEY
-  if (!key) return null
+  if (!key) {
+    if (!_warnedMissingKey) {
+      console.error('[email] RESEND_API_KEY is not set — all transactional emails will be skipped')
+      _warnedMissingKey = true
+    }
+    return null
+  }
   _resend = new Resend(key)
   return _resend
 }
@@ -27,8 +34,21 @@ const storeEmail = () => process.env.STORE_EMAIL ?? 'vamiclubwear@gmail.com'
 
 async function send(to: string, subject: string, html: string, text: string) {
   const r = getResend()
-  if (!r) return   // silently skip if key not configured
-  await r.emails.send({ from: from(), to, subject, html, text })
+  if (!r) {
+    console.warn(`[email] Skipped send to ${to} (subject: "${subject}") — Resend not configured`)
+    return
+  }
+  try {
+    const result = await r.emails.send({ from: from(), to, subject, html, text })
+    if ((result as any)?.error) {
+      console.error(`[email] Resend rejected send to ${to}:`, (result as any).error)
+    } else {
+      console.log(`[email] Sent to ${to} (subject: "${subject}")`, (result as any)?.data?.id ?? '')
+    }
+  } catch (err) {
+    console.error(`[email] Send failed to ${to} (subject: "${subject}"):`, err)
+    throw err
+  }
 }
 
 // ─── Shared layout ────────────────────────────────────────────────────────────
