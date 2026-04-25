@@ -475,15 +475,14 @@ function OrderDrawer({
                   </p>
                 </div>
 
-              ) : order.status === 'CONFIRMED' && order.shippingStatus === 'NOT_CREATED' ? (
-                /* ── Confirmed but no AWB — auto-creation failed or token missing ── */
+              ) : ['CONFIRMED', 'PROCESSING', 'SHIPPED'].includes(order.status) && order.shippingStatus === 'NOT_CREATED' ? (
+                /* ── Post-payment but no AWB — auto-creation skipped or failed ── */
                 <div className="space-y-4">
                   <div className="rounded border border-amber-500/30 bg-amber-500/5 p-3">
-                    <p className="text-xs font-semibold text-amber-400 mb-1">Auto-creation did not run</p>
+                    <p className="text-xs font-semibold text-amber-400 mb-1">Shipment not yet created</p>
                     <p className="text-xs text-muted">
-                      This happens if <code className="text-on-background">DELHIVERY_TOKEN</code> is not set,
-                      or if Delhivery returned an error. Check your backend env vars,
-                      then retry below.
+                      Auto-creation may have been skipped if <code className="text-on-background">DELHIVERY_TOKEN</code> wasn&apos;t set
+                      at the moment of status change, or if Delhivery returned an error. Click below to create the shipment now.
                     </p>
                   </div>
 
@@ -495,7 +494,7 @@ function OrderDrawer({
                     >
                       {creatingShip
                         ? <><Loader2 className="h-4 w-4 animate-spin" />Creating…</>
-                        : <><Truck className="h-4 w-4" />Retry: Create Shipment via Delhivery</>
+                        : <><Truck className="h-4 w-4" />Create Shipment via Delhivery</>
                       }
                     </button>
                   ) : (

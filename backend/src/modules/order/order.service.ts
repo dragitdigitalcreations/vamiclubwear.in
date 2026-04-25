@@ -246,9 +246,13 @@ export const orderService = {
       data: { status: input.status },
     })
 
-    // Auto-create Delhivery shipment when admin confirms the order
+    // Auto-create Delhivery shipment whenever the order advances to a
+    // post-payment state (CONFIRMED or PROCESSING). Admins sometimes skip
+    // CONFIRMED and jump straight to PROCESSING — we still want the AWB
+    // generated automatically. Idempotent because we gate on shippingStatus.
+    const SHIPMENT_TRIGGER_STATES = new Set(['CONFIRMED', 'PROCESSING'])
     if (
-      input.status === 'CONFIRMED' &&
+      SHIPMENT_TRIGGER_STATES.has(input.status) &&
       order.shippingStatus === 'NOT_CREATED' &&
       order.customerPhone &&
       order.shippingAddress &&
