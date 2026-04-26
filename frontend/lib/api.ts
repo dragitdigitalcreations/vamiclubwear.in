@@ -77,7 +77,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const authApi = {
   login: (email: string, password: string) =>
-    request<{ token: string; user: { id: string; name: string; email: string; role: 'ADMIN' | 'MANAGER' } }>(
+    request<{ token: string; user: { id: string; name: string; email: string; role: 'ADMIN' | 'MANAGER' | 'STAFF' } }>(
       '/auth/login',
       { method: 'POST', body: JSON.stringify({ email, password }) }
     ),

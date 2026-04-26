@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET ?? 'vami-dev-secret-change-in-producti
 export interface AdminTokenPayload {
   sub:   string
   email: string
-  role:  'ADMIN' | 'MANAGER'
+  role:  'ADMIN' | 'MANAGER' | 'STAFF'
 }
 
 // Extends Express Request with decoded admin user

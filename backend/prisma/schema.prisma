@@ -304,6 +304,7 @@ model WebhookLog {
 enum AdminRole {
   ADMIN
   MANAGER
+  STAFF   // shop staff — POS scanner only, mobile-first UI, no sidebar
 }
 
 model AdminUser {

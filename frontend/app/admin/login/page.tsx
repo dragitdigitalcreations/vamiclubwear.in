@@ -28,7 +28,9 @@ export default function AdminLoginPage() {
       const { token, user } = await authApi.login(email, password)
       setToken(token)
       setUser({ id: user.id, name: user.name, email: user.email, role: user.role })
-      router.replace('/admin/dashboard')
+      // STAFF only operates the mobile POS scanner — bounce them straight there
+      // instead of the full dashboard they can't access.
+      router.replace(user.role === 'STAFF' ? '/admin/pos-scanner-mobile' : '/admin/dashboard')
     } catch (err: any) {
       const msg = err.message ?? 'Login failed'
       setError(msg)

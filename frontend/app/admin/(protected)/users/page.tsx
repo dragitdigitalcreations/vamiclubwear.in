@@ -12,14 +12,29 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { request } from '@/lib/api'
 import { toast } from '@/stores/toastStore'
 
+type Role = 'ADMIN' | 'MANAGER' | 'STAFF'
+
 type AdminUser = {
   id: string
   name: string | null
   email: string
-  role: 'ADMIN' | 'MANAGER'
+  role: Role
   isActive: boolean
   lastLoginAt: string | null
   createdAt: string
+}
+
+const ROLE_LABELS: Record<Role, string> = {
+  ADMIN:   'Admin — full access including user management',
+  MANAGER: 'Manager — can manage products, orders, inventory',
+  STAFF:   'Staff — POS scanner only (mobile UI for in-shop sales)',
+}
+
+// Cycle order for the inline pencil button: ADMIN → MANAGER → STAFF → ADMIN
+const ROLE_CYCLE: Record<Role, Role> = {
+  ADMIN:   'MANAGER',
+  MANAGER: 'STAFF',
+  STAFF:   'ADMIN',
 }
 
 // ── Create User Modal ─────────────────────────────────────────────────────────
@@ -33,7 +48,7 @@ function CreateUserModal({
 }) {
   const [name,     setName]     = useState('')
   const [email,    setEmail]    = useState('')
-  const [role,     setRole]     = useState<'ADMIN' | 'MANAGER'>('MANAGER')
+  const [role,     setRole]     = useState<Role>('MANAGER')
   const [loading,  setLoading]  = useState(false)
   const [errors,   setErrors]   = useState<Record<string, string>>({})
 
@@ -99,12 +114,18 @@ function CreateUserModal({
             <Label>Role</Label>
             <select
               value={role}
-              onChange={(e) => setRole(e.target.value as 'ADMIN' | 'MANAGER')}
+              onChange={(e) => setRole(e.target.value as Role)}
               className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-none focus:ring-1 focus:ring-ring"
             >
-              <option value="MANAGER">Manager — can manage products, orders, inventory</option>
-              <option value="ADMIN">Admin — full access including user management</option>
+              <option value="MANAGER">{ROLE_LABELS.MANAGER}</option>
+              <option value="ADMIN">{ROLE_LABELS.ADMIN}</option>
+              <option value="STAFF">{ROLE_LABELS.STAFF}</option>
             </select>
+            {role === 'STAFF' && (
+              <p className="text-[11px] text-amber-400">
+                Staff sign in to a phone-friendly POS scanner only — no dashboard, no products, no orders.
+              </p>
+            )}
           </div>
 
           <p className="text-xs text-muted">
@@ -201,7 +222,7 @@ export default function UsersPage() {
   }
 
   async function cycleRole(u: AdminUser) {
-    const next = u.role === 'ADMIN' ? 'MANAGER' : 'ADMIN'
+    const next = ROLE_CYCLE[u.role]
     try {
       const updated = await request<AdminUser>(`/admin/users/${u.id}`, {
         method: 'PATCH',
@@ -250,7 +271,7 @@ export default function UsersPage() {
                     <TableCell className="font-medium text-on-background">{u.name ?? '—'}</TableCell>
                     <TableCell className="text-sm text-muted">{u.email}</TableCell>
                     <TableCell>
-                      <Badge variant={u.role === 'ADMIN' ? 'default' : 'secondary'}>
+                      <Badge variant={u.role === 'ADMIN' ? 'default' : u.role === 'STAFF' ? 'outline' : 'secondary'}>
                         {u.role}
                       </Badge>
                     </TableCell>
@@ -269,7 +290,7 @@ export default function UsersPage() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => cycleRole(u)}
-                          title={`Change to ${u.role === 'ADMIN' ? 'Manager' : 'Admin'}`}
+                          title={`Change role to ${ROLE_CYCLE[u.role]}`}
                           className="rounded p-1.5 text-muted hover:text-on-background hover:bg-surface-elevated transition-colors"
                         >
                           <Pencil className="h-3.5 w-3.5" />

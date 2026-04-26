@@ -56,7 +56,7 @@ router.get('/users', requireAuth, requireAdmin, async (_req: Request, res: Respo
 const createUserSchema = z.object({
   name:  z.string().min(2).max(100),
   email: z.string().email(),
-  role:  z.enum(['ADMIN', 'MANAGER']).default('MANAGER'),
+  role:  z.enum(['ADMIN', 'MANAGER', 'STAFF']).default('MANAGER'),
 })
 
 router.post('/users', requireAuth, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
@@ -97,7 +97,7 @@ router.post('/users', requireAuth, requireAdmin, async (req: Request, res: Respo
 
 // ── PATCH /api/admin/users/:id — update role or active status (ADMIN only) ───
 const updateUserSchema = z.object({
-  role:     z.enum(['ADMIN', 'MANAGER']).optional(),
+  role:     z.enum(['ADMIN', 'MANAGER', 'STAFF']).optional(),
   isActive: z.boolean().optional(),
   name:     z.string().min(2).max(100).optional(),
 })

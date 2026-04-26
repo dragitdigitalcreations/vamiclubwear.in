@@ -18,17 +18,20 @@ export type AdminSection =
   | 'returns'
   | 'pos-sync'
   | 'pos-scanner'
+  | 'pos-scanner-mobile'
   | 'users'
 
 export const SECTION_ROLES: Record<AdminSection, UserRole[]> = {
-  dashboard:     ['ADMIN', 'MANAGER', 'STAFF'],
-  products:      ['ADMIN', 'MANAGER'],
-  inventory:     ['ADMIN', 'MANAGER'],
-  orders:        ['ADMIN', 'MANAGER', 'STAFF'],
-  returns:       ['ADMIN', 'MANAGER'],
-  'pos-sync':    ['ADMIN'],
-  'pos-scanner': ['ADMIN', 'MANAGER'],
-  users:         ['ADMIN'],
+  dashboard:            ['ADMIN', 'MANAGER'],
+  products:             ['ADMIN', 'MANAGER'],
+  inventory:            ['ADMIN', 'MANAGER'],
+  orders:               ['ADMIN', 'MANAGER'],
+  returns:              ['ADMIN', 'MANAGER'],
+  'pos-sync':           ['ADMIN'],
+  'pos-scanner':        ['ADMIN', 'MANAGER'],
+  // Mobile-first scanner — the ONLY section a STAFF user can reach.
+  'pos-scanner-mobile': ['ADMIN', 'MANAGER', 'STAFF'],
+  users:                ['ADMIN'],
 }
 
 // ─── Product & Variant form types ───────────────────────────────────────────
