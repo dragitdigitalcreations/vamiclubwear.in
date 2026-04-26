@@ -2,14 +2,18 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShoppingBag, Heart } from 'lucide-react'
+import { ShoppingBag, Heart, Share2, Link as LinkIcon, Check, MessageCircle, Facebook, Twitter } from 'lucide-react'
 import { Product, getPrimaryImage, getVariantsByColor, getAvailableStock } from '@/types/product'
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
 import { useCustomerAuthStore } from '@/stores/customerAuthStore'
 import { cloudinaryUrl } from '@/lib/cloudinary'
+
+// Site origin used to build absolute share URLs at click time. The env var
+// matches what's used elsewhere for canonical URLs in metadata generation.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.in'
 
 // ─── Price display — actual price + optional crossed-out base price ────────────
 function PriceDisplay({ actualPrice, basePrice }: { actualPrice: number; basePrice: number }) {
@@ -41,10 +45,31 @@ function isNewProduct(createdAt?: string): boolean {
 export function ProductCard({ product, priority = false }: ProductCardProps) {
   const [hovered,    setHovered]    = useState(false)
   const [addedPulse, setAddedPulse] = useState(false)
+  const [shareOpen,  setShareOpen]  = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
+  const shareWrapRef = useRef<HTMLDivElement | null>(null)
   const { addItem }                    = useCartStore()
   const { toggleItem, isWishlisted }   = useWishlistStore()
   const customerAuthed                 = useCustomerAuthStore((s) => !!s.token && !!s.user)
   const openPrompt                     = useCustomerAuthStore((s) => s.openPrompt)
+
+  // Close share popover on outside-click or Escape so the card behaves like a
+  // proper menu rather than swallowing input until the user re-clicks the icon.
+  useEffect(() => {
+    if (!shareOpen) return
+    function onDoc(e: MouseEvent) {
+      if (shareWrapRef.current && !shareWrapRef.current.contains(e.target as Node)) {
+        setShareOpen(false)
+      }
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setShareOpen(false) }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [shareOpen])
 
   const rawImageUrl   = getPrimaryImage(product)
   const imageUrl      = rawImageUrl ? cloudinaryUrl(rawImageUrl, { w: 600, q: 80 }) : null
@@ -99,6 +124,43 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
       imageUrl:  rawImageUrl ?? null,
       category:  product.category.name,
     })
+  }
+
+  // Resolve share URL at click time so it picks up the current host even when
+  // the env var isn't set (e.g. preview deployments) — falls back to SITE_URL.
+  function getShareUrl(): string {
+    const origin = typeof window !== 'undefined' ? window.location.origin : SITE_URL
+    return `${origin}/products/${product.slug}`
+  }
+
+  async function handleShareClick(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    const url   = getShareUrl()
+    const title = product.name
+    const text  = `${product.name} — Vami Clubwear`
+
+    // Prefer the native Web Share sheet on mobile / supporting browsers (gives
+    // users their full app list — WhatsApp, Instagram DM, Mail, etc).
+    if (typeof navigator !== 'undefined' && typeof (navigator as any).share === 'function') {
+      try {
+        await (navigator as any).share({ title, text, url })
+        return
+      } catch {
+        // User cancelled or share failed — fall through to popover
+      }
+    }
+    setShareOpen((v) => !v)
+  }
+
+  function copyShareLink(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    const url = getShareUrl()
+    navigator.clipboard?.writeText(url).then(() => {
+      setLinkCopied(true)
+      setTimeout(() => { setLinkCopied(false); setShareOpen(false) }, 1200)
+    }).catch(() => {})
   }
 
   return (
@@ -156,18 +218,92 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
           )}
         </div>
 
-        {/* ── Wishlist heart — always visible, top-right ── */}
-        <button
-          onClick={handleWishlist}
-          className={`absolute right-2.5 top-2.5 z-20 flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 ${
-            wishlisted
-              ? 'bg-on-background text-white shadow-sm'
-              : 'bg-white/90 text-muted shadow-sm hover:bg-on-background hover:text-white'
-          }`}
-          aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-        >
-          <Heart className={`h-3 w-3 transition-all duration-200 ${wishlisted ? 'fill-white' : ''}`} />
-        </button>
+        {/* ── Wishlist + Share — top-right, always visible ── */}
+        <div className="absolute right-2.5 top-2.5 z-20 flex flex-col items-end gap-1.5">
+          <button
+            onClick={handleWishlist}
+            className={`flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 ${
+              wishlisted
+                ? 'bg-on-background text-white shadow-sm'
+                : 'bg-white/90 text-muted shadow-sm hover:bg-on-background hover:text-white'
+            }`}
+            aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          >
+            <Heart className={`h-3 w-3 transition-all duration-200 ${wishlisted ? 'fill-white' : ''}`} />
+          </button>
+
+          <div ref={shareWrapRef} className="relative">
+            <button
+              onClick={handleShareClick}
+              className={`flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 ${
+                shareOpen
+                  ? 'bg-on-background text-white shadow-sm'
+                  : 'bg-white/90 text-muted shadow-sm hover:bg-on-background hover:text-white'
+              }`}
+              aria-label="Share product"
+              aria-haspopup="menu"
+              aria-expanded={shareOpen}
+            >
+              <Share2 className="h-3 w-3" />
+            </button>
+
+            <AnimatePresence>
+              {shareOpen && (
+                <motion.div
+                  key="share-menu"
+                  initial={{ opacity: 0, y: -4, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  role="menu"
+                  onClick={(e: React.MouseEvent) => e.preventDefault()}
+                  className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-md border border-border bg-background shadow-xl"
+                >
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(`${product.name} — ${getShareUrl()}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => { e.stopPropagation(); setShareOpen(false) }}
+                    className="flex items-center gap-2 px-3 py-2 text-xs text-on-background hover:bg-surface-elevated"
+                    role="menuitem"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5 text-green-500" /> WhatsApp
+                  </a>
+                  <a
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl())}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => { e.stopPropagation(); setShareOpen(false) }}
+                    className="flex items-center gap-2 px-3 py-2 text-xs text-on-background hover:bg-surface-elevated"
+                    role="menuitem"
+                  >
+                    <Facebook className="h-3.5 w-3.5 text-blue-500" /> Facebook
+                  </a>
+                  <a
+                    href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(getShareUrl())}&text=${encodeURIComponent(product.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => { e.stopPropagation(); setShareOpen(false) }}
+                    className="flex items-center gap-2 px-3 py-2 text-xs text-on-background hover:bg-surface-elevated"
+                    role="menuitem"
+                  >
+                    <Twitter className="h-3.5 w-3.5 text-sky-400" /> X / Twitter
+                  </a>
+                  <button
+                    type="button"
+                    onClick={copyShareLink}
+                    className="flex w-full items-center gap-2 border-t border-border px-3 py-2 text-xs text-on-background hover:bg-surface-elevated"
+                    role="menuitem"
+                  >
+                    {linkCopied
+                      ? <><Check className="h-3.5 w-3.5 text-green-400" /> Link copied</>
+                      : <><LinkIcon className="h-3.5 w-3.5 text-muted" /> Copy link</>}
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
 
         {/* ── Add to Bag — slides up from bottom on hover ── */}
         <AnimatePresence>
