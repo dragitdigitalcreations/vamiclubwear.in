@@ -121,19 +121,40 @@ router.patch('/users/:id', requireAuth, requireAdmin, async (req: Request, res: 
   }
 })
 
-// ── DELETE /api/admin/users/:id — deactivate (soft-delete) user (ADMIN only) ─
+// ── DELETE /api/admin/users/:id — permanently remove an admin user (ADMIN only)
+// AdminUser has no inbound FKs (audit trails store performedBy as a free-text
+// email string), so a hard delete is safe. Self-delete is blocked so the last
+// active admin can't accidentally lock everyone out of the panel.
 router.delete('/users/:id', requireAuth, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Prevent self-deletion
     const currentUser = (req as any).adminUser
     if (currentUser?.sub === req.params.id) {
-      res.status(400).json({ error: 'Cannot deactivate your own account' })
+      res.status(400).json({ error: 'You cannot delete your own account' })
       return
     }
-    await prisma.adminUser.update({
-      where: { id: req.params.id },
-      data:  { isActive: false },
+
+    const target = await prisma.adminUser.findUnique({
+      where:  { id: req.params.id },
+      select: { id: true, role: true },
     })
+    if (!target) {
+      res.status(404).json({ error: 'User not found' })
+      return
+    }
+
+    // Refuse to delete the last remaining active ADMIN — locking everyone out
+    // of /admin/users would require manual DB intervention to recover.
+    if (target.role === 'ADMIN') {
+      const remainingAdmins = await prisma.adminUser.count({
+        where: { role: 'ADMIN', isActive: true, id: { not: target.id } },
+      })
+      if (remainingAdmins === 0) {
+        res.status(400).json({ error: 'Cannot delete the last active admin account' })
+        return
+      }
+    }
+
+    await prisma.adminUser.delete({ where: { id: target.id } })
     res.json({ ok: true })
   } catch (err) {
     next(err)

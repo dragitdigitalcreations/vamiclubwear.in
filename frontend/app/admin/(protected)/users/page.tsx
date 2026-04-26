@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { UserPlus, Loader2, Shield, ShieldOff, Copy, Check, X, Pencil } from 'lucide-react'
+import { UserPlus, Loader2, Shield, ShieldOff, Copy, Check, X, Pencil, Trash2, AlertTriangle } from 'lucide-react'
+import { useAuthStore } from '@/stores/authStore'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { RBACGuard } from '@/components/admin/RBACGuard'
 import { Button } from '@/components/ui/button'
@@ -190,13 +191,96 @@ function TempPassDialog({ user, tempPass, onClose }: { user: AdminUser; tempPass
   )
 }
 
+// ── Delete Confirm Dialog ─────────────────────────────────────────────────────
+
+function DeleteConfirmDialog({
+  user, onClose, onConfirmed,
+}: {
+  user: AdminUser
+  onClose: () => void
+  onConfirmed: () => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const [confirmText, setConfirmText] = useState('')
+  const required = user.email
+  const canDelete = confirmText.trim().toLowerCase() === required.toLowerCase()
+
+  async function doDelete() {
+    if (!canDelete || busy) return
+    setBusy(true)
+    try {
+      await request<{ ok: boolean }>(`/admin/users/${user.id}`, { method: 'DELETE' })
+      toast.success(`${user.name ?? user.email} deleted`)
+      onConfirmed()
+    } catch (err: any) {
+      toast.error(err.message ?? 'Delete failed')
+    } finally { setBusy(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-md rounded-lg border border-destructive/40 bg-surface shadow-2xl">
+        <div className="flex items-center gap-3 border-b border-border px-6 py-4">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/15">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+          </div>
+          <div>
+            <h2 className="font-display text-base font-semibold text-on-background">Delete user permanently?</h2>
+            <p className="text-xs text-muted">This cannot be undone.</p>
+          </div>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          <p className="text-sm text-on-background">
+            <span className="font-semibold">{user.name ?? '—'}</span>
+            <span className="text-muted"> · {user.email} · {user.role}</span>
+          </p>
+          <p className="text-xs text-muted">
+            The account is removed entirely — sign-in will stop working immediately and the row vanishes from this list.
+            If you only want to revoke access temporarily, use the <strong>Deactivate</strong> button instead.
+          </p>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">
+              Type <code className="font-mono text-on-background">{required}</code> to confirm
+            </Label>
+            <Input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder={required}
+              autoFocus
+            />
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={busy}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="flex-1"
+              disabled={!canDelete || busy}
+              onClick={doDelete}
+            >
+              {busy ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deleting…</> : 'Delete user'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function UsersPage() {
+  const currentUserId               = useAuthStore((s) => s.user?.id)
   const [users,        setUsers]        = useState<AdminUser[]>([])
   const [loading,      setLoading]      = useState(true)
   const [showCreate,   setShowCreate]   = useState(false)
   const [createdResult, setCreatedResult] = useState<{ user: AdminUser; tempPass: string } | null>(null)
+  const [deletingUser, setDeletingUser]   = useState<AdminUser | null>(null)
 
   function loadUsers() {
     setLoading(true)
@@ -297,14 +381,22 @@ export default function UsersPage() {
                         </button>
                         <button
                           onClick={() => toggleActive(u)}
-                          title={u.isActive ? 'Deactivate' : 'Activate'}
+                          title={u.isActive ? 'Deactivate (revoke sign-in, keep account)' : 'Activate'}
                           className={`rounded p-1.5 transition-colors ${
                             u.isActive
-                              ? 'text-muted hover:text-destructive hover:bg-destructive/10'
+                              ? 'text-muted hover:text-amber-400 hover:bg-amber-400/10'
                               : 'text-muted hover:text-green-400 hover:bg-green-400/10'
                           }`}
                         >
                           {u.isActive ? <ShieldOff className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
+                        </button>
+                        <button
+                          onClick={() => setDeletingUser(u)}
+                          disabled={u.id === currentUserId}
+                          title={u.id === currentUserId ? 'You cannot delete your own account' : 'Delete user permanently'}
+                          className="rounded p-1.5 text-muted transition-colors hover:text-destructive hover:bg-destructive/10 disabled:opacity-30 disabled:hover:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </TableCell>
@@ -333,6 +425,17 @@ export default function UsersPage() {
           user={createdResult.user}
           tempPass={createdResult.tempPass}
           onClose={() => setCreatedResult(null)}
+        />
+      )}
+
+      {deletingUser && (
+        <DeleteConfirmDialog
+          user={deletingUser}
+          onClose={() => setDeletingUser(null)}
+          onConfirmed={() => {
+            setUsers((prev) => prev.filter((x) => x.id !== deletingUser.id))
+            setDeletingUser(null)
+          }}
         />
       )}
     </RBACGuard>
