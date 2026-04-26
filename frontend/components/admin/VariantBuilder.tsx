@@ -237,19 +237,52 @@ function VariantRow({
 
           {/* Row 2: Fabric + Style */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {/* FABRIC */}
-            <div className="space-y-1.5">
-              <Label>Fabric</Label>
-              <select
-                className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-none focus:ring-1 focus:ring-ring"
-                {...register(`variants.${index}.fabric`)}
-              >
-                <option value="">Select fabric…</option>
-                {FABRIC_OPTIONS.map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
-            </div>
+            {/* FABRIC — preset list with a "Custom" option that reveals a free-text field.
+                The persisted value stays under `fabric` (no extra schema field), so the
+                preset/custom distinction is purely a UI-side toggle. */}
+            <Controller
+              control={control}
+              name={`variants.${index}.fabric`}
+              render={({ field }) => {
+                const value     = field.value ?? ''
+                const isPreset  = value === '' || FABRIC_OPTIONS.includes(value)
+                const selectVal = value === '' ? '' : isPreset ? value : '__custom__'
+                return (
+                  <div className="space-y-1.5">
+                    <Label>Fabric</Label>
+                    <select
+                      value={selectVal}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        if (v === '__custom__') {
+                          // Switching to custom — clear so the input starts blank
+                          // (preserve any existing custom string instead of clobbering)
+                          field.onChange(isPreset ? '' : value)
+                        } else {
+                          field.onChange(v)
+                        }
+                      }}
+                      className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-none focus:ring-1 focus:ring-ring"
+                    >
+                      <option value="">Select fabric…</option>
+                      {FABRIC_OPTIONS.map((f) => (
+                        <option key={f} value={f}>{f}</option>
+                      ))}
+                      <option value="__custom__">Custom…</option>
+                    </select>
+                    {selectVal === '__custom__' && (
+                      <Input
+                        autoFocus
+                        placeholder="Enter custom fabric (e.g. Tussar Silk)"
+                        value={value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        maxLength={50}
+                      />
+                    )}
+                  </div>
+                )
+              }}
+            />
 
             {/* STYLE */}
             <div className="space-y-1.5">
