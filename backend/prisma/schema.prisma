@@ -73,25 +73,47 @@ model ProductMedia {
 }
 
 model Product {
-  id          String           @id @default(cuid())
-  name        String
-  slug        String           @unique
-  barcode     String?          @unique // physical barcode / QR — one per product, shared by all variants
-  description String?          @db.Text
-  basePrice   Decimal          @db.Decimal(10, 2)
-  categoryId  String
-  category    Category         @relation(fields: [categoryId], references: [id])
-  variants    ProductVariant[]
-  media       ProductMedia[]
-  isActive    Boolean          @default(true)
-  isFeatured  Boolean          @default(false)
-  deletedAt   DateTime?        // soft delete — preserves order history while hiding from storefront/admin listings
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id              String                @id @default(cuid())
+  name            String
+  slug            String                @unique
+  // SINGLE-mode barcode — one for the whole product, shared by all variants.
+  // Mutually exclusive with `colorBarcodes`: when perColorBarcode = true this stays null
+  // and each colour bundle gets its own row in ProductColorBarcode.
+  barcode         String?               @unique
+  perColorBarcode Boolean               @default(false)
+  description     String?               @db.Text
+  basePrice       Decimal               @db.Decimal(10, 2)
+  categoryId      String
+  category        Category              @relation(fields: [categoryId], references: [id])
+  variants        ProductVariant[]
+  colorBarcodes   ProductColorBarcode[]
+  media           ProductMedia[]
+  isActive        Boolean               @default(true)
+  isFeatured      Boolean               @default(false)
+  deletedAt       DateTime?             // soft delete — preserves order history while hiding from storefront/admin listings
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
 
   @@index([categoryId])
   @@index([slug])
   @@index([deletedAt])
+}
+
+// Per-colour barcode for products that carry one barcode per colour bundle
+// (all sizes of a colour share the same barcode). Lookup falls through to this
+// table when Product.barcode misses, then variants are filtered by `color`.
+model ProductColorBarcode {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color     String
+  barcode   String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, color])
+  @@index([productId])
+  @@index([barcode])
 }
 
 // ─────────────────────────────────────────────

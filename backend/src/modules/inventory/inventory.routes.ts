@@ -64,14 +64,30 @@ router.post('/backfill', requireAuth, async (_req: Request, res: Response, next:
     res.json({ created: orphans.length, locationName: location.name })
   } catch (err) { next(err) }
 })
-// GET /api/inventory/by-barcode/:barcode — look up all variants of a product by barcode
-// Returns the full product variant list so POS staff can pick the exact one sold
+// GET /api/inventory/by-barcode/:barcode — look up variants by barcode.
+// Falls through from the product-level barcode to the per-colour barcode table
+// so a colour-specific scan returns only that colour's size variants.
 router.get('/by-barcode/:barcode', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const barcode = decodeURIComponent(req.params.barcode)
 
-    // Find the product by its barcode
-    const product = await prisma.product.findFirst({
+    const variantSelect = {
+      id:      true,
+      sku:     true,
+      size:    true,
+      color:   true,
+      fabric:  true,
+      style:   true,
+      price:   true,
+      inventory: {
+        select: { quantity: true, reserved: true },
+        take:   1,
+        orderBy: { createdAt: 'asc' as const },
+      },
+    }
+
+    // 1. Try product-level barcode (SINGLE mode)
+    let product = await prisma.product.findFirst({
       where:  { barcode, deletedAt: null },
       select: {
         id:   true,
@@ -79,24 +95,35 @@ router.get('/by-barcode/:barcode', requireAuth, async (req: Request, res: Respon
         slug: true,
         variants: {
           where:   { isActive: true },
-          select: {
-            id:      true,
-            sku:     true,
-            size:    true,
-            color:   true,
-            fabric:  true,
-            style:   true,
-            price:   true,
-            inventory: {
-              select: { quantity: true, reserved: true },
-              take:   1,
-              orderBy: { createdAt: 'asc' },
-            },
-          },
+          select:  variantSelect,
           orderBy: { sku: 'asc' },
         },
       },
     })
+
+    // 2. Fall back to per-colour barcode — narrows variants to the matching colour
+    if (!product) {
+      const colorRow = await prisma.productColorBarcode.findUnique({
+        where:  { barcode },
+        select: { color: true, productId: true },
+      })
+      if (colorRow) {
+        product = await prisma.product.findFirst({
+          where:  { id: colorRow.productId, deletedAt: null },
+          select: {
+            id:   true,
+            name: true,
+            slug: true,
+            variants: {
+              where:   { isActive: true, color: colorRow.color },
+              select:  variantSelect,
+              orderBy: { sku: 'asc' },
+            },
+          },
+        })
+      }
+    }
+
     if (!product) return res.status(404).json({ error: `No product found for barcode "${barcode}"` })
 
     const variants = product.variants.map((v) => ({
@@ -217,6 +244,17 @@ router.patch('/reduce', requireAuth, async (req: Request, res: Response, next: N
                 barcode:   product.barcode ? `${product.barcode}${suffix}` : null,
               },
             })
+            // Suffix per-colour barcodes too so the unique slot is freed for reuse
+            const colorRows = await tx.productColorBarcode.findMany({
+              where:  { productId: product.id },
+              select: { id: true, barcode: true },
+            })
+            for (const row of colorRows) {
+              await tx.productColorBarcode.update({
+                where: { id: row.id },
+                data:  { barcode: `${row.barcode}${suffix}` },
+              })
+            }
             await tx.productVariant.updateMany({
               where: { productId: product.id },
               data:  { isActive: false },

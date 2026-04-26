@@ -34,10 +34,30 @@ const productFullInclude = {
       },
     },
   },
+  colorBarcodes: {
+    select: { color: true, barcode: true },
+  },
   media: {
     orderBy: { sortOrder: 'asc' as const },
   },
 } satisfies Prisma.ProductInclude
+
+// Normalise + de-dupe per-colour barcode rows. Trims whitespace, drops empties,
+// and keeps only the last value per colour so the form can't accidentally insert
+// two rows for the same colour.
+function normalizeColorBarcodes(
+  rows: Array<{ color: string; barcode: string }> | undefined,
+): Array<{ color: string; barcode: string }> {
+  if (!rows || rows.length === 0) return []
+  const map = new Map<string, string>()
+  for (const r of rows) {
+    const color   = (r.color ?? '').trim()
+    const barcode = (r.barcode ?? '').trim()
+    if (!color || !barcode) continue
+    map.set(color, barcode)
+  }
+  return Array.from(map.entries()).map(([color, barcode]) => ({ color, barcode }))
+}
 
 // Lightweight include for listing cards
 // Includes minimal inventory (quantity + reserved only) so the frontend
@@ -121,6 +141,13 @@ export const productService = {
       dedupedVariants.map(async (v) => ({ ...v, sku: await uniqueSku(v.sku) })),
     )
 
+    // Resolve barcode mode. The two modes are mutually exclusive at persistence
+    // time — when perColorBarcode is true the product-level barcode is cleared
+    // so a future scan can't ambiguously match both rows.
+    const perColor      = data.perColorBarcode === true
+    const colorBarcodes = perColor ? normalizeColorBarcodes(data.colorBarcodes) : []
+    const productBarcode = perColor ? null : (data.barcode?.trim() || null)
+
     return prisma.$transaction(async (tx) => {
       // Get or create default location so inventory can always be seeded
       let location = await tx.location.findFirst({ orderBy: { createdAt: 'asc' } })
@@ -132,13 +159,14 @@ export const productService = {
 
       const product = await tx.product.create({
         data: {
-          name:        data.name,
-          slug:        uniqueProductSlug,
-          barcode:     data.barcode || null,
-          description: data.description,
-          basePrice:   new Prisma.Decimal(data.basePrice),
-          categoryId:  data.categoryId,
-          isFeatured:  data.isFeatured ?? false,
+          name:            data.name,
+          slug:            uniqueProductSlug,
+          barcode:         productBarcode,
+          perColorBarcode: perColor,
+          description:     data.description,
+          basePrice:       new Prisma.Decimal(data.basePrice),
+          categoryId:      data.categoryId,
+          isFeatured:      data.isFeatured ?? false,
           variants: {
             create: resolvedVariants.map((v) => ({
               sku:      v.sku,
@@ -150,6 +178,9 @@ export const productService = {
               price:    new Prisma.Decimal(v.price),
             })),
           },
+          colorBarcodes: colorBarcodes.length > 0 ? {
+            create: colorBarcodes.map((c) => ({ color: c.color, barcode: c.barcode })),
+          } : undefined,
           // Persist media URLs returned from Cloudinary
           media: data.media && data.media.length > 0 ? {
             create: data.media.map((m, idx) => ({
@@ -311,7 +342,7 @@ export const productService = {
   async updateProduct(id: string, data: UpdateProductInput) {
     const existing = await prisma.product.findFirst({
       where: { id, deletedAt: null },
-      select: { id: true, slug: true, variants: { select: { id: true, sku: true } } },
+      select: { id: true, slug: true, perColorBarcode: true, variants: { select: { id: true, sku: true } } },
     })
     if (!existing) throw new NotFoundError(`Product ${id}`)
 
@@ -329,6 +360,17 @@ export const productService = {
         )
       : undefined
 
+    // Resolve barcode mode for this update. If perColorBarcode is omitted from
+    // the payload we keep the existing mode; either way, the two storage paths
+    // (Product.barcode vs ProductColorBarcode rows) stay mutually exclusive.
+    const nextPerColor = data.perColorBarcode ?? existing.perColorBarcode
+    const nextColorBarcodes = nextPerColor
+      ? normalizeColorBarcodes(data.colorBarcodes)
+      : []
+    const nextProductBarcode = nextPerColor
+      ? null
+      : (data.barcode !== undefined ? (data.barcode?.trim() || null) : undefined)
+
     return prisma.$transaction(async (tx) => {
       // 1. Update product-level fields
       await tx.product.update({
@@ -336,7 +378,11 @@ export const productService = {
         data: {
           ...(data.name        !== undefined && { name: data.name }),
           ...(resolvedSlug     !== undefined && { slug: resolvedSlug }),
-          ...(data.barcode !== undefined && { barcode: data.barcode || null }),
+          // Always set barcode when switching mode, otherwise honour explicit edits
+          ...((data.perColorBarcode !== undefined || data.barcode !== undefined) && {
+            barcode: nextProductBarcode === undefined ? null : nextProductBarcode,
+          }),
+          ...(data.perColorBarcode !== undefined && { perColorBarcode: nextPerColor }),
           ...(data.description !== undefined && { description: data.description }),
           ...(data.basePrice   !== undefined && { basePrice: new Prisma.Decimal(data.basePrice) }),
           ...(data.categoryId  !== undefined && { categoryId: data.categoryId }),
@@ -357,6 +403,22 @@ export const productService = {
           }),
         },
       })
+
+      // 1b. Replace per-colour barcodes when mode is per-colour or the caller
+      //     explicitly supplied the array. In SINGLE mode we always wipe rows so
+      //     a stale barcode can never be matched after the toggle flips.
+      if (data.perColorBarcode !== undefined || data.colorBarcodes !== undefined) {
+        await tx.productColorBarcode.deleteMany({ where: { productId: id } })
+        if (nextPerColor && nextColorBarcodes.length > 0) {
+          await tx.productColorBarcode.createMany({
+            data: nextColorBarcodes.map((c) => ({
+              productId: id,
+              color:     c.color,
+              barcode:   c.barcode,
+            })),
+          })
+        }
+      }
 
       // 2. Sync variants — authoritative replace: update by id, create new,
       //    drop omitted. Identifying by `id` means regenerated SKUs (from
@@ -528,7 +590,8 @@ export const productService = {
   },
 
   async getProductByBarcode(barcode: string) {
-    const product = await prisma.product.findFirst({
+    // Try the product-level (SINGLE-mode) barcode first…
+    let product = await prisma.product.findFirst({
       where: { barcode, deletedAt: null },
       select: {
         id: true, name: true, slug: true,
@@ -546,6 +609,36 @@ export const productService = {
         },
       },
     })
+
+    // …then fall through to per-colour barcodes; if found, narrow variants to
+    // that colour bundle so the POS picker only shows the relevant sizes.
+    if (!product) {
+      const colorRow = await prisma.productColorBarcode.findUnique({
+        where: { barcode },
+        select: { color: true, productId: true },
+      })
+      if (colorRow) {
+        product = await prisma.product.findFirst({
+          where: { id: colorRow.productId, deletedAt: null },
+          select: {
+            id: true, name: true, slug: true,
+            variants: {
+              where: { isActive: true, color: colorRow.color },
+              select: {
+                id: true, sku: true, size: true, color: true,
+                colorHex: true, fabric: true, style: true, price: true,
+                inventory: {
+                  select: { quantity: true, reserved: true },
+                  take: 1, orderBy: { createdAt: 'asc' },
+                },
+              },
+              orderBy: { sku: 'asc' },
+            },
+          },
+        })
+      }
+    }
+
     if (!product) throw new NotFoundError(`No product found for barcode "${barcode}"`)
     return product
   },
@@ -573,6 +666,17 @@ export const productService = {
             barcode:   toDelete.barcode ? `${toDelete.barcode}${suffix}` : null,
           },
         })
+        // Suffix per-colour barcodes too so they free their unique slots
+        const colorRows = await tx.productColorBarcode.findMany({
+          where: { productId: id },
+          select: { id: true, barcode: true },
+        })
+        for (const row of colorRows) {
+          await tx.productColorBarcode.update({
+            where: { id: row.id },
+            data:  { barcode: `${row.barcode}${suffix}` },
+          })
+        }
         await tx.productVariant.updateMany({
           where: { productId: id },
           data:  { isActive: false },
@@ -584,7 +688,7 @@ export const productService = {
         })
       })
     } else {
-      // No order history — safe to hard-delete
+      // No order history — safe to hard-delete (colour barcodes cascade)
       await prisma.$transaction(async (tx) => {
         const variants = await tx.productVariant.findMany({ where: { productId: id }, select: { id: true } })
         const variantIds = variants.map((v) => v.id)

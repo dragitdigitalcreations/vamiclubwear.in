@@ -28,21 +28,35 @@ export const mediaItemSchema = z.object({
 
 export type MediaItemInput = z.infer<typeof mediaItemSchema>
 
+// ── Per-colour barcode ───────────────────────────────────────────────────────
+
+export const colorBarcodeSchema = z.object({
+  color:   z.string().min(1, 'colour is required').max(50),
+  barcode: z.string().min(1, 'barcode is required').max(128),
+})
+
+export type ColorBarcodeInput = z.infer<typeof colorBarcodeSchema>
+
 // ── Product ──────────────────────────────────────────────────────────────────
 
 export const createProductSchema = z.object({
-  name:        z.string().min(2, 'Name must be at least 2 characters').max(200),
-  slug:        z.string()
-                 .min(2)
-                 .max(200)
-                 .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
-  barcode:     z.string().max(128).optional(),
-  description: z.string().max(5000).optional(),
-  basePrice:   z.number().positive('basePrice must be > 0'),
-  categoryId:  z.string().cuid('Invalid categoryId'),
-  isFeatured:  z.boolean().optional().default(false),
-  variants:    z.array(createVariantSchema).min(1, 'At least one variant is required'),
-  media:       z.array(mediaItemSchema).optional().default([]),
+  name:            z.string().min(2, 'Name must be at least 2 characters').max(200),
+  slug:            z.string()
+                     .min(2)
+                     .max(200)
+                     .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+  // SINGLE-mode barcode. Ignored by the service when perColorBarcode is true.
+  barcode:         z.string().max(128).optional(),
+  perColorBarcode: z.boolean().optional().default(false),
+  // Required (and replaces `barcode`) when perColorBarcode is true. One row per
+  // distinct colour; all sizes of that colour share the same barcode at the POS.
+  colorBarcodes:   z.array(colorBarcodeSchema).optional().default([]),
+  description:     z.string().max(5000).optional(),
+  basePrice:       z.number().positive('basePrice must be > 0'),
+  categoryId:      z.string().cuid('Invalid categoryId'),
+  isFeatured:      z.boolean().optional().default(false),
+  variants:        z.array(createVariantSchema).min(1, 'At least one variant is required'),
+  media:           z.array(mediaItemSchema).optional().default([]),
 })
 
 export type CreateProductInput = z.infer<typeof createProductSchema>

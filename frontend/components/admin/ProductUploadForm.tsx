@@ -35,18 +35,19 @@ const variantSchema = z.object({
 })
 
 const productSchema = z.object({
-  name:        z.string().min(2, 'Product name must be at least 2 characters'),
-  slug:        z.string()
-                 .min(2, 'Slug is required')
-                 .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
-  barcode:     z.string().max(128).optional(),
-  description: z.string().optional(),
-  basePrice:   z.number({ invalid_type_error: 'Price must be a number' })
-                .positive('Price must be greater than ₹0'),
-  categoryId:  z.string().min(1, 'Category is required'),
-  isFeatured:  z.boolean().default(false),
-  isActive:    z.boolean().default(true),
-  variants:    z.array(variantSchema).min(1, 'At least one variant is required'),
+  name:            z.string().min(2, 'Product name must be at least 2 characters'),
+  slug:            z.string()
+                     .min(2, 'Slug is required')
+                     .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+  barcode:         z.string().max(128).optional(),
+  perColorBarcode: z.boolean().default(false),
+  description:     z.string().optional(),
+  basePrice:       z.number({ invalid_type_error: 'Price must be a number' })
+                     .positive('Price must be greater than ₹0'),
+  categoryId:      z.string().min(1, 'Category is required'),
+  isFeatured:      z.boolean().default(false),
+  isActive:        z.boolean().default(true),
+  variants:        z.array(variantSchema).min(1, 'At least one variant is required'),
 })
 
 type ProductFormValues = z.infer<typeof productSchema>
@@ -91,7 +92,10 @@ function Section({
 // ─── ProductUploadForm ────────────────────────────────────────────────────────
 
 interface ProductUploadFormProps {
-  initialData?: Partial<ProductFormValues & { id: string }>
+  initialData?: Partial<ProductFormValues & {
+    id: string
+    colorBarcodes?: Array<{ color: string; barcode: string }>
+  }>
   productId?: string
   initialMedia?: MediaItem[]
 }
@@ -103,6 +107,14 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
   const [mediaItems, setMediaItems]             = useState<MediaItem[]>(initialMedia ?? [])
   const [categories, setCategories]             = useState<Array<{ id: string; name: string }>>([])
+
+  // Per-colour barcode map keyed by colour name. Lives outside RHF because the
+  // colour list is derived from variants and changes as the admin edits rows;
+  // a controlled record is simpler than a useFieldArray bound to dynamic keys.
+  const [colorBarcodes, setColorBarcodes] = useState<Record<string, string>>(() => {
+    const seed = initialData?.colorBarcodes ?? []
+    return Object.fromEntries(seed.map((c) => [c.color, c.barcode]))
+  })
 
   // Fetch real categories from backend
   useEffect(() => {
@@ -116,15 +128,16 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
   const methods = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name:        initialData?.name        ?? '',
-      slug:        initialData?.slug        ?? '',
-      barcode:     (initialData as any)?.barcode ?? '',
-      description: initialData?.description ?? '',
-      basePrice:   initialData?.basePrice   ?? 0,
-      categoryId:  initialData?.categoryId  ?? '',
-      isFeatured:  initialData?.isFeatured  ?? false,
-      isActive:    initialData?.isActive    ?? true,
-      variants:    initialData?.variants    ?? [],
+      name:            initialData?.name        ?? '',
+      slug:            initialData?.slug        ?? '',
+      barcode:         (initialData as any)?.barcode ?? '',
+      perColorBarcode: (initialData as any)?.perColorBarcode ?? false,
+      description:     initialData?.description ?? '',
+      basePrice:       initialData?.basePrice   ?? 0,
+      categoryId:      initialData?.categoryId  ?? '',
+      isFeatured:      initialData?.isFeatured  ?? false,
+      isActive:        initialData?.isActive    ?? true,
+      variants:        initialData?.variants    ?? [],
     },
     mode: 'onBlur',
   })
@@ -145,11 +158,12 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
     }
   }, [nameValue, slugManuallyEdited, setValue])
 
-  const slugValue  = useWatch({ control, name: 'slug' })
-  const basePrice  = useWatch({ control, name: 'basePrice' }) ?? 0
-  const isFeatured = useWatch({ control, name: 'isFeatured' })
-  const isActive   = useWatch({ control, name: 'isActive' })
-  const variantRows = useWatch({ control, name: 'variants' }) ?? []
+  const slugValue       = useWatch({ control, name: 'slug' })
+  const basePrice       = useWatch({ control, name: 'basePrice' }) ?? 0
+  const isFeatured      = useWatch({ control, name: 'isFeatured' })
+  const isActive        = useWatch({ control, name: 'isActive' })
+  const perColorBarcode = useWatch({ control, name: 'perColorBarcode' })
+  const variantRows     = useWatch({ control, name: 'variants' }) ?? []
 
   // Distinct (colour, colorHex) pairs defined on the current variants — used
   // by MediaUploader so admins can bind images to a specific colour variant.
@@ -183,7 +197,25 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
         sortOrder: idx,
       }))
 
-    const payload = { ...data, media: mediaPayload }
+    // Build per-colour barcode rows from the current variant colours so we
+    // never send entries for colours the admin has since removed.
+    const colorBarcodesPayload = data.perColorBarcode
+      ? colorOptions
+          .map(({ color }) => ({ color, barcode: (colorBarcodes[color] ?? '').trim() }))
+          .filter((c) => c.barcode.length > 0)
+      : []
+
+    if (data.perColorBarcode && colorOptions.length === 0) {
+      setSubmitError('Add at least one variant with a colour before enabling per-colour barcodes.')
+      return
+    }
+
+    const payload = {
+      ...data,
+      barcode: data.perColorBarcode ? '' : (data.barcode ?? ''),
+      colorBarcodes: colorBarcodesPayload,
+      media: mediaPayload,
+    }
 
     try {
       if (productId) {
@@ -265,18 +297,77 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
               />
             </div>
 
-            {/* Barcode — one per product, shared by all variants */}
-            <div className="space-y-1.5">
-              <Label htmlFor="barcode">
-                Product Barcode / QR Code
-                <span className="ml-1.5 text-xs font-normal text-muted">(one per product — used by POS scanner)</span>
-              </Label>
-              <Input
-                id="barcode"
-                placeholder="Scan with barcode scanner or type manually…"
-                className="font-mono"
-                {...register('barcode')}
-              />
+            {/* Barcode mode toggle + inputs */}
+            <div className="space-y-3 rounded-md border border-border bg-surface-elevated/30 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="perColorBarcode" className="cursor-pointer">
+                    Use a separate barcode for each colour
+                  </Label>
+                  <p className="text-xs text-muted">
+                    {perColorBarcode
+                      ? 'Each colour bundle (all sizes of that colour) shares one barcode.'
+                      : 'A single barcode is used for the entire product, shared by every variant.'}
+                  </p>
+                </div>
+                <Switch
+                  id="perColorBarcode"
+                  checked={!!perColorBarcode}
+                  onCheckedChange={(v: boolean) => setValue('perColorBarcode', v, { shouldDirty: true })}
+                />
+              </div>
+
+              {!perColorBarcode && (
+                <div className="space-y-1.5 pt-1">
+                  <Label htmlFor="barcode" className="text-xs uppercase tracking-wide text-muted">
+                    Product Barcode / QR Code
+                  </Label>
+                  <Input
+                    id="barcode"
+                    placeholder="Scan with barcode scanner or type manually…"
+                    className="font-mono"
+                    {...register('barcode')}
+                  />
+                </div>
+              )}
+
+              {perColorBarcode && (
+                <div className="space-y-2 pt-1">
+                  <p className="text-xs uppercase tracking-wide text-muted">
+                    Per-colour barcodes
+                  </p>
+                  {colorOptions.length === 0 ? (
+                    <p className="rounded border border-dashed border-border px-3 py-3 text-xs text-muted">
+                      Add at least one variant with a colour below — a barcode field will appear here for each distinct colour.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {colorOptions.map(({ color, colorHex }) => (
+                        <div
+                          key={color}
+                          className="grid grid-cols-[auto_1fr] items-center gap-3 rounded border border-border bg-surface px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="h-4 w-4 rounded-full border border-border"
+                              style={{ backgroundColor: colorHex ?? '#888888' }}
+                            />
+                            <span className="text-sm text-on-background min-w-[8rem]">{color}</span>
+                          </div>
+                          <Input
+                            placeholder="Scan or type the barcode for this colour…"
+                            className="font-mono"
+                            value={colorBarcodes[color] ?? ''}
+                            onChange={(e) =>
+                              setColorBarcodes((prev) => ({ ...prev, [color]: e.target.value }))
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>

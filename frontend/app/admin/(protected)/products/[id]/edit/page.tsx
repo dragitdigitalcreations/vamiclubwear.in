@@ -34,9 +34,14 @@ export default function EditProductPage() {
     productsApi.get(id)
       .then((p: any) => {
         setInitialData({
-          name:        p.name,
-          slug:        p.slug,
-          barcode:     p.barcode  ?? '',
+          name:            p.name,
+          slug:            p.slug,
+          barcode:         p.barcode  ?? '',
+          perColorBarcode: !!p.perColorBarcode,
+          colorBarcodes:   (p.colorBarcodes ?? []).map((c: any) => ({
+            color:   c.color,
+            barcode: c.barcode,
+          })),
           description: p.description ?? '',
           basePrice:   Number(p.basePrice),
           categoryId:  p.category?.id ?? p.categoryId ?? '',
