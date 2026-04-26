@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Play, ShoppingBag, ChevronDown, ArrowRight, Zap, Heart } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Play, ShoppingBag, ChevronDown, ArrowRight, Zap, Heart, Barcode, Copy, Check } from 'lucide-react'
 import {
   Product,
   ProductMedia,
@@ -19,6 +19,7 @@ import {
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
 import { useCustomerAuthStore } from '@/stores/customerAuthStore'
+import { useAuthStore } from '@/stores/authStore'
 import { toast } from '@/stores/toastStore'
 import { cloudinaryUrl } from '@/lib/cloudinary'
 import { productsApi } from '@/lib/api'
@@ -335,6 +336,131 @@ function StickyCartBar({
         </div>
       </div>
     </motion.div>
+  )
+}
+
+// ─── Admin-only Barcode Panel ──────────────────────────────────────────────────
+// Visible only to logged-in admin staff. Lets shop staff cross-check stock at
+// the POS scanner if a sale was missed during checkout.
+function AdminBarcodePanel({
+  product,
+  variant,
+}: {
+  product: Product
+  variant: ProductVariant | null
+}) {
+  const isStaff = useAuthStore((s) => s.isAuthenticated && !!s.user)
+  const [copied, setCopied] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  // Avoid SSR/CSR mismatch — auth state is hydrated client-side from localStorage
+  useEffect(() => { setMounted(true) }, [])
+
+  if (!mounted || !isStaff) return null
+
+  const p              = product as Product & {
+    barcode?:         string | null
+    perColorBarcode?: boolean
+    colorBarcodes?:   Array<{ color: string; barcode: string }>
+  }
+  const perColor       = !!p.perColorBarcode
+  const colorBarcodes  = p.colorBarcodes ?? []
+  const activeColor    = variant?.color ?? null
+  const activeColorBc  = perColor && activeColor
+    ? colorBarcodes.find((c) => c.color === activeColor)?.barcode ?? null
+    : null
+
+  const hasAnyBarcode = perColor ? colorBarcodes.length > 0 : !!p.barcode
+  if (!hasAnyBarcode) return null
+
+  function copy(value: string) {
+    navigator.clipboard?.writeText(value).then(() => {
+      setCopied(value)
+      setTimeout(() => setCopied(null), 1500)
+    }).catch(() => {})
+  }
+
+  return (
+    <div className="mt-6 rounded-md border border-dashed border-amber-500/40 bg-amber-500/5 p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <Barcode className="h-3.5 w-3.5 text-amber-400" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-400">
+          Admin · POS Cross-Check
+        </span>
+      </div>
+
+      {!perColor && p.barcode && (
+        <div className="flex items-center justify-between gap-3 rounded border border-border bg-surface px-3 py-2">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wider text-muted">Product Barcode</p>
+            <p className="font-mono text-sm text-on-background truncate">{p.barcode}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => copy(p.barcode!)}
+            className="flex shrink-0 items-center gap-1 rounded border border-border px-2 py-1 text-[10px] uppercase tracking-wider text-muted transition-colors hover:border-on-background hover:text-on-background"
+            aria-label="Copy barcode"
+          >
+            {copied === p.barcode
+              ? <><Check className="h-3 w-3 text-green-400" />Copied</>
+              : <><Copy className="h-3 w-3" />Copy</>}
+          </button>
+        </div>
+      )}
+
+      {perColor && (
+        <div className="space-y-2">
+          {activeColorBc && (
+            <div className="flex items-center justify-between gap-3 rounded border border-amber-500/30 bg-surface px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-muted">
+                  Selected colour — <span className="text-amber-300">{activeColor}</span>
+                </p>
+                <p className="font-mono text-sm text-on-background truncate">{activeColorBc}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => copy(activeColorBc)}
+                className="flex shrink-0 items-center gap-1 rounded border border-border px-2 py-1 text-[10px] uppercase tracking-wider text-muted transition-colors hover:border-on-background hover:text-on-background"
+                aria-label="Copy barcode"
+              >
+                {copied === activeColorBc
+                  ? <><Check className="h-3 w-3 text-green-400" />Copied</>
+                  : <><Copy className="h-3 w-3" />Copy</>}
+              </button>
+            </div>
+          )}
+
+          {colorBarcodes.length > 1 && (
+            <details className="rounded border border-border bg-surface">
+              <summary className="cursor-pointer px-3 py-2 text-[10px] uppercase tracking-wider text-muted hover:text-on-background">
+                All colour barcodes ({colorBarcodes.length})
+              </summary>
+              <div className="divide-y divide-border">
+                {colorBarcodes.map((c) => (
+                  <div key={c.color} className="flex items-center justify-between gap-3 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-wider text-muted">{c.color}</p>
+                      <p className="font-mono text-xs text-on-background truncate">{c.barcode}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => copy(c.barcode)}
+                      className="flex shrink-0 items-center gap-1 rounded border border-border px-2 py-1 text-[10px] uppercase tracking-wider text-muted transition-colors hover:border-on-background hover:text-on-background"
+                      aria-label={`Copy ${c.color} barcode`}
+                    >
+                      {copied === c.barcode
+                        ? <><Check className="h-3 w-3 text-green-400" />Copied</>
+                        : <><Copy className="h-3 w-3" />Copy</>}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -657,6 +783,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 SKU: {variant.sku}
               </p>
             )}
+
+            <AdminBarcodePanel product={product} variant={variant} />
           </div>
         </div>
       </motion.div>
