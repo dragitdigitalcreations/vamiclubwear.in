@@ -25,6 +25,7 @@ type OrderStatus =
 type OrderSummary = {
   id: string
   orderNumber: string
+  invoiceNumber: string | null
   customerName: string | null
   status: string
   total: number
@@ -35,6 +36,9 @@ type OrderDetail = {
   id: string
   orderNumber: string
   status: string
+  subtotal: number
+  discount: number
+  shippingFee: number
   total: number
   customerName:    string | null
   customerEmail:   string | null
@@ -156,10 +160,12 @@ function OrderDrawer({
   orderId,
   onClose,
   onStatusChanged,
+  onInvoiceChanged,
 }: {
   orderId: string
   onClose: () => void
   onStatusChanged: (id: string, status: string) => void
+  onInvoiceChanged: (id: string, invoiceNumber: string | null) => void
 }) {
   const [order,         setOrder]         = useState<OrderDetail | null>(null)
   const [loading,       setLoading]       = useState(true)
@@ -260,6 +266,7 @@ function OrderDrawer({
         invoiceStatus: result.invoiceStatus,
         invoiceNumber: result.invoiceNumber,
       } : o)
+      onInvoiceChanged(orderId, result.invoiceNumber ?? null)
       toast.success(markCreated ? 'Invoice marked as created in Acrotex' : 'Invoice number saved')
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to save invoice')
@@ -272,11 +279,19 @@ function OrderDrawer({
     <div className="flex h-full flex-col">
 
       {/* ── Drawer header ────────────────────────────────────────────────── */}
+      {/* Once an Acrotex invoice number has been saved, that becomes the
+          primary identifier shown to admin (the auto-generated order number
+          stays visible underneath for cross-reference). */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="min-w-0">
           <h2 className="font-mono text-sm font-bold text-on-background truncate">
-            {loading ? '…' : order?.orderNumber}
+            {loading ? '…' : (order?.invoiceNumber || order?.orderNumber)}
           </h2>
+          {!loading && order && order.invoiceNumber && (
+            <p className="mt-0.5 font-mono text-[10px] text-muted truncate">
+              Order: {order.orderNumber}
+            </p>
+          )}
           {!loading && order && (
             <span className={cn(
               'mt-1 inline-block rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
@@ -382,9 +397,29 @@ function OrderDrawer({
                       </div>
                     </div>
                   ))}
-                  <div className="flex justify-between border-t border-border bg-surface-elevated px-3 py-2">
-                    <span className="text-sm font-semibold text-on-background">Total</span>
-                    <span className="text-sm font-semibold text-on-background">₹{Number(order.total).toLocaleString('en-IN')}</span>
+                  <div className="border-t border-border bg-surface-elevated px-3 py-2 space-y-1">
+                    {Number(order.discount) > 0 && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted">Subtotal</span>
+                        <span className="text-muted">₹{Number(order.subtotal).toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+                    {Number(order.discount) > 0 && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-green-400">Discount</span>
+                        <span className="text-green-400">−₹{Number(order.discount).toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted">Delivery</span>
+                      <span className={Number(order.shippingFee) === 0 ? 'text-green-400' : 'text-muted'}>
+                        {Number(order.shippingFee) === 0 ? 'Free' : `₹${Number(order.shippingFee).toLocaleString('en-IN')}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-border">
+                      <span className="text-sm font-semibold text-on-background">Total</span>
+                      <span className="text-sm font-semibold text-on-background">₹{Number(order.total).toLocaleString('en-IN')}</span>
+                    </div>
                   </div>
                 </div>
               </section>
@@ -717,6 +752,10 @@ export default function OrdersPage() {
     setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status } : o))
   }
 
+  function handleInvoiceChanged(id: string, invoiceNumber: string | null) {
+    setOrders((prev) => prev.map((o) => o.id === id ? { ...o, invoiceNumber } : o))
+  }
+
   return (
     <RBACGuard section="orders">
       <AdminHeader title="Orders" subtitle={`${total} total orders`} />
@@ -776,7 +815,10 @@ export default function OrdersPage() {
                         )}
                       >
                         <TableCell className="font-mono text-xs font-bold text-on-background">
-                          {o.orderNumber}
+                          {o.invoiceNumber || o.orderNumber}
+                          {o.invoiceNumber && (
+                            <p className="text-[10px] font-normal text-muted">{o.orderNumber}</p>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm">
                           {o.customerName ?? <span className="text-muted">Walk-in</span>}
@@ -836,6 +878,7 @@ export default function OrdersPage() {
                 orderId={selectedId}
                 onClose={() => setSelectedId(null)}
                 onStatusChanged={handleStatusChanged}
+                onInvoiceChanged={handleInvoiceChanged}
               />
             </motion.aside>
           )}

@@ -7,6 +7,7 @@ import { sendOrderConfirmationToCustomer, sendOrderNotificationToStore } from '.
 import { createDelhiveryShipment, mapDelhiveryStatus } from '../shipping/delhivery.service'
 import { sendShipmentCreatedEmail } from '../../lib/email'
 import { couponService } from '../coupon/coupon.service'
+import { calcShippingFee } from '../../utils/shipping'
 
 const MAX_LOCK_RETRIES = 3
 
@@ -68,7 +69,9 @@ export const orderService = {
         discount = validation.discount
         couponNote = `coupon:${validation.coupon.code}`
       }
-      const total = Math.max(0, subtotal - discount)
+      const afterDiscount = Math.max(0, subtotal - discount)
+      const shippingFee   = calcShippingFee(afterDiscount)
+      const total         = afterDiscount + shippingFee
 
       // ── 4. Create the order record ─────────────────────────────────────────
       const order = await tx.order.create({
@@ -85,6 +88,7 @@ export const orderService = {
           notes:           [input.notes, couponNote].filter(Boolean).join(' | ') || undefined,
           subtotal:      new Prisma.Decimal(subtotal),
           discount:      new Prisma.Decimal(discount),
+          shippingFee:   new Prisma.Decimal(shippingFee),
           total:         new Prisma.Decimal(total),
           items: {
             create: input.items.map((item) => {

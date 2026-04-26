@@ -17,6 +17,7 @@ import { orderService } from '../order/order.service'
 import { couponService } from '../coupon/coupon.service'
 import { prisma } from '../../lib/prisma'
 import { sendOrderConfirmationToCustomer, sendOrderNotificationToStore } from '../../lib/email'
+import { calcShippingFee } from '../../utils/shipping'
 
 const router = Router()
 
@@ -83,8 +84,10 @@ router.post('/create-order', async (req: Request, res: Response, next: NextFunct
         // the customer-facing /coupons/validate already informed them.
       }
     }
-    const amount = Math.max(0, subtotal - discount)
-    const amountPaise = Math.round(amount * 100) // Razorpay uses paise
+    const afterDiscount = Math.max(0, subtotal - discount)
+    const shippingFee   = calcShippingFee(afterDiscount)
+    const amount        = afterDiscount + shippingFee
+    const amountPaise   = Math.round(amount * 100) // Razorpay uses paise
 
     const razorpay = getRazorpay()
     if (!razorpay) {

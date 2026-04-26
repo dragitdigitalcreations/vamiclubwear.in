@@ -39,7 +39,9 @@ export default function CartPage() {
     )
   }
 
-  const shipping = subtotal >= 2500 ? 0 : 80
+  // Free delivery on orders ≥ ₹2400; otherwise flat ₹80.
+  // Mirrors backend calcShippingFee in src/utils/shipping.ts.
+  const shipping = subtotal >= 2400 ? 0 : 80
   const total    = subtotal + shipping
 
   return (
@@ -164,9 +166,9 @@ export default function CartPage() {
                   <span>Shipping</span>
                   <span>{shipping === 0 ? <span className="text-green-400">Free</span> : `₹${shipping}`}</span>
                 </div>
-                {subtotal < 2500 && (
+                {subtotal < 2400 && (
                   <p className="text-[11px] text-amber-500">
-                    Add ₹{(2500 - subtotal).toLocaleString('en-IN')} more for free shipping
+                    Add ₹{(2400 - subtotal).toLocaleString('en-IN')} more for free shipping
                   </p>
                 )}
                 <div className="border-t border-border pt-3 flex justify-between font-bold text-on-background text-base">

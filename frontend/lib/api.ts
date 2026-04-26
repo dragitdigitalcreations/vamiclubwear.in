@@ -269,6 +269,7 @@ export const ordersApi = {
       data: Array<{
         id: string
         orderNumber: string
+        invoiceNumber: string | null
         customerName: string | null
         status: string
         total: number

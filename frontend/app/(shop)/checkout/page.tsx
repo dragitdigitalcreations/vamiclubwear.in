@@ -12,6 +12,11 @@ import { toast } from '@/stores/toastStore'
 
 const RAZORPAY_KEY = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? ''
 
+// Mirror of backend `calcShippingFee` in src/utils/shipping.ts —
+// keep the threshold + flat rate in sync if either side changes.
+const FREE_SHIPPING_THRESHOLD = 2400
+const FLAT_DELIVERY_FEE       = 80
+
 declare global {
   interface Window { Razorpay: any }
 }
@@ -48,8 +53,12 @@ export default function CheckoutPage() {
   const [coupon,         setCoupon]         = useState<CouponValidationResult | null>(null)
   const [couponBusy,     setCouponBusy]     = useState(false)
   const [couponMsg,      setCouponMsg]      = useState<string | null>(null)
-  const discount = coupon?.discount ?? 0
-  const grandTotal = Math.max(0, subtotal - discount)
+  const discount       = coupon?.discount ?? 0
+  const afterDiscount  = Math.max(0, subtotal - discount)
+  const shippingFee    = afterDiscount > 0 && afterDiscount < FREE_SHIPPING_THRESHOLD
+    ? FLAT_DELIVERY_FEE
+    : 0
+  const grandTotal     = afterDiscount + shippingFee
 
   async function applyCoupon() {
     const code = couponInput.trim().toUpperCase()
@@ -301,6 +310,17 @@ export default function CheckoutPage() {
                 <span className="text-green-400">Coupon ({coupon.code})</span>
                 <span className="text-green-400">−₹{discount.toLocaleString('en-IN')}</span>
               </div>
+            )}
+            <div className="flex justify-between text-sm">
+              <span className="text-muted">Delivery</span>
+              <span className={shippingFee === 0 ? 'text-green-400' : 'text-on-background'}>
+                {shippingFee === 0 ? 'Free' : `₹${shippingFee}`}
+              </span>
+            </div>
+            {shippingFee > 0 && (
+              <p className="text-[11px] text-amber-500">
+                Add ₹{(FREE_SHIPPING_THRESHOLD - afterDiscount).toLocaleString('en-IN')} more for free delivery
+              </p>
             )}
             <div className="border-t border-border pt-3 flex justify-between font-semibold text-on-background">
               <span>Total</span>
