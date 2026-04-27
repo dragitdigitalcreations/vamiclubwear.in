@@ -1,7 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { MapPin, Phone, Mail, Clock, CheckCircle } from 'lucide-react'
+import { MapPin, Phone, Mail, CheckCircle } from 'lucide-react'
+
+// Single source of truth for the company WhatsApp number — used by both the
+// "Call / WhatsApp" info row and the "Chat on WhatsApp" quick-response button.
+const WA_NUMBER       = '919061607608'
+const WA_DISPLAY      = '+91 90616 07608'
+const WA_DEFAULT_TEXT = 'Hi Vami Clubwear, I have a query'
+const WA_LINK         = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_DEFAULT_TEXT)}`
 
 export default function ContactPage() {
   const [form, setForm]       = useState({ name: '', email: '', phone: '', message: '' })
@@ -106,30 +113,41 @@ export default function ContactPage() {
         {/* Info */}
         <div className="space-y-8">
           {[
-            { Icon: MapPin, title: 'Visit Us',     body: 'Vami Clubwear\nManjeri, Malappuram\nKerala — 676121' },
-            { Icon: Phone,  title: 'Call / WhatsApp', body: '+91 XXXXX XXXXX' },
-            { Icon: Mail,   title: 'Email',        body: 'hello@vamiclubwear.in' },
-            { Icon: Clock,  title: 'Working Hours', body: 'Mon – Sat: 10 AM – 7 PM\nSunday: 11 AM – 5 PM' },
-          ].map(({ Icon, title, body }) => (
-            <div key={title} className="flex gap-4">
-              <div className="flex-shrink-0 mt-0.5">
-                <div className="flex h-8 w-8 items-center justify-center bg-primary/10">
-                  <Icon className="h-4 w-4 text-primary-light" />
+            { Icon: MapPin, title: 'Visit Us',        body: 'Vami Clubwear\nManjeri, Malappuram\nKerala — 676121', href: undefined },
+            { Icon: Phone,  title: 'Call / WhatsApp', body: WA_DISPLAY,                                            href: WA_LINK },
+            { Icon: Mail,   title: 'Email',           body: 'hello@vamiclubwear.in',                               href: 'mailto:hello@vamiclubwear.in' },
+          ].map(({ Icon, title, body, href }) => {
+            const lines = body.split('\n').map((line, i) => (
+              <p key={i} className="text-sm text-muted">{line}</p>
+            ))
+            return (
+              <div key={title} className="flex gap-4">
+                <div className="flex-shrink-0 mt-0.5">
+                  <div className="flex h-8 w-8 items-center justify-center bg-primary/10">
+                    <Icon className="h-4 w-4 text-primary-light" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-on-background mb-1">{title}</p>
+                  {href ? (
+                    <a
+                      href={href}
+                      target={href.startsWith('http') ? '_blank' : undefined}
+                      rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      className="block hover:text-on-background transition-colors"
+                    >
+                      {lines}
+                    </a>
+                  ) : lines}
                 </div>
               </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-on-background mb-1">{title}</p>
-                {body.split('\n').map((line, i) => (
-                  <p key={i} className="text-sm text-muted">{line}</p>
-                ))}
-              </div>
-            </div>
-          ))}
+            )
+          })}
 
           <div className="border-t border-border pt-6">
             <p className="text-xs font-semibold uppercase tracking-widest text-on-background mb-3">Quick Response</p>
             <a
-              href="https://wa.me/91XXXXXXXXXX?text=Hi%20Vami%20Clubwear%2C%20I%20have%20a%20query"
+              href={WA_LINK}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 border border-green-600/40 bg-green-600/10 px-4 py-2.5 text-xs font-medium text-green-400 hover:bg-green-600/20 transition-colors"
