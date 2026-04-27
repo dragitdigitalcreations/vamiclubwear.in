@@ -29,23 +29,39 @@ export interface SyncResult {
 
 // Pull the latest aggregate status string from Delhivery's tracking response.
 // The v1/packages payload has shape:
-//   { ShipmentData: [ { Shipment: { Status: { Status: "Manifested", ... }, Scans: [...] } } ] }
+//   { ShipmentData: [ { Shipment: { Status: { Status, Instructions, StatusType }, Scans: [...] } } ] }
+//
+// Real-world quirks:
+// - Status.Status is sometimes missing/null even when Scans is fully populated.
+// - Scans aren't always strictly chronological, so we walk newest-to-oldest
+//   and return the first usable string we see — preferring strings that
+//   contain a known terminal keyword (Delivered / Out for Delivery / RTO) so
+//   the cascade flips order.status reliably even if a stale "In Transit"
+//   scan is appended after the "Delivered" one.
 function extractStatus(payload: any): string | null {
   const shipment = payload?.ShipmentData?.[0]?.Shipment
   if (!shipment) return null
 
-  // Prefer the aggregate status when present
   const agg = shipment?.Status?.Status
-  if (typeof agg === 'string' && agg.trim()) return agg.trim()
+  const aggStr = typeof agg === 'string' && agg.trim() ? agg.trim() : null
 
-  // Fall back to the most recent scan's status
-  const scans = shipment?.Scans
-  if (Array.isArray(scans) && scans.length > 0) {
-    const last = scans[scans.length - 1]
-    const s = last?.ScanDetail?.Scan ?? last?.Scan
-    if (typeof s === 'string' && s.trim()) return s.trim()
+  const scans: any[] = Array.isArray(shipment?.Scans) ? shipment.Scans : []
+  const scanStrings: string[] = []
+  for (let i = scans.length - 1; i >= 0; i--) {
+    const s = scans[i]?.ScanDetail?.Scan ?? scans[i]?.Scan ?? scans[i]?.ScanDetail?.Instructions
+    if (typeof s === 'string' && s.trim()) scanStrings.push(s.trim())
   }
-  return null
+
+  const candidates = [aggStr, ...scanStrings].filter((x): x is string => !!x)
+
+  // Prefer terminal/late-stage states if any candidate mentions them
+  const TERMINAL_KEYWORDS = ['delivered', 'rto', 'lost', 'damaged', 'cancelled', 'out for delivery', 'ofd']
+  for (const c of candidates) {
+    const lc = c.toLowerCase()
+    if (TERMINAL_KEYWORDS.some((k) => lc.includes(k))) return c
+  }
+
+  return candidates[0] ?? null
 }
 
 export async function syncShippingStatuses(): Promise<SyncResult> {
