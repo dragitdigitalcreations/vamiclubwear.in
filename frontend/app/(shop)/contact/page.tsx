@@ -115,7 +115,7 @@ export default function ContactPage() {
           {[
             { Icon: MapPin, title: 'Visit Us',        body: 'Vami Clubwear\nManjeri, Malappuram\nKerala — 676121', href: undefined },
             { Icon: Phone,  title: 'Call / WhatsApp', body: WA_DISPLAY,                                            href: WA_LINK },
-            { Icon: Mail,   title: 'Email',           body: 'hello@vamiclubwear.in',                               href: 'mailto:hello@vamiclubwear.in' },
+            { Icon: Mail,   title: 'Email',           body: 'vamiclubwear@gmail.com',                               href: 'mailto:vamiclubwear@gmail.com' },
           ].map(({ Icon, title, body, href }) => {
             const lines = body.split('\n').map((line, i) => (
               <p key={i} className="text-sm text-muted">{line}</p>

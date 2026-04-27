@@ -36,13 +36,13 @@ export default function ShippingPage() {
           <li>Not a sale / discounted item</li>
           <li>Not a custom / made-to-order piece</li>
         </ul>
-        <p className="mt-3">To initiate a return, email us at <a href="mailto:hello@vamiclubwear.in" className="text-on-background underline underline-offset-2">hello@vamiclubwear.in</a> with your order number and reason. We will arrange a pickup at no extra cost within Kerala.</p>
+        <p className="mt-3">To initiate a return, email us at <a href="mailto:vamiclubwear@gmail.com" className="text-on-background underline underline-offset-2">vamiclubwear@gmail.com</a> with your order number and reason. We will arrange a pickup at no extra cost within Kerala.</p>
         <p><strong className="text-on-background">Exchanges:</strong> We don't process direct exchanges. Return the original item for a refund and place a new order for your preferred size or colour.</p>
       </Section>
 
       <Section title="Refunds">
         <p>Once we receive and inspect the returned item, a refund will be processed within <strong className="text-on-background">5–7 business days</strong> to your original payment method (UPI, card, or net banking used at checkout).</p>
-        <p>If you haven't received your refund after 10 business days, contact us at <a href="mailto:hello@vamiclubwear.in" className="text-on-background underline underline-offset-2">hello@vamiclubwear.in</a>.</p>
+        <p>If you haven't received your refund after 10 business days, contact us at <a href="mailto:vamiclubwear@gmail.com" className="text-on-background underline underline-offset-2">vamiclubwear@gmail.com</a>.</p>
       </Section>
 
       <Section title="Damaged or Wrong Items">
