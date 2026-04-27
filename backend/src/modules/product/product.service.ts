@@ -545,10 +545,9 @@ export const productService = {
         slug:      true,
         basePrice: true,
         media: {
-          where:   { type: 'VIDEO' },
-          take:    1,
+          where:   { OR: [{ type: 'VIDEO' }, { type: 'IMAGE' }] },
           orderBy: { sortOrder: 'asc' },
-          select:  { url: true },
+          select:  { url: true, type: true },
         },
         variants: {
           where:   { isActive: true },
@@ -559,14 +558,19 @@ export const productService = {
       },
     })
     // Return lowest active-variant price (or basePrice as fallback)
-    return products.map((p) => ({
-      id:          p.id,
-      name:        p.name,
-      slug:        p.slug,
-      basePrice:   Number(p.basePrice),
-      lowestPrice: p.variants.length > 0 ? Number(p.variants[0].price) : Number(p.basePrice),
-      media:       p.media,
-    }))
+    return products.map((p) => {
+      const video = p.media.find((m) => m.type === 'VIDEO')
+      const image = p.media.find((m) => m.type === 'IMAGE')
+      return {
+        id:          p.id,
+        name:        p.name,
+        slug:        p.slug,
+        basePrice:   Number(p.basePrice),
+        lowestPrice: p.variants.length > 0 ? Number(p.variants[0].price) : Number(p.basePrice),
+        media:       video ? [{ url: video.url }] : [],
+        thumbnail:   image?.url ?? null,
+      }
+    })
   },
 
   // ── Variants ───────────────────────────────────────────────────────────────

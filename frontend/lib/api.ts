@@ -161,7 +161,9 @@ export const productsApi = {
       name: string
       slug: string
       basePrice: number
+      lowestPrice: number
       media: Array<{ url: string }>
+      thumbnail: string | null
     }>>('/products/showcase-videos'),
 }
 

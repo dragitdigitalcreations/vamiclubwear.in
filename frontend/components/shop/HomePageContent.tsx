@@ -1418,6 +1418,7 @@ interface ShowcaseItem {
   basePrice:   number
   lowestPrice: number
   media:       Array<{ url: string }>
+  thumbnail?:  string | null
 }
 
 function VideoCard({ item }: { item: ShowcaseItem }) {
@@ -1445,6 +1446,7 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
   }, [])
 
   const displayPrice = item.lowestPrice ?? item.basePrice
+  const priceFormatted = displayPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   return (
     <Link
@@ -1462,10 +1464,32 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
           onCanPlay={() => setLoaded(true)}
           className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.04] ${loaded ? 'opacity-100' : 'opacity-0'}`}
         />
-      </div>
-      <div className="pt-3 px-1">
-        <p className="truncate text-[12px] text-fg-2">{item.name}</p>
-        <p className="mt-1 text-[12px] font-semibold text-fg-1">₹{displayPrice.toLocaleString('en-IN')}</p>
+
+        {/* Inset product card — matches reference look */}
+        <div className="absolute inset-x-2 bottom-2 flex items-center gap-2.5 rounded-[6px] bg-[#F6EFE2] p-2 shadow-[0_2px_6px_rgba(0,0,0,0.08)]">
+          <div className="relative h-[54px] w-[46px] flex-shrink-0 overflow-hidden rounded-[3px] bg-[#EFE9E1]">
+            {item.thumbnail ? (
+              <Image
+                src={item.thumbnail}
+                alt={item.name}
+                fill
+                sizes="46px"
+                className="object-cover"
+              />
+            ) : (
+              <video
+                src={item.media[0]?.url}
+                muted playsInline preload="metadata"
+                className="h-full w-full object-cover"
+              />
+            )}
+          </div>
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-[11px] font-medium text-[#111]">{item.name}</p>
+            <p className="mt-0.5 text-[11px] font-semibold text-[#111]">Rs. {priceFormatted}</p>
+            <p className="mt-0.5 text-[10px] text-[#111] underline underline-offset-2">View Product</p>
+          </div>
+        </div>
       </div>
     </Link>
   )
