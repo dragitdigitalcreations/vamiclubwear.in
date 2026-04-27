@@ -298,7 +298,7 @@ function ThisJustIn() {
       <div className="mt-10 flex justify-center">
         <Link
           href="/products"
-          className="rounded-full border border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
+          className="rounded-full border-2 border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
         >
           Shop Now
         </Link>
@@ -532,7 +532,7 @@ function PromoSection() {
             </p>
             <Link
               href="/products"
-              className="mt-4 inline-flex items-center gap-2 rounded-full border border-white bg-white/80 px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#111] backdrop-blur-sm transition-all duration-300 hover:bg-[#111] hover:text-white"
+              className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-white bg-white/80 px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#111] backdrop-blur-sm transition-all duration-300 hover:bg-[#111] hover:text-white"
             >
               Shop Now
             </Link>
@@ -598,7 +598,7 @@ function PromoSection() {
             </p>
             <Link
               href="/products"
-              className="mt-4 inline-flex w-fit items-center gap-2 border border-white bg-white px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition-all duration-300 hover:bg-[#5C4033] hover:text-white"
+              className="mt-4 inline-flex w-fit items-center gap-2 border-2 border-white bg-white px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition-all duration-300 hover:bg-[#5C4033] hover:text-white"
             >
               Shop Now
             </Link>
@@ -702,7 +702,7 @@ function PromoSection() {
         </p>
         <Link
           href="/products"
-          className="mt-5 inline-flex items-center gap-2 rounded-full border border-white px-7 py-2.5 text-[11px] font-medium text-[#111] transition-all duration-300 hover:bg-[#111] hover:text-white"
+          className="mt-5 inline-flex items-center gap-2 rounded-full border-2 border-white px-7 py-2.5 text-[11px] font-medium text-[#111] transition-all duration-300 hover:bg-[#111] hover:text-white"
         >
           Shop Now
         </Link>
@@ -1044,7 +1044,7 @@ function ModestCollectionBanner() {
 
           <Link
             href="/products"
-            className="mt-7 inline-flex items-center gap-2.5 rounded-full border border-white px-8 py-3 text-white transition-all duration-300 hover:bg-white hover:text-[#121212]"
+            className="mt-7 inline-flex items-center gap-2.5 rounded-full border-2 border-white px-8 py-3 text-white transition-all duration-300 hover:bg-white hover:text-[#121212]"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
               fontWeight: 500,
@@ -1275,7 +1275,7 @@ function FeaturedProducts() {
       <div className="mt-10 flex justify-center">
         <Link
           href="/products"
-          className="rounded-full border border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
+          className="rounded-full border-2 border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
         >
           Shop Now
         </Link>
@@ -1399,7 +1399,7 @@ function TrendingSection() {
       <div className="mt-10 flex justify-center">
         <Link
           href="/products"
-          className="rounded-full border border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
+          className="rounded-full border-2 border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
         >
           Shop Now
         </Link>
@@ -1592,7 +1592,7 @@ function VideoShowcase() {
       <div className="mt-10 flex justify-center">
         <Link
           href="/products"
-          className="rounded-full border border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
+          className="rounded-full border-2 border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
         >
           Shop Now
         </Link>
