@@ -21,7 +21,27 @@ router.post('/:orderId/create', requireAuth, async (req: Request, res: Response,
   try {
     const order = await prisma.order.findUnique({
       where: { id: req.params.orderId },
-      include: { items: { include: { variant: { select: { sku: true, product: { select: { name: true } } } } } } },
+      include: {
+        items: {
+          include: {
+            variant: {
+              select: {
+                sku:   true,
+                size:  true,
+                color: true,
+                product: {
+                  select: {
+                    name:            true,
+                    barcode:         true,
+                    perColorBarcode: true,
+                    colorBarcodes:   { select: { color: true, barcode: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     })
     if (!order) { res.status(404).json({ error: 'Order not found' }); return }
     if (order.shippingStatus !== 'NOT_CREATED') {
@@ -60,21 +80,53 @@ router.post('/:orderId/create', requireAuth, async (req: Request, res: Response,
       },
     })
 
-    // Fire-and-forget shipment email
-    const emailItems = order.items.map((i) => ({
-      name:  i.variant.product.name,
-      sku:   i.variant.sku,
-      qty:   i.quantity,
-      price: Number(i.unitPrice),
-    }))
+    // Build invoice line items — pick the right barcode for each item:
+    // per-colour mode → look up the colour-specific barcode, else fall back
+    // to the product-level barcode. Lets staff scan the email PDF.
+    const emailItems = order.items.map((i) => {
+      const p = i.variant.product
+      const colorBarcode = p.perColorBarcode
+        ? p.colorBarcodes.find((c) => c.color === i.variant.color)?.barcode ?? null
+        : null
+      return {
+        name:    p.name,
+        sku:     i.variant.sku,
+        size:    i.variant.size,
+        color:   i.variant.color,
+        qty:     i.quantity,
+        price:   Number(i.unitPrice),
+        barcode: p.perColorBarcode ? colorBarcode : (p.barcode ?? null),
+      }
+    })
+
+    // Look up coupon code (if any) so the invoice can label the discount.
+    const redemption = (order.discount && Number(order.discount) > 0)
+      ? await prisma.couponRedemption.findFirst({
+          where:   { orderNumber: order.orderNumber },
+          select:  { coupon: { select: { code: true } } },
+          orderBy: { createdAt: 'desc' },
+        })
+      : null
+
     sendShipmentCreatedEmail({
-      orderNumber:   order.orderNumber,
-      customerName:  order.customerName,
-      customerEmail: order.customerEmail,
-      awbNumber:     result.awbNumber,
-      trackingUrl:   result.trackingUrl,
-      items:         emailItems,
-      total:         Number(order.total),
+      orderNumber:     order.orderNumber,
+      invoiceNumber:   order.invoiceNumber,
+      invoiceDate:     new Date(),
+      customerName:    order.customerName,
+      customerEmail:   order.customerEmail,
+      customerPhone:   order.customerPhone,
+      shippingAddress: order.shippingAddress,
+      shippingCity:    order.shippingCity,
+      shippingState:   order.shippingState,
+      shippingPincode: order.shippingPincode,
+      awbNumber:       result.awbNumber,
+      trackingUrl:     result.trackingUrl,
+      items:           emailItems,
+      subtotal:        Number(order.subtotal),
+      discount:        Number(order.discount),
+      couponCode:      redemption?.coupon?.code ?? null,
+      shippingFee:     Number(order.shippingFee),
+      total:           Number(order.total),
     }).catch((e) => console.error('[email] shipment email failed:', e))
 
     res.json({
@@ -96,7 +148,25 @@ router.post('/:orderId/resend-email', requireAuth, async (req: Request, res: Res
     const order = await prisma.order.findUnique({
       where: { id: req.params.orderId },
       include: {
-        items: { include: { variant: { select: { sku: true, product: { select: { name: true } } } } } },
+        items: {
+          include: {
+            variant: {
+              select: {
+                sku:   true,
+                size:  true,
+                color: true,
+                product: {
+                  select: {
+                    name:            true,
+                    barcode:         true,
+                    perColorBarcode: true,
+                    colorBarcodes:   { select: { color: true, barcode: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     })
     if (!order) { res.status(404).json({ error: 'Order not found' }); return }
@@ -107,21 +177,49 @@ router.post('/:orderId/resend-email', requireAuth, async (req: Request, res: Res
       res.status(400).json({ error: 'Order has no customer email on file' }); return
     }
 
-    const emailItems = order.items.map((i) => ({
-      name:  i.variant.product.name,
-      sku:   i.variant.sku,
-      qty:   i.quantity,
-      price: Number(i.unitPrice),
-    }))
+    const emailItems = order.items.map((i) => {
+      const p = i.variant.product
+      const colorBarcode = p.perColorBarcode
+        ? p.colorBarcodes.find((c) => c.color === i.variant.color)?.barcode ?? null
+        : null
+      return {
+        name:    p.name,
+        sku:     i.variant.sku,
+        size:    i.variant.size,
+        color:   i.variant.color,
+        qty:     i.quantity,
+        price:   Number(i.unitPrice),
+        barcode: p.perColorBarcode ? colorBarcode : (p.barcode ?? null),
+      }
+    })
+
+    const redemption = (order.discount && Number(order.discount) > 0)
+      ? await prisma.couponRedemption.findFirst({
+          where:   { orderNumber: order.orderNumber },
+          select:  { coupon: { select: { code: true } } },
+          orderBy: { createdAt: 'desc' },
+        })
+      : null
 
     await sendShipmentCreatedEmail({
-      orderNumber:   order.orderNumber,
-      customerName:  order.customerName,
-      customerEmail: order.customerEmail,
-      awbNumber:     order.awbNumber,
-      trackingUrl:   order.trackingUrl,
-      items:         emailItems,
-      total:         Number(order.total),
+      orderNumber:     order.orderNumber,
+      invoiceNumber:   order.invoiceNumber,
+      invoiceDate:     new Date(),
+      customerName:    order.customerName,
+      customerEmail:   order.customerEmail,
+      customerPhone:   order.customerPhone,
+      shippingAddress: order.shippingAddress,
+      shippingCity:    order.shippingCity,
+      shippingState:   order.shippingState,
+      shippingPincode: order.shippingPincode,
+      awbNumber:       order.awbNumber,
+      trackingUrl:     order.trackingUrl,
+      items:           emailItems,
+      subtotal:        Number(order.subtotal),
+      discount:        Number(order.discount),
+      couponCode:      redemption?.coupon?.code ?? null,
+      shippingFee:     Number(order.shippingFee),
+      total:           Number(order.total),
     })
 
     res.json({ ok: true, sentTo: order.customerEmail })
