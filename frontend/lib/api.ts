@@ -408,6 +408,17 @@ export const shippingApi = {
       `/shipping/${orderId}/invoice`,
       { method: 'PATCH', body: JSON.stringify(data) }
     ),
+
+  // Force a Delhivery sync for every active shipment. The backend also runs
+  // this on a schedule, so this is the manual "do it now" button.
+  syncStatuses: () =>
+    request<{
+      checked:  number
+      updated:  number
+      skipped:  number
+      errors:   Array<{ orderNumber: string; error: string }>
+      changes:  Array<{ orderNumber: string; from: string; to: string }>
+    }>('/shipping/sync-statuses', { method: 'POST' }),
 }
 
 // ── Uploads ───────────────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../../lib/prisma'
 import { requireAuth } from '../../middleware/auth'
 import { createDelhiveryShipment, trackDelhiveryShipment, mapDelhiveryStatus } from './delhivery.service'
+import { syncShippingStatuses } from './shipping.poller'
 import { sendShipmentCreatedEmail, sendDeliveryConfirmationEmail } from '../../lib/email'
 
 const router = Router()
@@ -192,8 +193,13 @@ router.post('/webhook', async (req: Request, res: Response, next: NextFunction) 
 
       const updates: Record<string, any> = { shippingStatus: newShippingStatus }
 
-      // Map shipping status → order status
-      if (newShippingStatus === 'SHIPPED' && order.status === 'CONFIRMED') {
+      // Cascade order.status to match courier reality. ANY in-flight shipping
+      // status bumps a pre-shipment order to SHIPPED (previously this only
+      // fired for CONFIRMED → SHIPPED, which missed couriers that jumped
+      // straight to IN_TRANSIT and left the order stuck at PROCESSING).
+      const PRE_SHIPMENT = ['PENDING', 'CONFIRMED', 'PROCESSING']
+      const IN_FLIGHT    = ['SHIPPED', 'IN_TRANSIT', 'OUT_FOR_DELIVERY']
+      if (IN_FLIGHT.includes(newShippingStatus) && PRE_SHIPMENT.includes(order.status)) {
         updates.status = 'SHIPPED'
       } else if (newShippingStatus === 'DELIVERED' && order.status !== 'DELIVERED') {
         updates.status = 'DELIVERED'
@@ -213,6 +219,22 @@ router.post('/webhook', async (req: Request, res: Response, next: NextFunction) 
     }
 
     res.json({ received: packages.length })
+  } catch (err) { next(err) }
+})
+
+// ── POST /api/shipping/sync-statuses ──────────────────────────────────────────
+// Force a Delhivery sync for every active shipment and report changes. The
+// auto-poller already runs on a schedule; this is the manual "do it now"
+// button on the Orders page.
+
+router.post('/sync-statuses', requireAuth, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await syncShippingStatuses()
+    if (result.skipped === -1) {
+      res.status(400).json({ error: 'DELHIVERY_TOKEN is not configured on the server' })
+      return
+    }
+    res.json(result)
   } catch (err) { next(err) }
 })
 

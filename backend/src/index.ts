@@ -24,6 +24,7 @@ import apiRoutes from './routes/index'
 import { errorHandler } from './middleware/errorHandler'
 import { prisma } from './lib/prisma'
 import { ensureCategories } from './lib/ensureCategories'
+import { startShippingPoller } from './modules/shipping/shipping.poller'
 
 const app = express()
 const PORT = process.env.PORT ?? 3001
@@ -88,6 +89,10 @@ app.listen(PORT, async () => {
   console.log(`\n[server] Vami Clubwear backend → http://localhost:${PORT}`)
   // Keep the admin Category dropdown in sync with the storefront Nav.
   ensureCategories(prisma).catch(() => {})
+  // Background poller — flips order shipping status to SHIPPED / IN_TRANSIT /
+  // DELIVERED automatically by polling Delhivery, so admins don't have to
+  // depend on Delhivery's webhook firing.
+  startShippingPoller()
   console.log('[server] Endpoints:')
   console.log(`  GET  http://localhost:${PORT}/health`)
   console.log(`  *    http://localhost:${PORT}/api/products`)

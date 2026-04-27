@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   ChevronLeft, ChevronRight, X, Truck, FileText,
-  ExternalLink, Loader2, Package, User, CheckCircle,
+  ExternalLink, Loader2, Package, User, CheckCircle, RefreshCw,
 } from 'lucide-react'
 import { AdminHeader }  from '@/components/admin/AdminHeader'
 import { RBACGuard }    from '@/components/admin/RBACGuard'
@@ -729,7 +729,36 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [loading,      setLoading]      = useState(true)
   const [selectedId,   setSelectedId]   = useState<string | null>(null)
+  const [syncing,      setSyncing]      = useState(false)
   const limit = 20
+
+  // Manual Delhivery sync — auto-poll runs every 15 min on the server, this
+  // is the "do it now" button when an admin needs an immediate refresh.
+  async function syncShippingNow() {
+    if (syncing) return
+    setSyncing(true)
+    try {
+      const r = await shippingApi.syncStatuses()
+      if (r.updated > 0) {
+        toast.success(
+          `${r.updated} shipment${r.updated !== 1 ? 's' : ''} updated · ` +
+          r.changes.map(c => `${c.orderNumber} → ${c.to.toLowerCase()}`).join(', ')
+        )
+        load()
+      } else if (r.checked === 0) {
+        toast.success('No active shipments to check')
+      } else {
+        toast.success(`Checked ${r.checked} shipment${r.checked !== 1 ? 's' : ''} — no status changes`)
+      }
+      if (r.errors.length > 0) {
+        toast.error(`${r.errors.length} shipment${r.errors.length !== 1 ? 's' : ''} could not be checked`)
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Sync failed')
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -764,22 +793,33 @@ export default function OrdersPage() {
         {/* ── Order list ──────────────────────────────────────────────────── */}
         <div className={cn('flex flex-col overflow-hidden transition-all', selectedId ? 'flex-1' : 'w-full')}>
 
-          {/* Status filter tabs */}
-          <div className="flex gap-1 overflow-x-auto border-b border-border px-6 py-2">
-            {STATUS_FILTERS.map((s) => (
-              <button
-                key={s}
-                onClick={() => { setStatusFilter(s); setPage(1) }}
-                className={cn(
-                  'shrink-0 rounded px-3 py-1 text-xs font-medium transition-colors',
-                  statusFilter === s
-                    ? 'bg-primary text-white'
-                    : 'text-muted hover:text-on-background hover:bg-surface-elevated'
-                )}
-              >
-                {s}
-              </button>
-            ))}
+          {/* Status filter tabs + Delhivery sync */}
+          <div className="flex items-center gap-3 border-b border-border px-6 py-2">
+            <div className="flex flex-1 gap-1 overflow-x-auto">
+              {STATUS_FILTERS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => { setStatusFilter(s); setPage(1) }}
+                  className={cn(
+                    'shrink-0 rounded px-3 py-1 text-xs font-medium transition-colors',
+                    statusFilter === s
+                      ? 'bg-primary text-white'
+                      : 'text-muted hover:text-on-background hover:bg-surface-elevated'
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={syncShippingNow}
+              disabled={syncing}
+              title="Pull latest tracking status from Delhivery for every active shipment"
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] font-medium text-muted transition-colors hover:text-on-background hover:border-on-background disabled:opacity-50"
+            >
+              <RefreshCw className={cn('h-3.5 w-3.5', syncing && 'animate-spin')} />
+              {syncing ? 'Syncing…' : 'Sync Delhivery'}
+            </button>
           </div>
 
           {/* Table */}
