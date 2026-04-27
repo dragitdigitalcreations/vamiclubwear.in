@@ -21,7 +21,12 @@ const fadeUp = {
 }
 
 // ─── Announcement Bar ─────────────────────────────────────────────────────────
+const ANNOUNCE_WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '919XXXXXXXXX'
+const ANNOUNCE_WHATSAPP_MSG    = 'Hi Vami Clubwear! I have a query.'
+const ANNOUNCE_IG_URL          = 'https://www.instagram.com/vami_clubwear_manjeri/'
+
 function AnnouncementBar() {
+  const whatsappUrl = `https://wa.me/${ANNOUNCE_WHATSAPP_NUMBER}?text=${encodeURIComponent(ANNOUNCE_WHATSAPP_MSG)}`
   return (
     <div className="bg-[#111111] text-white" style={{ marginTop: '96px' }}>
       <div className="mx-auto flex max-w-[1400px] md:max-w-[1410px] items-center justify-between px-5 md:px-10 h-9">
@@ -29,25 +34,18 @@ function AnnouncementBar() {
           Get up to 50% off now
         </p>
         <div className="hidden sm:flex items-center gap-4">
-          <a href="#" target="_blank" rel="noreferrer" aria-label="Facebook"
+          <span className="text-[10px] font-medium tracking-wide text-white/50">
+            Connect with us
+          </span>
+          <span className="border-l border-white/20 h-3" aria-hidden="true" />
+          <a href={whatsappUrl} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp"
             className="text-white/60 hover:text-white transition-colors">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.05 4.91A9.82 9.82 0 0 0 12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01zM12.04 20.15h-.01a8.23 8.23 0 0 1-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.21 8.21 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.23 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.42-.14-.01-.31-.01-.48-.01a.91.91 0 0 0-.66.31c-.23.25-.87.85-.87 2.07 0 1.22.89 2.4 1.02 2.57.12.17 1.76 2.69 4.27 3.77.6.26 1.06.41 1.43.53.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29z"/></svg>
           </a>
-          <a href="#" target="_blank" rel="noreferrer" aria-label="Instagram"
+          <a href={ANNOUNCE_IG_URL} target="_blank" rel="noreferrer" aria-label="Instagram"
             className="text-white/60 hover:text-white transition-colors">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
           </a>
-          <a href="#" target="_blank" rel="noreferrer" aria-label="X / Twitter"
-            className="text-white/60 hover:text-white transition-colors">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-          </a>
-          <a href="#" target="_blank" rel="noreferrer" aria-label="Pinterest"
-            className="text-white/60 hover:text-white transition-colors">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.632-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
-          </a>
-          <span className="border-l border-white/20 pl-4 text-[10px] font-medium tracking-wide text-white/50 cursor-pointer hover:text-white transition-colors">
-            Get Our Newsletter
-          </span>
         </div>
       </div>
     </div>
