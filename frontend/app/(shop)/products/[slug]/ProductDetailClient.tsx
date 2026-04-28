@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Play, ShoppingBag, ChevronDown, ArrowRight, Zap, Heart, Barcode, Copy, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Play, ShoppingBag, ChevronDown, ArrowRight, Zap, Heart, Barcode, Copy, Check, Share2, Link as LinkIcon, MessageCircle, Facebook, Twitter } from 'lucide-react'
 import {
   Product,
   ProductMedia,
@@ -535,6 +535,55 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const [qty,          setQty]          = useState(1)
   const [added,        setAdded]        = useState(false)
   const [showSticky,   setShowSticky]   = useState(false)
+  const [shareOpen,    setShareOpen]    = useState(false)
+  const [linkCopied,   setLinkCopied]   = useState(false)
+  const shareWrapRef                    = useRef<HTMLDivElement | null>(null)
+
+  // Close share popover on outside-click or Escape
+  useEffect(() => {
+    if (!shareOpen) return
+    function onDoc(e: MouseEvent) {
+      if (shareWrapRef.current && !shareWrapRef.current.contains(e.target as Node)) {
+        setShareOpen(false)
+      }
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setShareOpen(false) }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [shareOpen])
+
+  function getShareUrl(): string {
+    const fallback = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.in'
+    const origin = typeof window !== 'undefined' ? window.location.origin : fallback
+    return `${origin}/products/${product.slug}`
+  }
+
+  async function handleShareClick() {
+    const url   = getShareUrl()
+    const title = product.name
+    const text  = `${product.name} — Vami Clubwear`
+    if (typeof navigator !== 'undefined' && typeof (navigator as any).share === 'function') {
+      try {
+        await (navigator as any).share({ title, text, url })
+        return
+      } catch {
+        // User cancelled or share failed — fall through to popover
+      }
+    }
+    setShareOpen((v) => !v)
+  }
+
+  function copyShareLink() {
+    const url = getShareUrl()
+    navigator.clipboard?.writeText(url).then(() => {
+      setLinkCopied(true)
+      setTimeout(() => { setLinkCopied(false); setShareOpen(false) }, 1200)
+    }).catch(() => {})
+  }
 
   // Show sticky bar when main button scrolls out of view
   const { scrollY } = useScroll()
@@ -619,24 +668,97 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 <h1 className="font-display text-3xl font-bold leading-tight text-on-background md:text-4xl">
                   {product.name}
                 </h1>
-                <button
-                  onClick={() => toggleItem({
-                    id:        product.id,
-                    name:      product.name,
-                    slug:      product.slug,
-                    basePrice: Number(product.basePrice),
-                    imageUrl:  product.media.find((m) => m.type === 'IMAGE')?.url ?? null,
-                    category:  product.category.name,
-                  })}
-                  className={`mt-1 flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 hover:scale-110 ${
-                    isWishlisted(product.id)
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-border text-muted hover:border-primary hover:bg-primary hover:text-white'
-                  }`}
-                  aria-label={isWishlisted(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
-                >
-                  <Heart className={`h-4 w-4 ${isWishlisted(product.id) ? 'fill-white' : ''}`} />
-                </button>
+                <div className="mt-1 flex flex-shrink-0 items-center gap-2">
+                  <button
+                    onClick={() => toggleItem({
+                      id:        product.id,
+                      name:      product.name,
+                      slug:      product.slug,
+                      basePrice: Number(product.basePrice),
+                      imageUrl:  product.media.find((m) => m.type === 'IMAGE')?.url ?? null,
+                      category:  product.category.name,
+                    })}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 hover:scale-110 ${
+                      isWishlisted(product.id)
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-border text-muted hover:border-primary hover:bg-primary hover:text-white'
+                    }`}
+                    aria-label={isWishlisted(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                  >
+                    <Heart className={`h-4 w-4 ${isWishlisted(product.id) ? 'fill-white' : ''}`} />
+                  </button>
+
+                  <div ref={shareWrapRef} className="relative">
+                    <button
+                      onClick={handleShareClick}
+                      className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 hover:scale-110 ${
+                        shareOpen
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-border text-muted hover:border-primary hover:bg-primary hover:text-white'
+                      }`}
+                      aria-label="Share product"
+                      aria-haspopup="menu"
+                      aria-expanded={shareOpen}
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </button>
+
+                    <AnimatePresence>
+                      {shareOpen && (
+                        <motion.div
+                          key="share-menu"
+                          initial={{ opacity: 0, y: -4, scale: 0.96 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -4, scale: 0.96 }}
+                          transition={{ duration: 0.15 }}
+                          role="menu"
+                          className="absolute right-0 top-12 z-30 w-48 overflow-hidden rounded-md border border-border bg-background shadow-xl"
+                        >
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`${product.name} — ${getShareUrl()}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setShareOpen(false)}
+                            className="flex items-center gap-2 px-3 py-2.5 text-xs text-on-background hover:bg-surface-elevated"
+                            role="menuitem"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5 text-green-500" /> WhatsApp
+                          </a>
+                          <a
+                            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl())}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setShareOpen(false)}
+                            className="flex items-center gap-2 px-3 py-2.5 text-xs text-on-background hover:bg-surface-elevated"
+                            role="menuitem"
+                          >
+                            <Facebook className="h-3.5 w-3.5 text-blue-500" /> Facebook
+                          </a>
+                          <a
+                            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(getShareUrl())}&text=${encodeURIComponent(product.name)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setShareOpen(false)}
+                            className="flex items-center gap-2 px-3 py-2.5 text-xs text-on-background hover:bg-surface-elevated"
+                            role="menuitem"
+                          >
+                            <Twitter className="h-3.5 w-3.5 text-sky-400" /> X / Twitter
+                          </a>
+                          <button
+                            type="button"
+                            onClick={copyShareLink}
+                            className="flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-xs text-on-background hover:bg-surface-elevated"
+                            role="menuitem"
+                          >
+                            {linkCopied
+                              ? <><Check className="h-3.5 w-3.5 text-green-400" /> Link copied</>
+                              : <><LinkIcon className="h-3.5 w-3.5 text-muted" /> Copy link</>}
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
               </div>
               <p className="mt-4 text-2xl font-semibold text-on-background">
                 ₹{price.toLocaleString('en-IN')}
