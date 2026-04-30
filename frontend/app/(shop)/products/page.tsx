@@ -72,7 +72,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
     const result = await serverProductsApi.list(
       {
         page,
-        limit: 12,
+        limit: 15,
         ...(category && { category }),
         isActive: 'true',
         ...(sort === 'price-asc'  && { sortBy: 'price', sortDir: 'asc'  }),

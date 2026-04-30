@@ -63,7 +63,7 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
     try {
       const result = await productsApi.list({
         page:     pageParam,
-        limit:    12,
+        limit:    15,
         category: categorySlug || undefined,
         isActive: 'true' as any,
         // Pass sort as a custom param — the service resolves it server-side
@@ -138,7 +138,7 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
               exit={{ opacity: 0 }}
               className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4"
             >
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: 15 }).map((_, i) => (
                 <ProductCardSkeleton key={i} />
               ))}
             </motion.div>
@@ -224,7 +224,7 @@ export default function ProductsPageClient({ initial }: { initial?: InitialData 
     <Suspense fallback={
       <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-10">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4">
-          {Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton aspect-[3/4] rounded" />)}
+          {Array.from({ length: 15 }).map((_, i) => <div key={i} className="skeleton aspect-[3/4] rounded" />)}
         </div>
       </div>
     }>
