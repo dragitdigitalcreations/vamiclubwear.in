@@ -344,14 +344,17 @@ router.get('/order-track/:orderNumber', async (req: Request, res: Response, next
     const order = await prisma.order.findUnique({
       where: { orderNumber: req.params.orderNumber },
       select: {
-        orderNumber:    true,
-        status:         true,
-        shippingStatus: true,
-        awbNumber:      true,
-        trackingUrl:    true,
-        customerName:   true,
-        total:          true,
-        createdAt:      true,
+        orderNumber:     true,
+        status:          true,
+        shippingStatus:  true,
+        fulfillmentType: true,
+        pickupReadyAt:   true,
+        pickedUpAt:      true,
+        awbNumber:       true,
+        trackingUrl:     true,
+        customerName:    true,
+        total:           true,
+        createdAt:       true,
         items: {
           include: {
             variant: { select: { sku: true, product: { select: { name: true } } } },

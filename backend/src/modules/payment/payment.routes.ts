@@ -39,16 +39,17 @@ const orderItemSchema = z.object({
 })
 
 const customerSchema = z.object({
-  customerName:  z.string().max(150).optional(),
-  customerEmail: z.string().email().max(200).optional(),
-  customerPhone: z.string().max(20).optional(),
-  address:       z.string().max(500).optional(),
-  city:          z.string().max(100).optional(),
-  state:         z.string().max(100).optional(),
-  pincode:       z.string().max(10).optional(),
-  notes:         z.string().max(1000).optional(),
-  couponCode:    z.string().max(60).optional(),
-  items:         z.array(orderItemSchema).min(1),
+  customerName:    z.string().max(150).optional(),
+  customerEmail:   z.string().email().max(200).optional(),
+  customerPhone:   z.string().max(20).optional(),
+  address:         z.string().max(500).optional(),
+  city:            z.string().max(100).optional(),
+  state:           z.string().max(100).optional(),
+  pincode:         z.string().max(10).optional(),
+  fulfillmentType: z.enum(['DELIVERY', 'PICKUP']).optional().default('DELIVERY'),
+  notes:           z.string().max(1000).optional(),
+  couponCode:      z.string().max(60).optional(),
+  items:           z.array(orderItemSchema).min(1),
 })
 
 // ── POST /api/payment/create-order ───────────────────────────────────────────
@@ -61,7 +62,7 @@ router.post('/create-order', async (req: Request, res: Response, next: NextFunct
       return
     }
 
-    const { items, couponCode, customerEmail } = parsed.data
+    const { items, couponCode, customerEmail, fulfillmentType } = parsed.data
 
     // Compute amount from DB prices
     const variants = await prisma.productVariant.findMany({
@@ -84,8 +85,9 @@ router.post('/create-order', async (req: Request, res: Response, next: NextFunct
         // the customer-facing /coupons/validate already informed them.
       }
     }
+    // Pickup orders are collected from the store — no shipping fee charged.
     const afterDiscount = Math.max(0, subtotal - discount)
-    const shippingFee   = calcShippingFee(afterDiscount)
+    const shippingFee   = fulfillmentType === 'PICKUP' ? 0 : calcShippingFee(afterDiscount)
     const amount        = afterDiscount + shippingFee
     const amountPaise   = Math.round(amount * 100) // Razorpay uses paise
 
@@ -130,7 +132,7 @@ router.post('/verify', async (req: Request, res: Response, next: NextFunction) =
       return
     }
 
-    const { rzpOrderId, rzpPaymentId, rzpSignature, items, couponCode, ...customer } = parsed.data
+    const { rzpOrderId, rzpPaymentId, rzpSignature, items, couponCode, fulfillmentType, ...customer } = parsed.data
 
     // Verify Razorpay signature
     const keySecret = process.env.RAZORPAY_KEY_SECRET
@@ -148,10 +150,12 @@ router.post('/verify', async (req: Request, res: Response, next: NextFunction) =
       customerName:    customer.customerName,
       customerEmail:   customer.customerEmail,
       customerPhone:   customer.customerPhone,
-      shippingAddress: customer.address,
-      shippingCity:    customer.city,
-      shippingState:   customer.state,
-      shippingPincode: customer.pincode,
+      // Pickup orders skip shipping address even if the client sent stale values
+      shippingAddress: fulfillmentType === 'PICKUP' ? undefined : customer.address,
+      shippingCity:    fulfillmentType === 'PICKUP' ? undefined : customer.city,
+      shippingState:   fulfillmentType === 'PICKUP' ? undefined : customer.state,
+      shippingPincode: fulfillmentType === 'PICKUP' ? undefined : customer.pincode,
+      fulfillmentType,
       notes:           customer.notes,
       couponCode,
       items,

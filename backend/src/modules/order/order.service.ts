@@ -3,7 +3,7 @@ import { prisma } from '../../lib/prisma'
 import { CreateOrderInput, UpdateOrderStatusInput, ListOrdersQuery } from './order.schema'
 import { NotFoundError, InsufficientStockError, ConflictError } from '../../utils/errors'
 import { generateOrderNumber } from '../../utils/orderNumber'
-import { sendOrderConfirmationToCustomer, sendOrderNotificationToStore } from '../../lib/email'
+import { sendOrderConfirmationToCustomer, sendOrderNotificationToStore, sendPickupReadyEmail } from '../../lib/email'
 import { createDelhiveryShipment, mapDelhiveryStatus } from '../shipping/delhivery.service'
 import { sendShipmentCreatedEmail } from '../../lib/email'
 import { couponService } from '../coupon/coupon.service'
@@ -69,9 +69,11 @@ export const orderService = {
         discount = validation.discount
         couponNote = `coupon:${validation.coupon.code}`
       }
-      const afterDiscount = Math.max(0, subtotal - discount)
-      const shippingFee   = calcShippingFee(afterDiscount)
-      const total         = afterDiscount + shippingFee
+      // Pickup orders are collected from the store, so no shipping fee.
+      const fulfillmentType = input.fulfillmentType ?? 'DELIVERY'
+      const afterDiscount   = Math.max(0, subtotal - discount)
+      const shippingFee     = fulfillmentType === 'PICKUP' ? 0 : calcShippingFee(afterDiscount)
+      const total           = afterDiscount + shippingFee
 
       // ── 4. Create the order record ─────────────────────────────────────────
       const order = await tx.order.create({
@@ -81,6 +83,7 @@ export const orderService = {
           customerEmail:   input.customerEmail,
           customerPhone:   input.customerPhone,
           locationId,
+          fulfillmentType,
           shippingAddress: input.shippingAddress,
           shippingCity:    input.shippingCity,
           shippingState:   input.shippingState,
@@ -181,11 +184,12 @@ export const orderService = {
       price: Number(item.unitPrice),
     }))
     const emailData = {
-      orderNumber:   createdOrder.orderNumber,
-      customerName:  createdOrder.customerName,
-      customerEmail: createdOrder.customerEmail,
-      items:         emailItems,
-      total:         Number(createdOrder.total),
+      orderNumber:     createdOrder.orderNumber,
+      customerName:    createdOrder.customerName,
+      customerEmail:   createdOrder.customerEmail,
+      items:           emailItems,
+      total:           Number(createdOrder.total),
+      fulfillmentType: createdOrder.fulfillmentType,
     }
     Promise.all([
       sendOrderConfirmationToCustomer(emailData),
@@ -274,6 +278,7 @@ export const orderService = {
     // generated automatically. Idempotent because we gate on shippingStatus.
     const SHIPMENT_TRIGGER_STATES = new Set(['CONFIRMED', 'PROCESSING'])
     if (
+      order.fulfillmentType === 'DELIVERY' &&
       SHIPMENT_TRIGGER_STATES.has(input.status) &&
       order.shippingStatus === 'NOT_CREATED' &&
       order.customerPhone &&
@@ -360,6 +365,48 @@ export const orderService = {
           console.error('[shipping] Auto-create Delhivery shipment failed:', err)
         }
       })()
+    }
+
+    return updated
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Pickup workflow — for orders where the customer chose to collect from
+  // the store. Stage transitions:
+  //   READY     → marks pickupReadyAt + bumps status to PROCESSING
+  //   PICKED_UP → marks pickedUpAt + bumps status to DELIVERED
+  // Only valid on orders with fulfillmentType = PICKUP.
+  // ─────────────────────────────────────────────────────────────────────────
+  async updatePickupStage(id: string, stage: 'READY' | 'PICKED_UP') {
+    const order = await prisma.order.findUnique({ where: { id } })
+    if (!order) throw new NotFoundError(`Order ${id}`)
+    if (order.fulfillmentType !== 'PICKUP') {
+      throw new ConflictError('Pickup actions are only available on store-pickup orders')
+    }
+
+    const data: Prisma.OrderUpdateInput = {}
+    if (stage === 'READY') {
+      data.pickupReadyAt = new Date()
+      // Bump status forward to surface "ready for pickup" in the standard flow.
+      if (order.status === 'PENDING' || order.status === 'CONFIRMED') {
+        data.status = 'PROCESSING'
+      }
+    } else {
+      data.pickedUpAt = new Date()
+      data.status     = 'DELIVERED'
+      if (!order.pickupReadyAt) data.pickupReadyAt = new Date()
+    }
+
+    const updated = await prisma.order.update({ where: { id }, data })
+
+    // Fire-and-forget pickup-ready email — only on the READY transition and
+    // only the first time (pickupReadyAt was null beforehand).
+    if (stage === 'READY' && !order.pickupReadyAt && updated.customerEmail) {
+      sendPickupReadyEmail({
+        orderNumber:   updated.orderNumber,
+        customerName:  updated.customerName,
+        customerEmail: updated.customerEmail,
+      }).catch((e) => console.error('[email] pickup-ready email failed:', e))
     }
 
     return updated

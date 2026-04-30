@@ -226,41 +226,55 @@ enum InvoiceStatus {
   CREATED
 }
 
+// How the customer wants to receive their order.
+//   DELIVERY — courier (Delhivery) ships to the customer's address
+//   PICKUP   — customer collects from the Manjeri store; no shipping fee,
+//              no Delhivery shipment created, address fields optional
+enum FulfillmentType {
+  DELIVERY
+  PICKUP
+}
+
 model Order {
-  id                   String         @id @default(cuid())
-  orderNumber          String         @unique // VCW-250405-0001
+  id                   String          @id @default(cuid())
+  orderNumber          String          @unique // VCW-250405-0001
   customerName         String?
   customerEmail        String?
   customerPhone        String?
-  locationId           String?        // where stock was deducted from
+  locationId           String?         // where stock was deducted from
   shippingAddress      String?
   shippingCity         String?
   shippingState        String?
   shippingPincode      String?
-  status               OrderStatus    @default(PENDING)
-  paymentStatus        PaymentStatus  @default(UNPAID)
-  // Delhivery shipping fields
-  shippingStatus       ShippingStatus @default(NOT_CREATED)
+  status               OrderStatus     @default(PENDING)
+  paymentStatus        PaymentStatus   @default(UNPAID)
+  // Fulfillment — DELIVERY (courier) or PICKUP (collect from shop)
+  fulfillmentType      FulfillmentType @default(DELIVERY)
+  pickupReadyAt        DateTime?       // staff marked the order ready to be collected
+  pickedUpAt           DateTime?       // staff confirmed customer collected it
+  // Delhivery shipping fields (only used when fulfillmentType = DELIVERY)
+  shippingStatus       ShippingStatus  @default(NOT_CREATED)
   awbNumber            String?
   trackingUrl          String?
   delhiveryShipmentId  String?
   // Acrotex invoice fields
-  invoiceStatus        InvoiceStatus  @default(PENDING)
+  invoiceStatus        InvoiceStatus   @default(PENDING)
   invoiceNumber        String?
   invoicePdfUrl        String?
   items                OrderItem[]
-  subtotal             Decimal        @db.Decimal(10, 2)
-  discount             Decimal        @default(0) @db.Decimal(10, 2)
-  shippingFee          Decimal        @default(0) @db.Decimal(10, 2)
-  total                Decimal        @db.Decimal(10, 2)
+  subtotal             Decimal         @db.Decimal(10, 2)
+  discount             Decimal         @default(0) @db.Decimal(10, 2)
+  shippingFee          Decimal         @default(0) @db.Decimal(10, 2)
+  total                Decimal         @db.Decimal(10, 2)
   notes                String?
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
   @@index([status])
   @@index([orderNumber])
   @@index([createdAt])
   @@index([awbNumber])
+  @@index([fulfillmentType])
 }
 
 model OrderItem {

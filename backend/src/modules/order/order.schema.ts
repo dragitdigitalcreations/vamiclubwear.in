@@ -9,6 +9,7 @@ export const createOrderSchema = z.object({
   shippingCity:    z.string().max(100).optional(),
   shippingState:   z.string().max(100).optional(),
   shippingPincode: z.string().max(10).optional(),
+  fulfillmentType: z.enum(['DELIVERY', 'PICKUP']).optional().default('DELIVERY'),
   notes:           z.string().max(1000).optional(),
   couponCode:      z.string().max(60).optional(),
   items:           z

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   ChevronLeft, ChevronRight, X, Truck, FileText,
-  ExternalLink, Loader2, Package, User, CheckCircle, RefreshCw,
+  ExternalLink, Loader2, Package, User, CheckCircle, RefreshCw, Store,
 } from 'lucide-react'
 import { AdminHeader }  from '@/components/admin/AdminHeader'
 import { RBACGuard }    from '@/components/admin/RBACGuard'
@@ -22,12 +22,15 @@ type OrderStatus =
   | 'PENDING' | 'CONFIRMED' | 'PROCESSING'
   | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED'
 
+type FulfillmentType = 'DELIVERY' | 'PICKUP'
+
 type OrderSummary = {
   id: string
   orderNumber: string
   invoiceNumber: string | null
   customerName: string | null
   status: string
+  fulfillmentType: FulfillmentType
   total: number
   createdAt: string
 }
@@ -47,6 +50,9 @@ type OrderDetail = {
   shippingCity:    string | null
   shippingState:   string | null
   shippingPincode: string | null
+  fulfillmentType: FulfillmentType
+  pickupReadyAt:   string | null
+  pickedUpAt:      string | null
   shippingStatus:  string
   awbNumber:       string | null
   trackingUrl:     string | null
@@ -120,8 +126,10 @@ const nextStatus: Record<string, OrderStatus | null> = {
 }
 
 // ── Drawer Tab type ───────────────────────────────────────────────────────────
+// 'shipment' tab is replaced by 'pickup' for store-pickup orders so admins
+// don't see Delhivery actions on orders that are never being shipped.
 
-type DrawerTab = 'details' | 'shipment' | 'invoice'
+type DrawerTab = 'details' | 'shipment' | 'pickup' | 'invoice'
 
 // ── Tab Button ────────────────────────────────────────────────────────────────
 
@@ -174,6 +182,8 @@ function OrderDrawer({
   const [creatingShip,  setCreatingShip]  = useState(false)
   const [invoiceNum,    setInvoiceNum]    = useState('')
   const [savingInvoice, setSavingInvoice] = useState(false)
+  const [pickupBusy,    setPickupBusy]    = useState<null | 'READY' | 'PICKED_UP'>(null)
+  const isPickup = order?.fulfillmentType === 'PICKUP'
 
   useEffect(() => {
     setTab('details')
@@ -253,6 +263,28 @@ function OrderDrawer({
     }
   }
 
+  async function handlePickupAdvance(stage: 'READY' | 'PICKED_UP') {
+    if (!order) return
+    setPickupBusy(stage)
+    try {
+      const updated = await ordersApi.updatePickup(order.id, stage)
+      setOrder((o) => o ? {
+        ...o,
+        status:        updated.status,
+        pickupReadyAt: updated.pickupReadyAt,
+        pickedUpAt:    updated.pickedUpAt,
+      } : o)
+      onStatusChanged(order.id, updated.status)
+      toast.success(stage === 'READY'
+        ? 'Marked as ready for pickup — customer notified by email'
+        : 'Pickup confirmed — order completed')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to update pickup status')
+    } finally {
+      setPickupBusy(null)
+    }
+  }
+
   async function handleSaveInvoice(markCreated?: boolean) {
     if (!order) return
     setSavingInvoice(true)
@@ -315,14 +347,25 @@ function OrderDrawer({
             icon={Package}
             label="Details"
           />
-          <TabBtn
-            active={tab === 'shipment'}
-            onClick={() => setTab('shipment')}
-            icon={Truck}
-            label="Shipment"
-            dot={order.shippingStatus === 'NOT_CREATED'}
-            dotColor="bg-amber-400"
-          />
+          {isPickup ? (
+            <TabBtn
+              active={tab === 'pickup'}
+              onClick={() => setTab('pickup')}
+              icon={Store}
+              label="Pickup"
+              dot={!order.pickedUpAt}
+              dotColor={order.pickupReadyAt ? 'bg-emerald-400' : 'bg-amber-400'}
+            />
+          ) : (
+            <TabBtn
+              active={tab === 'shipment'}
+              onClick={() => setTab('shipment')}
+              icon={Truck}
+              label="Shipment"
+              dot={order.shippingStatus === 'NOT_CREATED'}
+              dotColor="bg-amber-400"
+            />
+          )}
           <TabBtn
             active={tab === 'invoice'}
             onClick={() => setTab('invoice')}
@@ -355,13 +398,28 @@ function OrderDrawer({
                   <h3 className="text-xs font-semibold uppercase tracking-widest text-muted">Customer</h3>
                 </div>
                 <div className="rounded border border-border bg-surface-elevated p-3 space-y-1">
-                  <p className="text-sm font-medium text-on-background">{order.customerName ?? 'Walk-in Customer'}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-on-background">{order.customerName ?? 'Walk-in Customer'}</p>
+                    <span className={cn(
+                      'rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1',
+                      isPickup
+                        ? 'bg-primary/15 text-primary-light'
+                        : 'bg-cyan-600/15 text-cyan-300'
+                    )}>
+                      {isPickup ? <><Store className="h-3 w-3" /> Pickup</> : <><Truck className="h-3 w-3" /> Delivery</>}
+                    </span>
+                  </div>
                   {order.customerEmail && <p className="text-xs text-muted">{order.customerEmail}</p>}
                   {order.customerPhone && <p className="text-xs text-muted">{order.customerPhone}</p>}
-                  {(order.shippingAddress || order.shippingCity) && (
+                  {!isPickup && (order.shippingAddress || order.shippingCity) && (
                     <p className="mt-1 text-xs text-muted pt-1 border-t border-border">
                       {[order.shippingAddress, order.shippingCity, order.shippingState, order.shippingPincode]
                         .filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                  {isPickup && (
+                    <p className="mt-1 text-xs text-primary-light pt-1 border-t border-border">
+                      Customer collects from store · Manjeri, Kerala
                     </p>
                   )}
                   {order.notes && (
@@ -466,8 +524,8 @@ function OrderDrawer({
             </div>
           )}
 
-          {/* ── SHIPMENT TAB ─────────────────────────────────────────────── */}
-          {tab === 'shipment' && (
+          {/* ── SHIPMENT TAB (delivery only) ─────────────────────────────── */}
+          {tab === 'shipment' && !isPickup && (
             <div className="p-4 space-y-4">
 
               {/* Status badge */}
@@ -573,6 +631,136 @@ function OrderDrawer({
                 /* ── Cancelled / other terminal state ── */
                 <div className="rounded border border-border bg-surface-elevated p-4 text-center">
                   <p className="text-xs text-muted">No shipment — order is {order.status.toLowerCase()}.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── PICKUP TAB (store-pickup orders only) ───────────────────── */}
+          {tab === 'pickup' && isPickup && (
+            <div className="p-4 space-y-4">
+
+              {/* Status badge */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted">Store Pickup</h3>
+                <span className={cn(
+                  'rounded px-2 py-1 text-xs font-semibold flex items-center gap-1',
+                  order.pickedUpAt
+                    ? 'bg-emerald-600/20 text-emerald-400'
+                    : order.pickupReadyAt
+                      ? 'bg-cyan-600/20 text-cyan-400'
+                      : 'bg-amber-600/20 text-amber-400'
+                )}>
+                  {order.pickedUpAt
+                    ? <>✓ Picked up</>
+                    : order.pickupReadyAt
+                      ? <>Ready for collection</>
+                      : <>Awaiting prep</>}
+                </span>
+              </div>
+
+              {/* Pickup location panel */}
+              <div className="rounded border border-primary/30 bg-primary/5 p-4 space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-primary-light flex items-center gap-1.5">
+                  <Store className="h-3.5 w-3.5" /> Pickup Location
+                </p>
+                <p className="text-sm font-medium text-on-background">Vami Clubwear — Manjeri Store</p>
+                <p className="text-xs text-muted">Manjeri, Malappuram</p>
+                <p className="text-xs text-muted">Kerala — 676121, India</p>
+                <p className="text-[11px] text-muted pt-1 border-t border-primary/20 mt-2">
+                  Mon–Sat · 10:30 am – 9:00 pm
+                </p>
+              </div>
+
+              {/* Timeline */}
+              <div className="rounded border border-border overflow-hidden">
+                <div className="flex items-center gap-3 px-3 py-2.5 border-b border-border">
+                  <span className={cn(
+                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
+                    'bg-emerald-500/20 text-emerald-400'
+                  )}>✓</span>
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-on-background">Order paid</p>
+                    <p className="text-[10px] text-muted">{new Date(order.createdAt).toLocaleString('en-IN')}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 px-3 py-2.5 border-b border-border">
+                  <span className={cn(
+                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
+                    order.pickupReadyAt
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-surface text-muted border border-border'
+                  )}>{order.pickupReadyAt ? '✓' : '2'}</span>
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-on-background">Ready to collect</p>
+                    <p className="text-[10px] text-muted">
+                      {order.pickupReadyAt
+                        ? new Date(order.pickupReadyAt).toLocaleString('en-IN')
+                        : 'Not yet — mark ready below'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 px-3 py-2.5">
+                  <span className={cn(
+                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
+                    order.pickedUpAt
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-surface text-muted border border-border'
+                  )}>{order.pickedUpAt ? '✓' : '3'}</span>
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-on-background">Picked up by customer</p>
+                    <p className="text-[10px] text-muted">
+                      {order.pickedUpAt
+                        ? new Date(order.pickedUpAt).toLocaleString('en-IN')
+                        : 'Customer hasn’t collected yet'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              {!order.pickupReadyAt && order.status !== 'CANCELLED' && (
+                <button
+                  onClick={() => handlePickupAdvance('READY')}
+                  disabled={pickupBusy !== null}
+                  className="flex w-full items-center justify-center gap-2 bg-primary py-3 text-xs font-semibold uppercase tracking-widest text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+                >
+                  {pickupBusy === 'READY'
+                    ? <><Loader2 className="h-4 w-4 animate-spin" />Marking…</>
+                    : <><Store className="h-4 w-4" />Mark Ready for Pickup</>
+                  }
+                </button>
+              )}
+
+              {order.pickupReadyAt && !order.pickedUpAt && order.status !== 'CANCELLED' && (
+                <button
+                  onClick={() => handlePickupAdvance('PICKED_UP')}
+                  disabled={pickupBusy !== null}
+                  className="flex w-full items-center justify-center gap-2 bg-emerald-700/20 border border-emerald-500/40 py-3 text-xs font-semibold uppercase tracking-widest text-emerald-400 hover:bg-emerald-700/30 disabled:opacity-50 transition-colors"
+                >
+                  {pickupBusy === 'PICKED_UP'
+                    ? <><Loader2 className="h-4 w-4 animate-spin" />Confirming…</>
+                    : <><CheckCircle className="h-4 w-4" />Confirm Customer Picked Up</>
+                  }
+                </button>
+              )}
+
+              {order.pickedUpAt && (
+                <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-3 text-center">
+                  <CheckCircle className="h-6 w-6 text-emerald-400 mx-auto mb-1" />
+                  <p className="text-xs font-semibold text-emerald-400">Pickup completed</p>
+                  <p className="text-[10px] text-muted mt-0.5">
+                    Collected {new Date(order.pickedUpAt).toLocaleString('en-IN')}
+                  </p>
+                </div>
+              )}
+
+              {/* Hint about emails */}
+              {!order.pickupReadyAt && (
+                <div className="rounded border border-border bg-surface-elevated p-3">
+                  <p className="text-[11px] text-muted">
+                    Marking ready will email the customer with our store address and a reminder to bring their order number.
+                  </p>
                 </div>
               )}
             </div>
@@ -689,7 +877,18 @@ function OrderDrawer({
       {/* ── Bottom action bar ─────────────────────────────────────────────── */}
       {order && !loading && (
         <div className="shrink-0 border-t border-border p-3 flex gap-2">
-          {nextStatus[order.status] && (
+          {/* Pickup orders never get shipped — past PROCESSING the Pickup tab
+              owns the transitions, so deflect rather than offering "Mark as
+              SHIPPED" that doesn't apply. */}
+          {isPickup && (order.status === 'PROCESSING' || order.status === 'SHIPPED') && !order.pickedUpAt ? (
+            <button
+              onClick={() => setTab('pickup')}
+              className="flex-1 bg-primary py-2.5 text-xs font-semibold uppercase tracking-widest text-white hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+            >
+              <Store className="h-4 w-4" />
+              Manage Pickup
+            </button>
+          ) : nextStatus[order.status] && (
             <button
               onClick={advance}
               disabled={updating}
@@ -861,7 +1060,17 @@ export default function OrdersPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {o.customerName ?? <span className="text-muted">Walk-in</span>}
+                          <div className="flex items-center gap-2">
+                            <span>{o.customerName ?? <span className="text-muted">Walk-in</span>}</span>
+                            {o.fulfillmentType === 'PICKUP' && (
+                              <span
+                                title="Customer will collect from shop"
+                                className="rounded bg-primary/15 text-primary-light px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider flex items-center gap-1"
+                              >
+                                <Store className="h-2.5 w-2.5" /> Pickup
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <span className={cn('rounded px-2 py-0.5 text-xs font-medium', statusColor(o.status))}>

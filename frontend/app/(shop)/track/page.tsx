@@ -4,7 +4,7 @@ import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Package, Truck, CheckCircle, Clock, ExternalLink, ArrowRight } from 'lucide-react'
+import { Search, Package, Truck, CheckCircle, Clock, ExternalLink, ArrowRight, Store, MapPin } from 'lucide-react'
 import { ordersApi } from '@/lib/api'
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
@@ -52,6 +52,16 @@ function StatusDot({ active, done }: { active: boolean; done: boolean }) {
 type TrackResult = Awaited<ReturnType<typeof ordersApi.track>>
 
 function TrackingResult({ data }: { data: TrackResult }) {
+  const isPickup = data.fulfillmentType === 'PICKUP'
+
+  // Pickup orders use a different stage list — there's no carrier handoff,
+  // so we surface "Ready to collect" + "Picked up" instead of SHIPPED/DELIVERED.
+  const PICKUP_STAGES = [
+    { key: 'PAID',    label: 'Order paid',         done: true },
+    { key: 'PREP',    label: 'Preparing your order', done: !!data.pickupReadyAt || !!data.pickedUpAt || data.status === 'PROCESSING' || data.status === 'DELIVERED' },
+    { key: 'READY',   label: 'Ready to collect',   done: !!data.pickupReadyAt || !!data.pickedUpAt },
+    { key: 'PICKED',  label: 'Picked up',          done: !!data.pickedUpAt || data.status === 'DELIVERED' },
+  ]
   const currentIdx = ORDER_STATUSES.indexOf(data.status as any)
 
   return (
@@ -72,35 +82,82 @@ function TrackingResult({ data }: { data: TrackResult }) {
             <p className="mt-1 font-semibold text-on-background">₹{Number(data.total).toLocaleString('en-IN')}</p>
           </div>
         </div>
-        <div className="mt-4 flex items-center gap-2">
+        <div className="mt-4 flex items-center gap-2 flex-wrap">
           <span className={`text-sm font-semibold ${statusColor(data.status)}`}>{data.status}</span>
           <span className="text-muted">·</span>
-          <span className="text-xs text-muted">{SHIPPING_STATUS_LABELS[data.shippingStatus] ?? data.shippingStatus}</span>
+          <span className="text-xs text-muted">
+            {isPickup
+              ? (data.pickedUpAt ? 'Collected' : data.pickupReadyAt ? 'Ready to collect' : 'Preparing your order')
+              : (SHIPPING_STATUS_LABELS[data.shippingStatus] ?? data.shippingStatus)}
+          </span>
+          <span className={`ml-auto rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1 ${
+            isPickup ? 'bg-primary/15 text-primary-light' : 'bg-cyan-600/15 text-cyan-300'
+          }`}>
+            {isPickup ? <><Store className="h-3 w-3" /> Store Pickup</> : <><Truck className="h-3 w-3" /> Home Delivery</>}
+          </span>
         </div>
       </div>
 
       {/* Progress tracker */}
       <div className="border border-border bg-surface p-5">
-        <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted">Order Progress</p>
+        <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted">
+          {isPickup ? 'Pickup Progress' : 'Order Progress'}
+        </p>
         <div className="space-y-4">
-          {ORDER_STATUSES.map((s, i) => {
-            const done   = i < currentIdx
-            const active = i === currentIdx
-            return (
-              <div key={s} className="flex items-center gap-3">
-                <StatusDot active={active} done={done} />
-                <span className={`text-sm ${active ? 'font-semibold text-on-background' : done ? 'text-on-background/60' : 'text-muted'}`}>
-                  {s.charAt(0) + s.slice(1).toLowerCase()}
-                </span>
-                {active && <span className="ml-auto text-xs text-primary-light">Current</span>}
-              </div>
-            )
-          })}
+          {isPickup ? (
+            PICKUP_STAGES.map((s, i) => {
+              const nextUndone = PICKUP_STAGES.findIndex((x) => !x.done)
+              const active = i === nextUndone
+              return (
+                <div key={s.key} className="flex items-center gap-3">
+                  <StatusDot active={active} done={s.done} />
+                  <span className={`text-sm ${active ? 'font-semibold text-on-background' : s.done ? 'text-on-background/60' : 'text-muted'}`}>
+                    {s.label}
+                  </span>
+                  {active && <span className="ml-auto text-xs text-primary-light">Current</span>}
+                </div>
+              )
+            })
+          ) : (
+            ORDER_STATUSES.map((s, i) => {
+              const done   = i < currentIdx
+              const active = i === currentIdx
+              return (
+                <div key={s} className="flex items-center gap-3">
+                  <StatusDot active={active} done={done} />
+                  <span className={`text-sm ${active ? 'font-semibold text-on-background' : done ? 'text-on-background/60' : 'text-muted'}`}>
+                    {s.charAt(0) + s.slice(1).toLowerCase()}
+                  </span>
+                  {active && <span className="ml-auto text-xs text-primary-light">Current</span>}
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
 
-      {/* Shipment tracking */}
-      {data.awbNumber && (
+      {/* Pickup location panel (PICKUP only) */}
+      {isPickup && (
+        <div className="border border-primary/30 bg-primary/5 p-5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary-light mb-2 flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5" /> Collect From
+          </p>
+          <p className="text-sm font-medium text-on-background">Vami Clubwear — Manjeri Store</p>
+          <p className="text-xs text-muted">Manjeri, Malappuram</p>
+          <p className="text-xs text-muted">Kerala — 676121, India</p>
+          <p className="text-[11px] text-muted mt-3 pt-3 border-t border-primary/20">
+            Mon–Sat · 10:30 am – 9:00 pm · Please bring this order number when you visit.
+          </p>
+          {data.pickupReadyAt && !data.pickedUpAt && (
+            <p className="mt-3 text-xs text-emerald-400 font-medium">
+              ✓ Your order is ready to collect — come by anytime during store hours.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Shipment tracking (DELIVERY only) */}
+      {!isPickup && data.awbNumber && (
         <div className="border border-cyan-500/30 bg-cyan-500/5 p-5">
           <div className="flex items-start justify-between gap-4">
             <div>

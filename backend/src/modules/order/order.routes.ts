@@ -34,4 +34,8 @@ router.patch(
   orderController.updateStatus
 )
 
+// PATCH /api/orders/:id/pickup [manager] — advance store-pickup workflow
+//   body: { stage: 'READY' | 'PICKED_UP' }
+router.patch('/:id/pickup', requireAuth, orderController.updatePickup)
+
 export default router

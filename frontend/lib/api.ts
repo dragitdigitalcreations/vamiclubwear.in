@@ -274,6 +274,7 @@ export const ordersApi = {
         invoiceNumber: string | null
         customerName: string | null
         status: string
+        fulfillmentType: 'DELIVERY' | 'PICKUP'
         total: number
         createdAt: string
       }>
@@ -312,17 +313,35 @@ export const ordersApi = {
       body: JSON.stringify({ status }),
     }),
 
+  // Advance the pickup workflow — only valid on PICKUP orders.
+  // stage: 'READY' marks the order packed and waiting for collection;
+  //        'PICKED_UP' marks the order completed (auto-bumps to DELIVERED).
+  updatePickup: (id: string, stage: 'READY' | 'PICKED_UP') =>
+    request<{
+      id: string
+      status: string
+      fulfillmentType: 'DELIVERY' | 'PICKUP'
+      pickupReadyAt: string | null
+      pickedUpAt:    string | null
+    }>(`/orders/${id}/pickup`, {
+      method: 'PATCH',
+      body: JSON.stringify({ stage }),
+    }),
+
   // Public order tracking — no auth required
   track: (orderNumber: string) =>
     request<{
-      orderNumber:    string
-      status:         string
-      shippingStatus: string
-      awbNumber:      string | null
-      trackingUrl:    string | null
-      customerName:   string | null
-      total:          number
-      createdAt:      string
+      orderNumber:     string
+      status:          string
+      shippingStatus:  string
+      fulfillmentType: 'DELIVERY' | 'PICKUP'
+      pickupReadyAt:   string | null
+      pickedUpAt:      string | null
+      awbNumber:       string | null
+      trackingUrl:     string | null
+      customerName:    string | null
+      total:           number
+      createdAt:       string
       items: Array<{ quantity: number; variant: { sku: string; product: { name: string } } }>
     }>(`/shipping/order-track/${encodeURIComponent(orderNumber)}`),
 

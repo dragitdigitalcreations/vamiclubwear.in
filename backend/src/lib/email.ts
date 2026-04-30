@@ -112,7 +112,11 @@ interface OrderEmailData {
   customerEmail?: string | null
   items:         OrderItem[]
   total:         number
+  fulfillmentType?: 'DELIVERY' | 'PICKUP'
 }
+
+const STORE_ADDRESS_HTML = `Vami Clubwear<br/>Manjeri, Malappuram<br/>Kerala — 676121, India`
+const STORE_ADDRESS_TEXT = 'Vami Clubwear, Manjeri, Malappuram, Kerala — 676121, India'
 
 function buildOrderRows(items: OrderItem[]): string {
   return items.map((i) => {
@@ -130,11 +134,30 @@ function buildOrderRows(items: OrderItem[]): string {
 
 export async function sendOrderConfirmationToCustomer(data: OrderEmailData): Promise<void> {
   if (!data.customerEmail) return
+  const isPickup = data.fulfillmentType === 'PICKUP'
+
+  const fulfillmentBlock = isPickup
+    ? `<div style="margin:18px 0;padding:14px 16px;background:#f7f3ef;border-left:3px solid #5c4033;">
+         <div style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#5c4033;">Collect from Shop</div>
+         <div style="margin-top:6px;font-size:13px;color:#1a1a1a;line-height:1.6;">${STORE_ADDRESS_HTML}</div>
+         <div style="margin-top:6px;font-size:12px;color:#666;">We'll email you again as soon as your order is ready to be picked up.</div>
+       </div>`
+    : ''
+
+  const closingLine = isPickup
+    ? `Keep this order number handy. We'll email you again as soon as your order is ready to be collected from our Manjeri store. For any queries, simply reply to this email.`
+    : `Keep this order number handy. We're preparing your order for dispatch and will email your tracking link as soon as it ships. For any queries, simply reply to this email.`
+
+  const introLine = isPickup
+    ? `We've received your order. Our team will get it ready and email you again the moment it's ready to collect from our store.`
+    : `We've received your order and our team will contact you shortly to confirm and arrange delivery.`
+
   const html = wrapHtml(`
     <div class="body">
       <h2>Thank you for your order${data.customerName ? `, ${data.customerName.split(' ')[0]}` : ''}!</h2>
-      <p>We've received your order and our team will contact you shortly to confirm and arrange delivery.</p>
+      <p>${introLine}</p>
       <div class="order-num">${data.orderNumber}</div>
+      ${fulfillmentBlock}
       <table class="items">
         <thead><tr>
           <th>Item</th>
@@ -148,23 +171,28 @@ export async function sendOrderConfirmationToCustomer(data: OrderEmailData): Pro
         </tr></tfoot>
       </table>
       <p><span class="badge" style="background:#2e7d32;">✓ Payment Received</span></p>
-      <p style="margin-top:20px;font-size:13px;color:#777;">
-        Keep this order number handy. We're preparing your order for dispatch and will email
-        your tracking link as soon as it ships. For any queries, simply reply to this email.
-      </p>
+      <p style="margin-top:20px;font-size:13px;color:#777;">${closingLine}</p>
     </div>
   `)
-  await send(data.customerEmail, `Order Confirmed — ${data.orderNumber} | Vami Clubwear`, html,
-    `Thank you for your order ${data.orderNumber}! Payment of ₹${data.total.toLocaleString('en-IN')} received. We'll email tracking details as soon as your order ships.`)
+  await send(
+    data.customerEmail,
+    `Order Confirmed — ${data.orderNumber} | Vami Clubwear`,
+    html,
+    isPickup
+      ? `Thank you for your order ${data.orderNumber}! Payment of ₹${data.total.toLocaleString('en-IN')} received. You chose to collect from our shop — we'll email you when it's ready. ${STORE_ADDRESS_TEXT}.`
+      : `Thank you for your order ${data.orderNumber}! Payment of ₹${data.total.toLocaleString('en-IN')} received. We'll email tracking details as soon as your order ships.`,
+  )
 }
 
 export async function sendOrderNotificationToStore(data: OrderEmailData): Promise<void> {
   const to = storeEmail()
   if (!to) return
+  const isPickup = data.fulfillmentType === 'PICKUP'
   const html = wrapHtml(`
     <div class="body">
-      <h2>New Order Received</h2>
+      <h2>New Order Received${isPickup ? ' — STORE PICKUP' : ''}</h2>
       <div class="order-num">${data.orderNumber}</div>
+      ${isPickup ? `<p><span class="badge" style="background:#5c4033;">Collect from Shop</span></p>` : ''}
       ${data.customerName  ? `<p><strong>Customer:</strong> ${data.customerName}</p>` : ''}
       ${data.customerEmail ? `<p><strong>Email:</strong> ${data.customerEmail}</p>` : ''}
       <table class="items">
@@ -181,8 +209,45 @@ export async function sendOrderNotificationToStore(data: OrderEmailData): Promis
       </table>
     </div>
   `)
-  await send(to, `[NEW ORDER] ${data.orderNumber} — ₹${data.total.toLocaleString('en-IN')}`, html,
-    `New order ${data.orderNumber} — ₹${data.total.toLocaleString('en-IN')}`)
+  await send(
+    to,
+    `[NEW ORDER${isPickup ? ' · PICKUP' : ''}] ${data.orderNumber} — ₹${data.total.toLocaleString('en-IN')}`,
+    html,
+    `New ${isPickup ? 'pickup ' : ''}order ${data.orderNumber} — ₹${data.total.toLocaleString('en-IN')}`,
+  )
+}
+
+// ─── Pickup ready (to customer) ──────────────────────────────────────────────
+
+interface PickupReadyEmailData {
+  orderNumber:   string
+  customerName?: string | null
+  customerEmail?: string | null
+}
+
+export async function sendPickupReadyEmail(data: PickupReadyEmailData): Promise<void> {
+  if (!data.customerEmail) return
+  const html = wrapHtml(`
+    <div class="body">
+      <h2>Your order is ready to collect${data.customerName ? `, ${data.customerName.split(' ')[0]}` : ''}!</h2>
+      <p>Good news — your Vami Clubwear order is packed and waiting for you at our store.</p>
+      <div class="order-num">${data.orderNumber}</div>
+      <div style="margin:18px 0;padding:14px 16px;background:#f7f3ef;border-left:3px solid #5c4033;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#5c4033;">Collect From</div>
+        <div style="margin-top:6px;font-size:13px;color:#1a1a1a;line-height:1.6;">${STORE_ADDRESS_HTML}</div>
+        <div style="margin-top:6px;font-size:12px;color:#666;">Please carry this order number for verification.</div>
+      </div>
+      <p style="margin-top:20px;font-size:13px;color:#777;">
+        Reply to this email or message us on WhatsApp at +91 90616 07608 if you need directions or want to confirm a pickup time.
+      </p>
+    </div>
+  `)
+  await send(
+    data.customerEmail,
+    `Ready to Collect — ${data.orderNumber} | Vami Clubwear`,
+    html,
+    `Your order ${data.orderNumber} is ready to collect at ${STORE_ADDRESS_TEXT}.`,
+  )
 }
 
 // ─── Shipment created — INVOICE-style email (to customer) ───────────────────
