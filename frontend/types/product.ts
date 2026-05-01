@@ -121,6 +121,35 @@ export function filterMediaByColor(
   return [...matched, ...untagged]
 }
 
+// Returns ALL media, but with the selected colour's images first, then
+// untagged media, then media tagged with other colours. Within each group the
+// original `sortOrder` is preserved. Customers can still scroll to every photo
+// — the selected colour just leads the gallery.
+export function sortMediaByColor(
+  media: ProductMedia[],
+  color: string | null | undefined,
+): ProductMedia[] {
+  const bySort = (a: ProductMedia, b: ProductMedia) => a.sortOrder - b.sortOrder
+  if (!color) return [...media].sort(bySort)
+  const target = color.trim().toLowerCase()
+
+  const selected: ProductMedia[] = []
+  const untagged: ProductMedia[] = []
+  const others:   ProductMedia[] = []
+
+  for (const m of media) {
+    const c = parseMediaColor(m.altText).color
+    if (c === null) untagged.push(m)
+    else if (c.trim().toLowerCase() === target) selected.push(m)
+    else others.push(m)
+  }
+
+  selected.sort(bySort)
+  untagged.sort(bySort)
+  others.sort(bySort)
+  return [...selected, ...untagged, ...others]
+}
+
 // Cart types (also used in cart store)
 
 export interface CartItem {

@@ -13,8 +13,7 @@ import {
   getVariantsBySize,
   getVariantsByColor,
   getAvailableStock,
-  parseMediaColor,
-  filterMediaByColor,
+  sortMediaByColor,
 } from '@/types/product'
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
@@ -27,8 +26,9 @@ import { ProductCard } from '@/components/shop/ProductCard'
 
 // ─── Media Gallery ─────────────────────────────────────────────────────────────
 function MediaGallery({ media, selectedColor }: { media: ProductMedia[]; selectedColor: string | null }) {
-  const filtered = filterMediaByColor(media, selectedColor)
-  const sorted   = [...filtered].sort((a, b) => a.sortOrder - b.sortOrder)
+  // Show ALL media so customers can scroll through every photo — but lead with
+  // the selected colour so the chosen variant is what they see first.
+  const sorted = sortMediaByColor(media, selectedColor)
   const [active, setActive] = useState(0)
 
   // When the colour changes the filtered list may shorten — clamp the index.
