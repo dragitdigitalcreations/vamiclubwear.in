@@ -110,7 +110,7 @@ function HeroSection() {
       {/* Desktop wash kept centered; mobile wash removed so the models read cleanly behind the headline. */}
       <div className="pointer-events-none absolute inset-0 hidden sm:block bg-gradient-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
 
-      <div className="relative z-10 flex h-full items-start sm:items-center px-6 pt-10 pb-10 sm:px-16 sm:py-0 lg:px-24">
+      <div className="relative z-10 flex h-full items-start sm:items-center px-6 pt-10 pb-32 sm:px-16 sm:py-0 lg:px-24">
         <div className="max-w-[560px] w-full flex flex-col">
 
           {/* Visual hero headline — demoted to h2 so the page exposes a single
@@ -135,7 +135,7 @@ function HeroSection() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-            className="mt-5 sm:mt-6 text-fg-2"
+            className="mt-1 sm:mt-6 text-fg-2"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
               fontWeight: 500,
@@ -151,12 +151,12 @@ function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.38 }}
-            className="mt-auto sm:mt-8 pt-10 sm:pt-0"
+            className="self-end sm:self-start mt-auto sm:mt-8 pt-10 sm:pt-0"
           >
             <Link
               href="/products"
               aria-label="Shop trendy women's fashion online in India"
-              className="group inline-flex items-center gap-3 rounded-full bg-white/15 backdrop-blur-md border border-white/30 px-7 py-3.5 sm:px-9 sm:py-4 text-fg-1 shadow-[0_4px_24px_rgba(0,0,0,0.08)] transition-all duration-300 hover:bg-black hover:border-black hover:text-white hover:gap-5"
+              className="group inline-flex items-center gap-3 rounded-full bg-white/15 backdrop-blur-md border border-white/30 px-7 py-3.5 sm:px-9 sm:py-4 text-fg-1 shadow-[0_4px_24px_rgba(0,0,0,0.08)] sm:transition-all sm:duration-300 sm:hover:bg-black sm:hover:border-black sm:hover:text-white sm:hover:gap-5"
               style={{
                 fontFamily: 'var(--font-poppins), Poppins, sans-serif',
                 fontWeight: 500,
@@ -164,7 +164,7 @@ function HeroSection() {
               }}
             >
               Shop Now
-              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              <ArrowRight className="h-4 w-4 sm:transition-transform sm:duration-300 sm:group-hover:translate-x-1" />
             </Link>
           </motion.div>
 
