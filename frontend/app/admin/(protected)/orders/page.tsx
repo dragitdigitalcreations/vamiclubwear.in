@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   ChevronLeft, ChevronRight, X, Truck, FileText,
   ExternalLink, Loader2, Package, User, CheckCircle, RefreshCw, Store,
+  AlertTriangle,
 } from 'lucide-react'
 import { AdminHeader }  from '@/components/admin/AdminHeader'
 import { RBACGuard }    from '@/components/admin/RBACGuard'
@@ -177,6 +178,7 @@ function OrderDrawer({
 }) {
   const [order,         setOrder]         = useState<OrderDetail | null>(null)
   const [loading,       setLoading]       = useState(true)
+  const [loadError,     setLoadError]     = useState<string | null>(null)
   const [updating,      setUpdating]      = useState(false)
   const [tab,           setTab]           = useState<DrawerTab>('details')
   const [creatingShip,  setCreatingShip]  = useState(false)
@@ -185,7 +187,9 @@ function OrderDrawer({
   const [pickupBusy,    setPickupBusy]    = useState<null | 'READY' | 'PICKED_UP'>(null)
   const isPickup = order?.fulfillmentType === 'PICKUP'
 
-  useEffect(() => {
+  const fetchOrder = useCallback(() => {
+    setLoading(true)
+    setLoadError(null)
     setTab('details')
     ordersApi.get(orderId)
       .then((o) => {
@@ -193,9 +197,16 @@ function OrderDrawer({
         setOrder(od)
         setInvoiceNum(od.invoiceNumber ?? '')
       })
-      .catch(() => toast.error('Failed to load order'))
+      .catch((err: any) => {
+        const msg = err?.message ?? 'Failed to load order'
+        setLoadError(msg)
+        setOrder(null)
+        toast.error(msg)
+      })
       .finally(() => setLoading(false))
   }, [orderId])
+
+  useEffect(() => { fetchOrder() }, [fetchOrder])
 
   async function advance() {
     if (!order) return
@@ -383,6 +394,19 @@ function OrderDrawer({
           {[...Array(5)].map((_, i) => (
             <div key={i} className="h-6 rounded bg-surface-elevated animate-pulse" />
           ))}
+        </div>
+      ) : loadError ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+          <AlertTriangle className="h-8 w-8 text-red-400" />
+          <p className="text-sm font-semibold text-on-background">Couldn’t load this order</p>
+          <p className="text-xs text-muted break-words max-w-[260px]">{loadError}</p>
+          <button
+            onClick={fetchOrder}
+            className="mt-1 inline-flex items-center gap-1.5 rounded border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-red-400 hover:bg-red-500/20 transition-colors"
+          >
+            <RefreshCw className="h-3 w-3" />
+            Retry
+          </button>
         </div>
       ) : order ? (
         <div className="flex-1 overflow-y-auto">
@@ -927,6 +951,11 @@ export default function OrdersPage() {
   const [page,         setPage]         = useState(1)
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [loading,      setLoading]      = useState(true)
+  // Inline error UI — when the list endpoint fails (DB down, 500, network) we
+  // surface a visible "Failed to load — Retry" panel instead of relying on a
+  // toast that the admin may miss while staring at a blank table. Stays null
+  // on success.
+  const [loadError,    setLoadError]    = useState<string | null>(null)
   const [selectedId,   setSelectedId]   = useState<string | null>(null)
   const [syncing,      setSyncing]      = useState(false)
   const limit = 20
@@ -961,14 +990,21 @@ export default function OrdersPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
+    setLoadError(null)
     try {
       const params: { page: number; limit: number; status?: string } = { page, limit }
       if (statusFilter !== 'ALL') params.status = statusFilter
       const r = await ordersApi.list(params)
       setOrders(r.data)
       setTotal(r.total)
-    } catch {
-      toast.error('Failed to load orders')
+    } catch (err: any) {
+      const msg = err?.message ?? 'Failed to load orders'
+      setLoadError(msg)
+      // Defensive: clear stale data so we never render half-loaded state on
+      // top of an error screen.
+      setOrders([])
+      setTotal(0)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
@@ -1020,6 +1056,29 @@ export default function OrdersPage() {
               {syncing ? 'Syncing…' : 'Sync Delhivery'}
             </button>
           </div>
+
+          {/* Inline error banner — shown when the list endpoint fails so the
+              admin sees what went wrong and can retry without reloading the
+              browser tab. Sits above the table; the table still renders empty
+              underneath for visual continuity. */}
+          {loadError && !loading && (
+            <div className="border-b border-red-500/30 bg-red-500/5 px-6 py-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 shrink-0 text-red-400 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-red-400">Couldn’t load orders</p>
+                  <p className="mt-0.5 text-xs text-muted break-words">{loadError}</p>
+                </div>
+                <button
+                  onClick={load}
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-red-400 hover:bg-red-500/20 transition-colors"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Table */}
           <div className="flex-1 overflow-y-auto">
