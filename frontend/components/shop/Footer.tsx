@@ -184,15 +184,15 @@ export function Footer() {
             &copy; {new Date().getFullYear()} Vami Clubwear. All rights reserved.
           </p>
           <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-fg-3">
-            Crafted by{' '}
+            Carved by{' '}
             <a
-              href="https://www.instagram.com/dragit.in/"
+              href="https://www.instagram.com/shadlux_com/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-fg-1 font-semibold transition-colors hover:text-primary"
-              aria-label="Visit Dragit on Instagram"
+              aria-label="Visit SHADLUX.COM on Instagram"
             >
-              Dragit
+              SHADLUX.COM
             </a>
           </p>
           <a
