@@ -117,6 +117,15 @@ interface OrderEmailData {
 
 const STORE_ADDRESS_HTML = `Vami Clubwear<br/>Manjeri, Malappuram<br/>Kerala — 676121, India`
 const STORE_ADDRESS_TEXT = 'Vami Clubwear, Manjeri, Malappuram, Kerala — 676121, India'
+const STORE_MAPS_URL = 'https://maps.app.goo.gl/whKHwKHBWcTGnRny9'
+
+function mapsButton(): string {
+  return `<div style="margin-top:12px;">
+    <a href="${STORE_MAPS_URL}" style="display:inline-block;background:#5c4033;color:#fff;padding:9px 18px;text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border-radius:2px;">
+      Get Directions →
+    </a>
+  </div>`
+}
 
 function buildOrderRows(items: OrderItem[]): string {
   return items.map((i) => {
@@ -141,6 +150,7 @@ export async function sendOrderConfirmationToCustomer(data: OrderEmailData): Pro
          <div style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#5c4033;">Collect from Shop</div>
          <div style="margin-top:6px;font-size:13px;color:#1a1a1a;line-height:1.6;">${STORE_ADDRESS_HTML}</div>
          <div style="margin-top:6px;font-size:12px;color:#666;">We'll email you again as soon as your order is ready to be picked up.</div>
+         ${mapsButton()}
        </div>`
     : ''
 
@@ -179,7 +189,7 @@ export async function sendOrderConfirmationToCustomer(data: OrderEmailData): Pro
     `Order Confirmed — ${data.orderNumber} | Vami Clubwear`,
     html,
     isPickup
-      ? `Thank you for your order ${data.orderNumber}! Payment of ₹${data.total.toLocaleString('en-IN')} received. You chose to collect from our shop — we'll email you when it's ready. ${STORE_ADDRESS_TEXT}.`
+      ? `Thank you for your order ${data.orderNumber}! Payment of ₹${data.total.toLocaleString('en-IN')} received. You chose to collect from our shop — we'll email you when it's ready. ${STORE_ADDRESS_TEXT}. Directions: ${STORE_MAPS_URL}`
       : `Thank you for your order ${data.orderNumber}! Payment of ₹${data.total.toLocaleString('en-IN')} received. We'll email tracking details as soon as your order ships.`,
   )
 }
@@ -236,6 +246,7 @@ export async function sendPickupReadyEmail(data: PickupReadyEmailData): Promise<
         <div style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#5c4033;">Collect From</div>
         <div style="margin-top:6px;font-size:13px;color:#1a1a1a;line-height:1.6;">${STORE_ADDRESS_HTML}</div>
         <div style="margin-top:6px;font-size:12px;color:#666;">Please carry this order number for verification.</div>
+        ${mapsButton()}
       </div>
       <p style="margin-top:20px;font-size:13px;color:#777;">
         Reply to this email or message us on WhatsApp at +91 90616 07608 if you need directions or want to confirm a pickup time.
@@ -246,7 +257,7 @@ export async function sendPickupReadyEmail(data: PickupReadyEmailData): Promise<
     data.customerEmail,
     `Ready to Collect — ${data.orderNumber} | Vami Clubwear`,
     html,
-    `Your order ${data.orderNumber} is ready to collect at ${STORE_ADDRESS_TEXT}.`,
+    `Your order ${data.orderNumber} is ready to collect at ${STORE_ADDRESS_TEXT}. Directions: ${STORE_MAPS_URL}`,
   )
 }
 
