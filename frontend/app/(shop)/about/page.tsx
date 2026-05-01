@@ -28,6 +28,11 @@ export default function AboutPage() {
             who bring decades of expertise to each garment.
           </p>
           <p>
+            We also run a dedicated big-size aesthetic fashion service — Anarkalis, salwars,
+            shararas, gowns and modest pieces sized inclusively up to XXXL, designed to fit
+            and flatter every body without compromise on style.
+          </p>
+          <p>
             Whether you're dressing for a festive occasion, a wedding, or simply want to feel
             exceptional every day, Vami Clubwear has something made for you.
           </p>

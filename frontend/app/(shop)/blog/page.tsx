@@ -13,13 +13,13 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.i
 export const metadata: Metadata = {
   title: "Style Journal — Women's Fashion Tips & Stories",
   description:
-    "Style guides, bridal inspiration and fashion stories from Vami Clubwear — Indo-Western fusion, modest wear and trendy women's clothing in India.",
+    "Style guides, plus-size styling inspiration and fashion stories from Vami Clubwear — Indo-Western fusion, modest wear and size-inclusive women's clothing (up to XXXL) in India.",
   alternates: { canonical: `${SITE_URL}/blog` },
   openGraph: {
     type: 'website',
     title: "Vami Clubwear Style Journal",
     description:
-      "Style guides, bridal inspiration and fashion stories from Vami Clubwear.",
+      "Style guides, plus-size styling inspiration and fashion stories from Vami Clubwear.",
     url: `${SITE_URL}/blog`,
   },
 }
@@ -72,8 +72,8 @@ export default function BlogIndexPage() {
           Style Journal
         </h1>
         <p className="text-fg-2 max-w-[640px] mb-12" style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: '15px', lineHeight: 1.7 }}>
-          Style guides, bridal inspiration and fashion stories from the Vami
-          Clubwear atelier in Manjeri, Kerala.
+          Style guides, plus-size styling inspiration and fashion stories from
+          the Vami Clubwear atelier in Manjeri, Kerala.
         </p>
 
         {posts.length === 0 ? (

@@ -29,7 +29,7 @@ model Location {
 
 // ─────────────────────────────────────────────
 // CATEGORIES
-// Self-referential tree (e.g. "Fusion Wear > Bridal Sets")
+// Self-referential tree (e.g. "Fusion Wear > Anarkali Sets")
 // ─────────────────────────────────────────────
 
 model Category {

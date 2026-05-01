@@ -1,7 +1,7 @@
 Project: Vami Clubwear E-Commerce App & POS Sync
 Role: Lead AI Full-Stack Developer
 Project Overview
-A premium, mobile-first e-commerce web application for Vami Clubwear (based in Manjeri, Kerala). The app specializes in Indo-Western fusion wear, modest fashion, and bespoke bridal collections. It requires a real-time omnichannel inventory synchronization with the physical store's POS (Tally/Zoho) to prevent overselling.
+A premium, mobile-first e-commerce web application for Vami Clubwear (based in Manjeri, Kerala). The app specializes in Indo-Western fusion wear, modest fashion, and a dedicated big-size aesthetic fashion service for women — size-inclusive Anarkalis, salwars, shararas, churidars, gowns and dupattas tailored up to XXXL. It requires a real-time omnichannel inventory synchronization with the physical store's POS (Tally/Zoho) to prevent overselling.
 
 Visual & UX Architecture
 Theme: Strict Dark Mode (Deep Charcoal #121212 background, Soft Black #1E1E1E surfaces, Mocha Mousse #5C4033 primary accents).

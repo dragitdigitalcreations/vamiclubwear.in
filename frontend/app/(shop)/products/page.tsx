@@ -19,7 +19,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 const CATEGORY_BLURBS: Record<string, string> = {
-  'anarkali':       'Floor-grazing Anarkalis with intricate zari work, sheer dupattas and bridal-grade embroidery — handcrafted for festive evenings, mehndis and receptions.',
+  'anarkali':       'Floor-grazing Anarkalis with intricate zari work, sheer dupattas and statement embroidery — handcrafted for festive evenings, mehndis and receptions, available up to XXXL.',
   'salwar':         'Festive salwar suits and salwar sets in maroon, navy, dark green velvet and Banarasi mul chanderi — sized L through XXXL.',
   'sharara-set':    'Three-piece sharara sets in georgette, chinon and mul cotton — modest, dramatic, designed to move.',
   'churidar-bit':   'Unstitched churidar fabric bits — premium Kerala-sourced cottons and silks, perfect for tailor-made fits.',
@@ -31,7 +31,7 @@ const CATEGORY_BLURBS: Record<string, string> = {
 }
 
 const DEFAULT_BLURB =
-  'Vami Clubwear is a Manjeri, Kerala–based label specialising in Indo-Western fusion wear, modest fashion and bespoke bridal couture. Every piece is handcrafted with attention to embroidery, fabric and fit — Anarkalis, salwars, shararas, churidars, gowns and dupattas, sized for every body. Free shipping across India, online prepaid only.'
+  'Vami Clubwear is a Manjeri, Kerala–based label specialising in Indo-Western fusion wear, modest fashion and a dedicated big-size aesthetic collection for plus-size women. Every piece is handcrafted with attention to embroidery, fabric and fit — Anarkalis, salwars, shararas, churidars, gowns and dupattas, sized inclusively up to XXXL. Free shipping across India, online prepaid only.'
 
 interface PageProps {
   searchParams?: { category?: string; sort?: string; page?: string }
@@ -43,7 +43,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const title = label ? `${label} Collection` : 'All Collections'
   const description = label
     ? `Shop the ${label} collection at Vami Clubwear — premium Indo-Western fusion handcrafted in Manjeri, Kerala.`
-    : 'Browse the complete Vami Clubwear catalog — Anarkalis, salwars, shararas, churidars, modest wear and bridal couture.'
+    : 'Browse the complete Vami Clubwear catalog — Anarkalis, salwars, shararas, churidars, modest wear and big-size aesthetic fashion for women up to XXXL.'
 
   return {
     title,

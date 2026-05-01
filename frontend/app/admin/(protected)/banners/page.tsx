@@ -220,11 +220,11 @@ function BannerRow({
               </div>
               <div>
                 <label className="mb-1 block text-xs text-muted">Secondary button label</label>
-                <input className={inputCls} value={draft.ctaAltLabel ?? ''} onChange={field('ctaAltLabel')} placeholder="Bridal Edit" />
+                <input className={inputCls} value={draft.ctaAltLabel ?? ''} onChange={field('ctaAltLabel')} placeholder="Big Size Edit" />
               </div>
               <div>
                 <label className="mb-1 block text-xs text-muted">Secondary button link</label>
-                <input className={inputCls} value={draft.ctaAltHref ?? ''} onChange={field('ctaAltHref')} placeholder="/products?category=bridal" />
+                <input className={inputCls} value={draft.ctaAltHref ?? ''} onChange={field('ctaAltHref')} placeholder="/products?category=big-size" />
               </div>
             </div>
           </div>

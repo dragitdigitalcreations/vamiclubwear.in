@@ -68,8 +68,8 @@ export default function SizingPage() {
         <p className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-2">Fit Tip</p>
         <p className="text-sm text-muted leading-relaxed">
           If you are between two sizes, we recommend sizing up for a comfortable, relaxed fit.
-          For custom measurements (bridal orders), contact us on WhatsApp with your exact measurements
-          and we will tailor the garment to you.
+          For custom or plus-size measurements (anything beyond our XXL chart), contact us on WhatsApp with your exact measurements
+          and we will tailor the garment to you — fits available up to XXXL.
         </p>
       </div>
     </div>

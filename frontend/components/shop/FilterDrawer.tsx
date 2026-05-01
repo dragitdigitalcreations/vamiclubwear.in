@@ -8,7 +8,7 @@ import { useFilterStore } from '@/stores/filterStore'
 const CATEGORIES = [
   { slug: '',                    label: 'All Pieces' },
   { slug: 'indo-western-fusion', label: 'Fusion Wear' },
-  { slug: 'bridal-collection',   label: 'Bridal' },
+  { slug: 'big-size',            label: 'Big Size' },
   { slug: 'modest-wear',         label: 'Modest Fashion' },
   { slug: 'dupattas-drapes',     label: 'Dupattas' },
 ]

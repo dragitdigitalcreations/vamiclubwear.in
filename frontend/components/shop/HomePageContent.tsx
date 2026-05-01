@@ -959,9 +959,10 @@ function AboutSection() {
           className="mt-8 text-sm leading-[1.85] text-muted md:text-base"
         >
           Vami Clubwear is a premium Indo-Western fashion label born from the rich cultural
-          heritage of Manjeri, Kerala. We reimagine traditional silhouettes — from bespoke
-          bridal ensembles to everyday fusion wear — as statements of individuality, grace,
-          and quiet luxury. Every piece is crafted with intention, worn with pride.
+          heritage of Manjeri, Kerala. We reimagine traditional silhouettes — from everyday
+          fusion wear to size-inclusive aesthetic pieces tailored up to XXXL — as statements
+          of individuality, grace, and quiet luxury. Every piece is crafted with intention,
+          worn with pride.
         </motion.p>
 
         <motion.div
@@ -1623,14 +1624,15 @@ function SeoContentBlock() {
       <p>
         Vami Clubwear is a Manjeri, Kerala&ndash;based online clothing store
         for modern Indian women. Discover trendy outfits for women, premium
-        Indo-Western fusion wear, modest fashion and bespoke bridal couture
-        &mdash; from floor-grazing Anarkalis and embroidered shararas to
-        breezy cotton salwars, tailored churidars and statement dupattas.
-        Every piece is handcrafted with attention to embroidery, fabric and
-        fit, then shipped free across India. Whether you&rsquo;re searching
-        for an everyday Kerala fashion staple, a wedding-ready couture set
-        or modest tops and dresses for women, Vami Clubwear delivers
-        premium quality, inclusive sizing up to XXXL and a curated
+        Indo-Western fusion wear, modest fashion and a dedicated big-size
+        aesthetic collection for plus-size women &mdash; from floor-grazing
+        Anarkalis and embroidered shararas to breezy cotton salwars, tailored
+        churidars and statement dupattas, all available up to XXXL. Every
+        piece is handcrafted with attention to embroidery, fabric and fit,
+        then shipped free across India. Whether you&rsquo;re searching for
+        an everyday Kerala fashion staple, a festive statement set or
+        size-inclusive modest tops and dresses for women, Vami Clubwear
+        delivers premium quality, inclusive sizing up to XXXL and a curated
         women&rsquo;s clothing online experience trusted by shoppers across
         India.
       </p>
@@ -1646,7 +1648,7 @@ function SeoContentBlock() {
         <li><a href="/products?category=duppatta">Shop designer dupattas online in India</a></li>
         <li><a href="/products?category=big-size">Shop plus-size women&rsquo;s clothing (up to XXXL)</a></li>
         <li><a href="/products">Shop the full Vami Clubwear women&rsquo;s collection</a></li>
-        <li><a href="/blog">Read the Vami Clubwear style journal &mdash; women&rsquo;s fashion tips &amp; bridal inspiration</a></li>
+        <li><a href="/blog">Read the Vami Clubwear style journal &mdash; women&rsquo;s fashion tips &amp; plus-size styling inspiration</a></li>
       </ul>
     </section>
   )
