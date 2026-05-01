@@ -110,7 +110,7 @@ function HeroSection() {
       {/* Desktop wash kept centered; mobile wash removed so the models read cleanly behind the headline. */}
       <div className="pointer-events-none absolute inset-0 hidden sm:block bg-gradient-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
 
-      <div className="relative z-10 flex h-full items-start sm:items-center px-6 pt-10 pb-32 sm:px-16 sm:py-0 lg:px-24">
+      <div className="relative z-10 flex h-full items-start sm:items-center px-6 pt-10 pb-10 sm:px-16 sm:py-0 lg:px-24">
         <div className="max-w-[560px] w-full flex flex-col">
 
           {/* Visual hero headline — demoted to h2 so the page exposes a single
@@ -151,7 +151,7 @@ function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.38 }}
-            className="self-center sm:self-start mt-auto mb-[26%] sm:mb-0 sm:mt-8 pt-10 sm:pt-0"
+            className="absolute right-6 bottom-[150px] sm:static sm:mt-8 sm:pt-0"
           >
             <Link
               href="/products"
