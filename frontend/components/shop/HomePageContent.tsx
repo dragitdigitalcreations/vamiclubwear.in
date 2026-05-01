@@ -721,6 +721,28 @@ function PromoSection() {
 
 // ─── About section ────────────────────────────────────────────────────────────
 // ─── Customer Reviews ────────────────────────────────────────────────────────
+const REVIEW_WORD_LIMIT = 25
+
+function countWords(s: string) {
+  return s.trim().split(/\s+/).filter(Boolean).length
+}
+
+function clampWords(s: string, max: number) {
+  const parts = s.split(/(\s+)/)
+  let used = 0
+  const out: string[] = []
+  for (const part of parts) {
+    if (/^\s+$/.test(part)) {
+      out.push(part)
+    } else if (part.length > 0) {
+      if (used >= max) break
+      out.push(part)
+      used++
+    }
+  }
+  return out.join('')
+}
+
 function CustomerReviewsSection() {
   const [reviews, setReviews] = useState<CustomerReview[]>([])
   const [activeIdx, setActiveIdx] = useState(0)
@@ -751,6 +773,10 @@ function CustomerReviewsSection() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (submitting) return
+    if (countWords(form.body) > REVIEW_WORD_LIMIT) {
+      setFeedback({ type: 'err', msg: `Please keep your review within ${REVIEW_WORD_LIMIT} words.` })
+      return
+    }
     setSubmitting(true)
     setFeedback(null)
     try {
@@ -808,13 +834,15 @@ function CustomerReviewsSection() {
               <textarea
                 required
                 minLength={4}
-                maxLength={600}
                 rows={3}
-                placeholder="Tell us about your Vami moment…"
+                placeholder={`Tell us about your Vami moment… (max ${REVIEW_WORD_LIMIT} words)`}
                 value={form.body}
-                onChange={(e) => setForm({ ...form, body: e.target.value })}
-                className="resize-none border-b border-black/20 bg-transparent py-2 text-sm text-black placeholder:text-black/40 focus:border-black focus:outline-none"
+                onChange={(e) => setForm({ ...form, body: clampWords(e.target.value, REVIEW_WORD_LIMIT) })}
+                className="resize-none border-b border-black/20 bg-transparent py-2 text-center font-poppins text-sm text-black placeholder:text-black/40 focus:border-black focus:outline-none"
               />
+              <div className="text-right text-[10px] uppercase tracking-[0.18em] text-black/40">
+                {countWords(form.body)} / {REVIEW_WORD_LIMIT} words
+              </div>
               {feedback && (
                 <p className={`text-[11px] ${feedback.type === 'ok' ? 'text-green-700' : 'text-red-600'}`}>
                   {feedback.msg}
@@ -867,10 +895,10 @@ function CustomerReviewsSection() {
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 className="flex flex-col gap-5"
               >
-                <p className="font-display text-lg leading-[1.55] text-black md:text-xl">
+                <p className="text-center font-poppins text-lg font-light leading-[1.7] text-black md:text-xl">
                   &ldquo;{active?.body}&rdquo;
                 </p>
-                <footer className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/70">
+                <footer className="text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-black/70">
                   — {active?.customerName}
                 </footer>
               </motion.blockquote>

@@ -5,10 +5,15 @@ import { requireAuth } from '../../middleware/auth'
 
 const router = Router()
 
+const REVIEW_WORD_LIMIT = 25
+
 const submitSchema = z.object({
   customerName: z.string().min(1).max(120),
   email:        z.string().email().max(200),
-  body:         z.string().min(4).max(600),
+  body:         z.string().min(4).max(600).refine(
+    (v) => v.trim().split(/\s+/).filter(Boolean).length <= REVIEW_WORD_LIMIT,
+    { message: `Please keep your review within ${REVIEW_WORD_LIMIT} words.` },
+  ),
 })
 
 // ── GET /api/reviews — public, approved reviews for storefront carousel ──────

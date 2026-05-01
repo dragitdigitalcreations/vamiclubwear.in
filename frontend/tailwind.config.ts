@@ -124,6 +124,7 @@ const config: Config = {
       fontFamily: {
         sans:    ['Metropolis', 'Arial', 'Helvetica', 'sans-serif'],
         display: ['NTFabulous', 'Metropolis', 'Arial', 'Helvetica', 'sans-serif'],
+        poppins: ['var(--font-poppins)', 'Inter', 'system-ui', 'sans-serif'],
       },
 
       fontSize: {
