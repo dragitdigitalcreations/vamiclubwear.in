@@ -20,22 +20,29 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.i
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Vami Clubwear — Indo-Western Fusion & Bridal Couture | Manjeri, Kerala',
+    default: "Trendy Women's Fashion in India | Vami Clubwear",
     template: '%s | Vami Clubwear',
   },
   description:
-    'Shop premium Indo-Western fusion wear, modest fashion, and bespoke bridal collections at Vami Clubwear. Anarkalis, salwars, shararas, churidars and more — handcrafted in Manjeri, Kerala. Free shipping across India.',
+    "Shop stylish women's clothing online at Vami Clubwear. Discover trendy tops, dresses & oversized t-shirts for modern women in India. Indo-Western fusion, modest fashion & bridal couture handcrafted in Manjeri, Kerala.",
   applicationName: 'Vami Clubwear',
   generator: 'Next.js',
   category: 'fashion',
   keywords: [
+    "women's fashion India",
+    'trendy outfits for women',
+    'online clothing store India',
+    "women's clothing online",
+    'oversized t-shirts for women',
+    'dresses for women',
+    'tops for women online',
+    'Kerala fashion',
     'Vami Clubwear',
     'Vami Manjeri',
     'Indo-Western fashion',
     'fusion wear India',
     'bridal collection',
     'modest fashion',
-    'Kerala fashion online',
     'Manjeri boutique',
     'Anarkali online',
     'salwar suit online',
@@ -57,23 +64,23 @@ export const metadata: Metadata = {
     locale: 'en_IN',
     url: SITE_URL,
     siteName: 'Vami Clubwear',
-    title: 'Vami Clubwear — Indo-Western Fusion & Bridal Couture',
+    title: "Trendy Women's Fashion in India | Vami Clubwear",
     description:
-      'Premium Indo-Western fusion wear, modest fashion, and bespoke bridal collections. Handcrafted in Manjeri, Kerala.',
+      "Shop stylish women's clothing online at Vami Clubwear. Discover trendy tops, dresses & oversized t-shirts for modern women in India.",
     images: [
       {
         url: '/hero-models.webp',
         width: 1200,
         height: 630,
-        alt: 'Vami Clubwear — Indo-Western fusion couture',
+        alt: "Vami Clubwear — trendy women's fashion in India",
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Vami Clubwear — Indo-Western Fusion & Bridal Couture',
+    title: "Trendy Women's Fashion in India | Vami Clubwear",
     description:
-      'Premium Indo-Western fusion wear, modest fashion, and bespoke bridal collections.',
+      "Shop stylish women's clothing online at Vami Clubwear. Discover trendy tops, dresses & oversized t-shirts for modern women in India.",
     images: ['/hero-models.webp'],
   },
   robots: {

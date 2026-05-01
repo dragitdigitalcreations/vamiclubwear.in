@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { CATEGORIES } from '@/lib/categories'
 import { serverProductsApi } from '@/lib/server-api'
+import { getAllPosts } from '@/lib/blog/posts'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.in'
 
@@ -17,7 +18,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/shipping`, lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
     { url: `${SITE_URL}/returns`,  lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
     { url: `${SITE_URL}/sizing`,   lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${SITE_URL}/blog`,     lastModified: now, changeFrequency: 'weekly',  priority: 0.6 },
   ]
+
+  const blogPaths: MetadataRoute.Sitemap = getAllPosts().map((p) => ({
+    url: `${SITE_URL}/blog/${p.slug}`,
+    lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(p.publishedAt),
+    changeFrequency: 'monthly',
+    priority: 0.5,
+  }))
 
   const categoryPaths: MetadataRoute.Sitemap = CATEGORIES.map((c) => ({
     url: `${SITE_URL}/products?category=${c.slug}`,
@@ -43,5 +52,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // rather than failing the request entirely.
   }
 
-  return [...staticPaths, ...categoryPaths, ...productPaths]
+  return [...staticPaths, ...categoryPaths, ...blogPaths, ...productPaths]
 }

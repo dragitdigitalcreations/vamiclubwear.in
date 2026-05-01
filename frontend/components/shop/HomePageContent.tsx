@@ -114,7 +114,10 @@ function HeroSection() {
       <div className="relative z-10 flex h-full items-start sm:items-center px-6 pt-10 pb-10 sm:px-16 sm:py-0 lg:px-24">
         <div className="max-w-[560px] w-full flex flex-col">
 
-          <motion.h1
+          {/* Visual hero headline — demoted to h2 so the page exposes a single
+              keyword-targeted <h1> further down (rendered sr-only inside
+              HomePageContent). Visual styling is unchanged. */}
+          <motion.h2
             initial={{ opacity: 0, y: 36 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
@@ -127,7 +130,7 @@ function HeroSection() {
             }}
           >
             Calling<br />All Fashion<br />Lovers!
-          </motion.h1>
+          </motion.h2>
 
           <motion.p
             initial={{ opacity: 0, y: 24 }}
@@ -153,6 +156,7 @@ function HeroSection() {
           >
             <Link
               href="/products"
+              aria-label="Shop trendy women's fashion online in India"
               className="group inline-flex items-center gap-3 rounded-full bg-fg-1 px-7 py-3.5 sm:px-9 sm:py-4 text-white transition-all duration-300 hover:bg-black hover:gap-5"
               style={{
                 fontFamily: 'var(--font-poppins), Poppins, sans-serif',
@@ -298,6 +302,7 @@ function ThisJustIn() {
       <div className="mt-10 flex justify-center">
         <Link
           href="/products"
+          aria-label="Shop trendy women's clothing online at Vami Clubwear"
           className="rounded-full border-2 border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
         >
           Shop Now
@@ -532,6 +537,7 @@ function PromoSection() {
             </p>
             <Link
               href="/products"
+              aria-label="Shop Indo-Western fusion outfits for women in India"
               className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-white bg-white/80 px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#111] backdrop-blur-sm transition-all duration-300 hover:bg-[#111] hover:text-white"
             >
               Shop Now
@@ -598,6 +604,7 @@ function PromoSection() {
             </p>
             <Link
               href="/products"
+              aria-label="Shop premium women's fashion starting at ₹1,499"
               className="mt-4 inline-flex w-fit items-center gap-2 border-2 border-white bg-white px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition-all duration-300 hover:bg-[#5C4033] hover:text-white"
             >
               Shop Now
@@ -702,6 +709,7 @@ function PromoSection() {
         </p>
         <Link
           href="/products"
+          aria-label="Shop premium women's clothing online in India"
           className="mt-5 inline-flex items-center gap-2 rounded-full border-2 border-white px-7 py-2.5 text-[11px] font-medium text-[#111] transition-all duration-300 hover:bg-[#111] hover:text-white"
         >
           Shop Now
@@ -1044,6 +1052,7 @@ function ModestCollectionBanner() {
 
           <Link
             href="/products"
+            aria-label="Shop modest fashion & abayas for women online"
             className="mt-7 inline-flex items-center gap-2.5 rounded-full border-2 border-white px-8 py-3 text-white transition-all duration-300 hover:bg-white hover:text-[#121212]"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
@@ -1275,6 +1284,7 @@ function FeaturedProducts() {
       <div className="mt-10 flex justify-center">
         <Link
           href="/products"
+          aria-label="Shop trendy women's clothing online at Vami Clubwear"
           className="rounded-full border-2 border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
         >
           Shop Now
@@ -1399,6 +1409,7 @@ function TrendingSection() {
       <div className="mt-10 flex justify-center">
         <Link
           href="/products"
+          aria-label="Shop trendy women's clothing online at Vami Clubwear"
           className="rounded-full border-2 border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
         >
           Shop Now
@@ -1592,6 +1603,7 @@ function VideoShowcase() {
       <div className="mt-10 flex justify-center">
         <Link
           href="/products"
+          aria-label="Shop trendy women's clothing online at Vami Clubwear"
           className="rounded-full border-2 border-white bg-transparent px-7 py-2.5 sm:px-10 sm:py-3 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-fg-1 transition-all duration-300 hover:bg-fg-1 hover:text-white"
         >
           Shop Now
@@ -1601,10 +1613,50 @@ function VideoShowcase() {
   )
 }
 
+// ─── Invisible SEO block — single keyword-targeted <h1>, supporting copy
+// and keyword-rich category anchors. Rendered sr-only so the premium visual
+// design stays untouched while Googlebot still gets crawlable text. ────────
+function SeoContentBlock() {
+  return (
+    <section className="sr-only" aria-hidden="false">
+      <h1>Trendy Women&rsquo;s Fashion in India | Vami Clubwear</h1>
+      <p>
+        Vami Clubwear is a Manjeri, Kerala&ndash;based online clothing store
+        for modern Indian women. Discover trendy outfits for women, premium
+        Indo-Western fusion wear, modest fashion and bespoke bridal couture
+        &mdash; from floor-grazing Anarkalis and embroidered shararas to
+        breezy cotton salwars, tailored churidars and statement dupattas.
+        Every piece is handcrafted with attention to embroidery, fabric and
+        fit, then shipped free across India. Whether you&rsquo;re searching
+        for an everyday Kerala fashion staple, a wedding-ready couture set
+        or modest tops and dresses for women, Vami Clubwear delivers
+        premium quality, inclusive sizing up to XXXL and a curated
+        women&rsquo;s clothing online experience trusted by shoppers across
+        India.
+      </p>
+      <h2>Shop Women&rsquo;s Fashion by Category</h2>
+      <ul>
+        <li><a href="/products?category=anarkali">Shop Anarkali suits for women online in India</a></li>
+        <li><a href="/products?category=salwar">Shop festive salwar suits for women online</a></li>
+        <li><a href="/products?category=sharara-set">Shop sharara sets for women in India</a></li>
+        <li><a href="/products?category=cotton-salwar">Shop everyday cotton salwars for women</a></li>
+        <li><a href="/products?category=churidar-bit">Shop unstitched churidar fabric online</a></li>
+        <li><a href="/products?category=modest-wear">Shop modest wear &amp; abayas for women</a></li>
+        <li><a href="/products?category=pants">Shop Indo-Western fusion pants for women</a></li>
+        <li><a href="/products?category=duppatta">Shop designer dupattas online in India</a></li>
+        <li><a href="/products?category=big-size">Shop plus-size women&rsquo;s clothing (up to XXXL)</a></li>
+        <li><a href="/products">Shop the full Vami Clubwear women&rsquo;s collection</a></li>
+        <li><a href="/blog">Read the Vami Clubwear style journal &mdash; women&rsquo;s fashion tips &amp; bridal inspiration</a></li>
+      </ul>
+    </section>
+  )
+}
+
 // ─── Export ───────────────────────────────────────────────────────────────────
 export function HomePageContent() {
   return (
     <div className="landing-page">
+      <SeoContentBlock />
       <AnnouncementBar />
       <HeroSection />
       <ThisJustIn />
