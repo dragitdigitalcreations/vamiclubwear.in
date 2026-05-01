@@ -151,7 +151,7 @@ function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.38 }}
-            className="absolute right-6 bottom-[150px] sm:static sm:mt-8 sm:pt-0"
+            className="absolute left-6 bottom-[150px] sm:static sm:mt-8 sm:pt-0"
           >
             <Link
               href="/products"
