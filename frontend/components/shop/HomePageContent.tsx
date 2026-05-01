@@ -107,8 +107,7 @@ function HeroSection() {
         }}
       />
 
-      {/* Left-side wash: stronger on mobile so black text stays legible; centered on desktop */}
-      <div className="pointer-events-none absolute inset-0 sm:hidden bg-gradient-to-b from-[#FAF8F5]/95 via-[#FAF8F5]/45 to-transparent" />
+      {/* Desktop wash kept centered; mobile wash removed so the models read cleanly behind the headline. */}
       <div className="pointer-events-none absolute inset-0 hidden sm:block bg-gradient-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
 
       <div className="relative z-10 flex h-full items-start sm:items-center px-6 pt-10 pb-10 sm:px-16 sm:py-0 lg:px-24">
@@ -157,10 +156,10 @@ function HeroSection() {
             <Link
               href="/products"
               aria-label="Shop trendy women's fashion online in India"
-              className="group inline-flex items-center gap-3 rounded-full bg-fg-1 px-7 py-3.5 sm:px-9 sm:py-4 text-white transition-all duration-300 hover:bg-black hover:gap-5"
+              className="group inline-flex items-center gap-3 rounded-full bg-white/15 backdrop-blur-md border border-white/30 px-7 py-3.5 sm:px-9 sm:py-4 text-fg-1 shadow-[0_4px_24px_rgba(0,0,0,0.08)] transition-all duration-300 hover:bg-black hover:border-black hover:text-white hover:gap-5"
               style={{
                 fontFamily: 'var(--font-poppins), Poppins, sans-serif',
-                fontWeight: 400,
+                fontWeight: 500,
                 fontSize: 'clamp(13px, 3.8vw, 16px)',
               }}
             >
