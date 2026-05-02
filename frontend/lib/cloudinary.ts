@@ -49,6 +49,6 @@ export function cloudinaryUrl(url: string, opts: CloudinaryOptions = {}): string
  */
 export function cloudinarySrcSet(url: string, widths = [400, 800, 1200]) {
   return widths
-    .map((w) => `${cloudinaryUrl(url, { w, q: 80 })} ${w}w`)
+    .map((w) => `${cloudinaryUrl(url, { w })} ${w}w`)
     .join(', ')
 }

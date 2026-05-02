@@ -72,10 +72,10 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   }, [shareOpen])
 
   const rawImageUrl   = getPrimaryImage(product)
-  const imageUrl      = rawImageUrl ? cloudinaryUrl(rawImageUrl, { w: 600, q: 80 }) : null
+  const imageUrl      = rawImageUrl ? cloudinaryUrl(rawImageUrl, { w: 600 }) : null
   const hoverImages   = product.media?.filter((m) => m.type === 'IMAGE').sort((a, b) => a.sortOrder - b.sortOrder)
   const hoverImageUrl = hoverImages && hoverImages.length > 1
-    ? cloudinaryUrl(hoverImages[1].url, { w: 600, q: 80 })
+    ? cloudinaryUrl(hoverImages[1].url, { w: 600 })
     : null
 
   const isNew      = isNewProduct(product.createdAt)

@@ -56,6 +56,9 @@ export const productController = {
   ) => {
     try {
       const result = await productService.listProducts(req.query)
+      // Edge cache for 30s + serve stale for up to 5min while revalidating —
+      // safe because admin product/inventory mutations bust the in-memory cache.
+      res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=300')
       res.json(result)
     } catch (err) {
       next(err)
@@ -82,6 +85,7 @@ export const productController = {
   ) => {
     try {
       const product = await productService.getProductBySlug(req.params.slug)
+      res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=300')
       res.json(product)
     } catch (err) {
       next(err)

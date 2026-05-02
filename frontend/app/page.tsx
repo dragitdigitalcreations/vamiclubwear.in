@@ -10,6 +10,8 @@ import { HomePageContent } from '@/components/shop/HomePageContent'
 export default function RootPage() {
   return (
     <>
+      {/* Preload LCP hero image — only on the home page (was global, wasted on every other route) */}
+      <link rel="preload" as="image" href="/hero-models.webp" fetchPriority="high" />
       <Navbar />
       <main>
         <HomePageContent />

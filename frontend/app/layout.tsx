@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
-import '@fontsource/metropolis/300.css'
 import '@fontsource/metropolis/400.css'
 import '@fontsource/metropolis/500.css'
 import '@fontsource/metropolis/600.css'
@@ -160,7 +159,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <head>
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
-        <link rel="preload" as="image" href="/hero-models.webp" fetchPriority="high" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }}

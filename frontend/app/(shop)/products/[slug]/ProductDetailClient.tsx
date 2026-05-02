@@ -78,7 +78,7 @@ function MediaGallery({ media, selectedColor }: { media: ProductMedia[]; selecte
               />
             ) : current?.url ? (
               <Image
-                src={cloudinaryUrl(current.url, { w: 900, q: 85 })}
+                src={cloudinaryUrl(current.url, { w: 900 })}
                 alt={current.altText ?? 'Product image'}
                 fill
                 className="object-cover"
@@ -140,7 +140,7 @@ function MediaGallery({ media, selectedColor }: { media: ProductMedia[]; selecte
                 </div>
               ) : (
                 <Image
-                  src={cloudinaryUrl(item.url, { w: 120, q: 70 })}
+                  src={cloudinaryUrl(item.url, { w: 120 })}
                   alt={item.altText ?? ''}
                   fill
                   className="object-cover"
@@ -300,7 +300,7 @@ function StickyCartBar({
               <Image
                 src={cloudinaryUrl(
                   product.media.find((m) => m.type === 'IMAGE')!.url,
-                  { w: 80, q: 70 }
+                  { w: 80 }
                 )}
                 alt={product.name}
                 fill

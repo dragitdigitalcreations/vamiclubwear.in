@@ -110,7 +110,7 @@ function WishlistCard({
   onRemove: () => void
 }) {
   const imageUrl = item.imageUrl
-    ? cloudinaryUrl(item.imageUrl, { w: 600, q: 80 })
+    ? cloudinaryUrl(item.imageUrl, { w: 600 })
     : null
 
   return (

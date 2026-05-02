@@ -19,6 +19,7 @@ if (process.env.JWT_SECRET === 'vami-dev-secret-change-in-production' && process
 import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
+import compression from 'compression'
 import rateLimit from 'express-rate-limit'
 import apiRoutes from './routes/index'
 import { errorHandler } from './middleware/errorHandler'
@@ -31,6 +32,12 @@ const PORT = process.env.PORT ?? 3001
 
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(helmet())
+
+// ── gzip compression — shrinks JSON payloads (e.g. /api/products) ~70-80%.
+// Cloud Run does not auto-compress; this is the single biggest backend win.
+// Cast: @types/compression's RequestHandler doesn't perfectly align with the
+// installed Express type signature, but the runtime contract is correct.
+app.use(compression() as unknown as express.RequestHandler)
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 const allowedOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:3000')

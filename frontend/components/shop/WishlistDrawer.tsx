@@ -76,7 +76,7 @@ export function WishlistDrawer() {
                       >
                         {item.imageUrl ? (
                           <Image
-                            src={cloudinaryUrl(item.imageUrl, { w: 120, q: 75 })}
+                            src={cloudinaryUrl(item.imageUrl, { w: 120 })}
                             alt={item.name}
                             fill
                             className="object-cover"
