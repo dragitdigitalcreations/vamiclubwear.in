@@ -438,21 +438,7 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   CONTENT BOX VISIBILITY — pure white strokes on every non-landing page
-   ───────────────────────────────────────────────────────────────────────
-   Storefront pages (PDP, cart, checkout, profile, track, etc.) are on a
-   cream background and the subtle grey border tokens were washing out.
-   Pure white borders on the cream bg give a clean "card lifted" feel.
-   Landing page keeps its original borders via the .landing-page scope. */
-
-body:not(:has(.landing-page)) .border-border,
-body:not(:has(.landing-page)) .border { border-color: #FFFFFF !important; }
-
-.landing-page .border-border,
-.landing-page .border { border-color: var(--border) !important; }
-
-/* Admin panel already has its own dark border token; don't force white there. */
+/* Admin panel already has its own dark border token. */
 .admin-theme .border-border,
 .admin-theme .border { border-color: var(--border) !important; }
 
