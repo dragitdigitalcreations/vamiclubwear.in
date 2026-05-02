@@ -97,6 +97,8 @@ model Product {
   @@index([categoryId])
   @@index([slug])
   @@index([deletedAt])
+  // Storefront listing hot path: WHERE deletedAt IS NULL AND isActive = true ORDER BY createdAt DESC
+  @@index([deletedAt, isActive, createdAt(sort: Desc)])
 }
 
 // Per-colour barcode for products that carry one barcode per colour bundle

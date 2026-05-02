@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, Heart, Share2, Link as LinkIcon, Check, MessageCircle, Facebook, Twitter } from 'lucide-react'
 import { Product, getPrimaryImage, getVariantsByColor, getAvailableStock } from '@/types/product'
 import { useCartStore } from '@/stores/cartStore'
@@ -247,18 +246,13 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
               <Share2 className="h-3 w-3" />
             </button>
 
-            <AnimatePresence>
-              {shareOpen && (
-                <motion.div
-                  key="share-menu"
-                  initial={{ opacity: 0, y: -4, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.96 }}
-                  transition={{ duration: 0.15 }}
-                  role="menu"
-                  onClick={(e: React.MouseEvent) => e.preventDefault()}
-                  className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-md border border-border bg-background shadow-xl"
-                >
+            {shareOpen && (
+              <div
+                key="share-menu"
+                role="menu"
+                onClick={(e: React.MouseEvent) => e.preventDefault()}
+                className="absolute right-0 top-9 z-30 w-44 overflow-hidden rounded-md border border-border bg-background shadow-xl animate-[fadeInDown_150ms_ease-out]"
+              >
                   <a
                     href={`https://wa.me/?text=${encodeURIComponent(`${product.name} — ${getShareUrl()}`)}`}
                     target="_blank"
@@ -299,34 +293,30 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
                       ? <><Check className="h-3.5 w-3.5 text-green-400" /> Link copied</>
                       : <><LinkIcon className="h-3.5 w-3.5 text-muted" /> Copy link</>}
                   </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* ── Add to Bag — slides up from bottom on hover ── */}
-        <AnimatePresence>
-          {hovered && defaultVariant && (
-            <motion.button
-              key="add-bag"
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '100%', opacity: 0 }}
-              transition={{ duration: 0.22, ease: [0.32, 0, 0.67, 0] }}
-              onClick={handleQuickAdd}
-              className={`absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-1.5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] transition-colors duration-150 ${
-                addedPulse
-                  ? 'bg-green-700 text-white'
-                  : 'bg-white/95 text-on-background hover:bg-on-background hover:text-white'
-              }`}
-              aria-label="Add to bag"
-            >
-              <ShoppingBag className="h-3 w-3" />
-              {addedPulse ? 'Added ✓' : 'Add to Bag'}
-            </motion.button>
-          )}
-        </AnimatePresence>
+        {/* ── Add to Bag — slides up from bottom on hover (pure CSS, no framer-motion) ── */}
+        {defaultVariant && (
+          <button
+            onClick={handleQuickAdd}
+            className={`absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-1.5 py-3 text-[10px] font-semibold uppercase tracking-[0.15em] transition-[transform,opacity,background-color,color] duration-200 ease-out ${
+              hovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
+            } ${
+              addedPulse
+                ? 'bg-green-700 text-white'
+                : 'bg-white/95 text-on-background hover:bg-on-background hover:text-white'
+            }`}
+            aria-hidden={!hovered}
+            tabIndex={hovered ? 0 : -1}
+            aria-label="Add to bag"
+          >
+            <ShoppingBag className="h-3 w-3" />
+            {addedPulse ? 'Added ✓' : 'Add to Bag'}
+          </button>
+        )}
       </div>
 
       {/* ── Info block ── */}

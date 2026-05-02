@@ -1,9 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
-import '@fontsource/metropolis/400.css'
-import '@fontsource/metropolis/500.css'
-import '@fontsource/metropolis/600.css'
-import '@fontsource/metropolis/700.css'
 import './globals.css'
 import { Toaster } from '@/components/ui/Toaster'
 
@@ -159,6 +155,17 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <head>
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        {/* Preconnect to the backend so the first /api call doesn't pay a TCP+TLS handshake */}
+        <link rel="preconnect" href="https://api.vamiclubwear.in" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://api.vamiclubwear.in" />
+        {/* Preload the body weight of Metropolis so first paint isn't served in the fallback font */}
+        <link
+          rel="preload"
+          as="font"
+          type="font/woff2"
+          href="/fonts/metropolis/metropolis-latin-400-normal.woff2"
+          crossOrigin=""
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }}
