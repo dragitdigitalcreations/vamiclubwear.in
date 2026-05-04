@@ -9,6 +9,7 @@ import { productsApi, reviewsApi, type CustomerReview } from '@/lib/api'
 import { getPrimaryImage } from '@/types/product'
 import type { Product } from '@/types/product'
 import { CATEGORIES } from '@/lib/categories'
+import { cloudinaryUrl } from '@/lib/cloudinary'
 import { ShopVamiMarquee } from '@/components/shop/ShopVamiMarquee'
 
 // ─── Shared animation ─────────────────────────────────────────────────────────
@@ -179,8 +180,10 @@ function HeroSection() {
 
 
 // ─── Shared home card — image only, info rendered outside by parent ───────────
-function HomeCard({ product }: { product: Product }) {
-  const imgUrl = getPrimaryImage(product)
+function HomeCard({ product, priority = false }: { product: Product; priority?: boolean }) {
+  const rawUrl = getPrimaryImage(product)
+  // Without cloudinaryUrl we'd pull the 2-3 MB original on every cold start.
+  const imgUrl = rawUrl ? cloudinaryUrl(rawUrl, { w: 600 }) : null
   return (
     <Link
       href={`/products/${product.slug}`}
@@ -191,8 +194,9 @@ function HomeCard({ product }: { product: Product }) {
           src={imgUrl}
           alt={product.name}
           fill
+          priority={priority}
           className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-          sizes="232px"
+          sizes="(max-width: 640px) 82vw, 236px"
         />
       )}
     </Link>
@@ -274,10 +278,10 @@ function ThisJustIn() {
                     </div>
                   </div>
                 ))
-              : products.map((product) => (
+              : products.map((product, i) => (
                   <div key={product.id} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
                     <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
-                      <HomeCard product={product} />
+                      <HomeCard product={product} priority={i < 4} />
                     </div>
                     <div className="pt-2">
                       <p className="truncate text-[11px] text-fg-2">{product.name}</p>
@@ -409,11 +413,11 @@ function CategorySection() {
                       <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
                         {imgUrl ? (
                           <Image
-                            src={imgUrl}
+                            src={cloudinaryUrl(imgUrl, { w: 600 })}
                             alt={cat.label}
                             fill
                             className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                            sizes="236px"
+                            sizes="(max-width: 640px) 82vw, 236px"
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-[#E8E4DE] text-[11px] font-medium uppercase tracking-[0.18em] text-fg-3/70">
@@ -1282,13 +1286,13 @@ function FeaturedProducts() {
                     </div>
                   </div>
                 ))
-              : products.map((product) => (
+              : products.map((product, i) => (
                   <div key={product.id} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
                     <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
                       <span className="absolute left-3 top-3 z-10 rounded-full bg-black px-3 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-white">
                         Sale
                       </span>
-                      <HomeCard product={product} />
+                      <HomeCard product={product} priority={i < 4} />
                     </div>
                     <div className="pt-2">
                       <p className="truncate text-[11px] text-fg-2">{product.name}</p>
@@ -1410,10 +1414,10 @@ function TrendingSection() {
                     </div>
                   </div>
                 ))
-              : products.map((product) => (
+              : products.map((product, i) => (
                   <div key={product.id} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
                     <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
-                      <HomeCard product={product} />
+                      <HomeCard product={product} priority={i < 4} />
                     </div>
                     <div className="pt-2">
                       <p className="truncate text-[11px] text-fg-2">{product.name}</p>
@@ -1507,7 +1511,7 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
           <div className="relative h-[54px] w-[46px] flex-shrink-0 overflow-hidden rounded-[3px] bg-[#EFE9E1]">
             {item.thumbnail ? (
               <Image
-                src={item.thumbnail}
+                src={cloudinaryUrl(item.thumbnail, { w: 120 })}
                 alt={item.name}
                 fill
                 sizes="46px"

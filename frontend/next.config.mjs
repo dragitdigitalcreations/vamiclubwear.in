@@ -13,7 +13,10 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days at the edge
+    // Cloudinary URLs are content-keyed per transformation (different params =
+    // different URL), so the upstream is effectively immutable. Cache for a
+    // year so /_next/image stays warm across cold starts on Vercel.
+    minimumCacheTTL: 60 * 60 * 24 * 365,
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
     ],
