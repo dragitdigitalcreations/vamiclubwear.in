@@ -212,16 +212,38 @@ export const productService = {
       }
 
       // Re-fetch with inventory included
-      return tx.product.findUniqueOrThrow({
+      const created = await tx.product.findUniqueOrThrow({
         where: { id: product.id },
         include: productFullInclude,
       })
+
+      cache.delPattern('products:list:*').catch(() => {})
+
+      return created
     })
   },
 
   async listProducts(query: ListProductsQuery) {
     const { page, limit, categoryId, category, isActive, isFeatured, search } = query
     const skip = (page - 1) * limit
+
+    // Build a deterministic cache key from the normalized query. Skip caching
+    // for free-text search — the long tail is too large to be worth the
+    // round-trip and tends to evict hotter keys.
+    const cacheKey = !search ? `products:list:${JSON.stringify({
+      page, limit,
+      categoryId: categoryId ?? null,
+      category:   category   ?? null,
+      isActive:   isActive   ?? null,
+      isFeatured: isFeatured ?? null,
+    })}` : null
+
+    if (cacheKey) {
+      const cached = await cache.get<{
+        data: unknown[]; total: number; page: number; limit: number; totalPages: number
+      }>(cacheKey)
+      if (cached !== null) return cached
+    }
 
     // Virtual "big-size" category: any product with an active variant sized XXXL or larger.
     // This is a filter, not a stored category — so products auto-appear on the Big Size
@@ -306,13 +328,20 @@ export const productService = {
       prisma.product.count({ where }),
     ])
 
-    return {
+    const result = {
       data:       products,
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
     }
+
+    // 60s TTL — short enough that price/stock edits surface quickly even if a
+    // mutation in another instance fails to broadcast its invalidation, but
+    // long enough to absorb traffic spikes (homepage refreshes, crawlers).
+    if (cacheKey) cache.set(cacheKey, result, 60).catch(() => {})
+
+    return result
   },
 
   async getProductById(id: string) {
