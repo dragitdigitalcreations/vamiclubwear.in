@@ -440,6 +440,24 @@ export const shippingApi = {
       errors:   Array<{ orderNumber: string; error: string }>
       changes:  Array<{ orderNumber: string; from: string; to: string }>
     }>('/shipping/sync-statuses', { method: 'POST' }),
+
+  // Public — checkout calls this to confirm Delhivery delivers to a pincode.
+  // Backend caches the response for 7 days and degrades open on upstream
+  // failure (returns ok:false, serviceable:null) so a Delhivery outage never
+  // hard-blocks checkout.
+  checkPincode: (pin: string) =>
+    request<{
+      ok:          boolean
+      pin?:        string
+      cached?:     boolean
+      serviceable: boolean | null
+      prepaid?:    boolean
+      oda?:        boolean
+      city?:       string | null
+      state?:      string | null
+      reason?:     'invalid_format' | 'upstream_unavailable'
+      message?:    string
+    }>(`/shipping/check-pincode?pin=${encodeURIComponent(pin)}`),
 }
 
 // ── Uploads ───────────────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, Loader2, CheckCircle, CreditCard, ShieldCheck, Ticket, X, AlertTriangle, Truck, Store, MapPin } from 'lucide-react'
 import { useCartStore, selectSubtotal } from '@/stores/cartStore'
 import { useSavedAddress } from '@/hooks/useSavedAddress'
-import { ApiError, couponsApi, type CouponValidationResult } from '@/lib/api'
+import { ApiError, couponsApi, shippingApi, type CouponValidationResult } from '@/lib/api'
 import { toast } from '@/stores/toastStore'
 
 const RAZORPAY_KEY = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? ''
@@ -22,6 +22,66 @@ declare global {
 }
 
 type FulfillmentType = 'DELIVERY' | 'PICKUP'
+
+// ── Pincode serviceability check ─────────────────────────────────────────────
+// idle:          haven't tried yet (fewer than 6 digits)
+// checking:      Delhivery API call in flight
+// serviceable:   Delhivery confirmed delivery to this pincode
+// unserviceable: Delhivery confirmed NO delivery — the only state that blocks checkout
+// unknown:       Delhivery is down / token missing — degrade open, allow checkout
+// invalid:       client-side format failure (shouldn't normally hit this)
+
+type PinStatus =
+  | { state: 'idle' }
+  | { state: 'checking' }
+  | { state: 'serviceable';   city: string | null; state_: string | null; oda: boolean }
+  | { state: 'unserviceable' }
+  | { state: 'unknown';       message: string }
+  | { state: 'invalid';       message: string }
+
+// In-memory cache shared across the page lifetime — keys are 6-digit pincodes.
+// Outlives debounce timeouts so re-typing a pincode shows instant feedback.
+const pinCache = new Map<string, PinStatus>()
+
+function PincodeStatusLine({ status }: { status: PinStatus }) {
+  if (status.state === 'idle')        return null
+  if (status.state === 'checking') {
+    return (
+      <p id="pincode-status" className="mt-1 flex items-center gap-1.5 text-xs text-muted">
+        <Loader2 className="h-3 w-3 animate-spin" /> Checking serviceability…
+      </p>
+    )
+  }
+  if (status.state === 'serviceable') {
+    const where = [status.city, status.state_].filter(Boolean).join(', ')
+    return (
+      <p id="pincode-status" className="mt-1 flex items-center gap-1.5 text-xs text-green-400">
+        <CheckCircle className="h-3 w-3" />
+        Delivers here{where ? ` — ${where}` : ''}{status.oda ? ' (out-of-area, may take longer)' : ''}
+      </p>
+    )
+  }
+  if (status.state === 'unserviceable') {
+    return (
+      <p id="pincode-status" className="mt-1 flex items-center gap-1.5 text-xs text-red-400">
+        <AlertTriangle className="h-3 w-3" />
+        Delivery not available for this pincode
+      </p>
+    )
+  }
+  if (status.state === 'invalid') {
+    return (
+      <p id="pincode-status" className="mt-1 text-xs text-red-400">{status.message}</p>
+    )
+  }
+  // unknown — soft warn but don't block
+  return (
+    <p id="pincode-status" className="mt-1 flex items-center gap-1.5 text-xs text-amber-400">
+      <AlertTriangle className="h-3 w-3" />
+      {status.message}
+    </p>
+  )
+}
 
 interface CheckoutForm {
   customerName:  string
@@ -61,6 +121,12 @@ export default function CheckoutPage() {
   const [confirmedFulfil, setConfirmedFulfil] = useState<FulfillmentType>('DELIVERY')
   const [fulfillment,     setFulfillment]     = useState<FulfillmentType>('DELIVERY')
   const isPickup = fulfillment === 'PICKUP'
+
+  // Real-time pincode serviceability — re-checked whenever the field becomes
+  // exactly 6 digits or on blur. Cached in-session so retyping is instant.
+  const [pinStatus, setPinStatus] = useState<PinStatus>({ state: 'idle' })
+  const pinDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pinReqIdRef    = useRef(0)
 
   // Refs for each validated field so we can scroll + focus the first invalid one
   // and let the summary banner jump to a specific row.
@@ -144,6 +210,83 @@ export default function CheckoutPage() {
     document.head.appendChild(s)
   }, [])
 
+  // ── Pincode serviceability check ───────────────────────────────────────────
+  // Triggers automatically when the field reaches exactly 6 digits, with a
+  // 500 ms debounce so we don't fire on every keystroke. Store-pickup orders
+  // skip the check entirely. Cache hits resolve synchronously.
+  function runPinCheck(rawPin: string) {
+    const pin = rawPin.replace(/\D/g, '').slice(0, 6)
+
+    // Cancel any in-flight debounce when the user keeps typing.
+    if (pinDebounceRef.current) {
+      clearTimeout(pinDebounceRef.current)
+      pinDebounceRef.current = null
+    }
+
+    if (pin.length === 0) { setPinStatus({ state: 'idle' }); return }
+    if (pin.length < 6)   { setPinStatus({ state: 'idle' }); return }
+
+    if (!/^[1-9][0-9]{5}$/.test(pin)) {
+      setPinStatus({ state: 'invalid', message: 'Pincode cannot start with 0' })
+      return
+    }
+
+    const cached = pinCache.get(pin)
+    if (cached) { setPinStatus(cached); return }
+
+    setPinStatus({ state: 'checking' })
+
+    pinDebounceRef.current = setTimeout(async () => {
+      // Bump the request id so a slow earlier response can't overwrite a newer
+      // request — important when a customer fixes a typo quickly.
+      const myReq = ++pinReqIdRef.current
+      try {
+        const res = await shippingApi.checkPincode(pin)
+        if (myReq !== pinReqIdRef.current) return  // stale response
+
+        let next: PinStatus
+        if (res.ok && res.serviceable === true) {
+          next = {
+            state:   'serviceable',
+            city:    res.city  ?? null,
+            state_:  res.state ?? null,
+            oda:     !!res.oda,
+          }
+        } else if (res.ok && res.serviceable === false) {
+          next = { state: 'unserviceable' }
+        } else if (!res.ok && res.reason === 'invalid_format') {
+          next = { state: 'invalid', message: res.message ?? 'Invalid pincode' }
+        } else {
+          // upstream_unavailable or any other soft failure — degrade open.
+          next = {
+            state: 'unknown',
+            message: res.message ?? 'We could not verify delivery for this pincode right now.',
+          }
+        }
+        pinCache.set(pin, next)
+        setPinStatus(next)
+      } catch (e: any) {
+        if (myReq !== pinReqIdRef.current) return
+        // Don't cache transport failures — let the next blur/type retry.
+        setPinStatus({
+          state: 'unknown',
+          message: 'Could not reach the serviceability service. You can still proceed.',
+        })
+      }
+    }, 500)
+  }
+
+  // Re-run automatically when the pincode value changes (covers paste + autofill).
+  // Skipped for store pickup — the customer collects from the shop.
+  useEffect(() => {
+    if (isPickup) { setPinStatus({ state: 'idle' }); return }
+    runPinCheck(form.pincode)
+    return () => {
+      if (pinDebounceRef.current) clearTimeout(pinDebounceRef.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.pincode, isPickup])
+
   function applyUseSaved() {
     if (!savedAddress) return
     setForm(prev => ({
@@ -199,6 +342,10 @@ export default function CheckoutPage() {
         e.pincode = 'Please enter your 6-digit pincode'
       } else if (!/^[1-9][0-9]{5}$/.test(pin)) {
         e.pincode = 'Pincode must be exactly 6 digits and cannot start with 0'
+      } else if (pinStatus.state === 'unserviceable') {
+        e.pincode = 'Sorry — Delhivery does not deliver to this pincode yet. Please try a nearby pincode or contact us for store pickup.'
+      } else if (pinStatus.state === 'checking') {
+        e.pincode = 'Just confirming delivery for this pincode — one moment…'
       }
     }
     setFieldErrors(e)
@@ -636,11 +783,18 @@ export default function CheckoutPage() {
                     pattern="[1-9][0-9]{5}"
                     maxLength={6}
                     placeholder="Pincode *"
-                    aria-invalid={!!fieldErrors.pincode}
-                    aria-describedby={fieldErrors.pincode ? 'err-pincode' : undefined}
-                    className={inp(fieldErrors.pincode)}
+                    aria-invalid={!!fieldErrors.pincode || pinStatus.state === 'unserviceable'}
+                    aria-describedby={fieldErrors.pincode ? 'err-pincode' : 'pincode-status'}
+                    onBlur={() => runPinCheck(form.pincode)}
+                    className={inp(
+                      fieldErrors.pincode ||
+                      (pinStatus.state === 'unserviceable' ? 'unserviceable' : undefined)
+                    )}
                   />
-                  {fieldErrors.pincode && <p id="err-pincode" className="mt-1 text-xs text-red-400">{fieldErrors.pincode}</p>}
+                  {fieldErrors.pincode
+                    ? <p id="err-pincode" className="mt-1 text-xs text-red-400">{fieldErrors.pincode}</p>
+                    : <PincodeStatusLine status={pinStatus} />
+                  }
                 </div>
               </div>
               <input {...f('state')} placeholder="State (e.g. Kerala)" autoComplete="address-level1" className={inp()} />
@@ -704,18 +858,31 @@ export default function CheckoutPage() {
 
           {/* Place order */}
           <div className="space-y-2 pb-10">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-            >
-              {submitting ? (
-                <><Loader2 className="h-4 w-4 animate-spin" />Processing…</>
-              ) : (
-                <>Pay ₹{grandTotal.toLocaleString('en-IN')} — Razorpay</>
-              )}
-            </button>
-            <p className="text-center text-[10px] text-muted">256-bit SSL secured · Online payment only — UPI, Cards, Net Banking, Wallets</p>
+            {(() => {
+              const blockUnserviceable = !isPickup && pinStatus.state === 'unserviceable'
+              const blockChecking      = !isPickup && pinStatus.state === 'checking'
+              const disabled           = submitting || blockUnserviceable || blockChecking
+              return (
+                <>
+                  <button
+                    type="submit"
+                    disabled={disabled}
+                    className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" />Processing…</>
+                    ) : blockChecking ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" />Confirming delivery…</>
+                    ) : blockUnserviceable ? (
+                      <>Delivery unavailable for this pincode</>
+                    ) : (
+                      <>Pay ₹{grandTotal.toLocaleString('en-IN')} — Razorpay</>
+                    )}
+                  </button>
+                  <p className="text-center text-[10px] text-muted">256-bit SSL secured · Online payment only — UPI, Cards, Net Banking, Wallets</p>
+                </>
+              )
+            })()}
           </div>
 
         </form>

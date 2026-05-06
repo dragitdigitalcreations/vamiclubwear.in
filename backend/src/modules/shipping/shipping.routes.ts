@@ -9,11 +9,87 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../../lib/prisma'
 import { requireAuth } from '../../middleware/auth'
-import { createDelhiveryShipment, trackDelhiveryShipment, mapDelhiveryStatus } from './delhivery.service'
+import {
+  createDelhiveryShipment,
+  trackDelhiveryShipment,
+  mapDelhiveryStatus,
+  checkPincodeServiceability,
+} from './delhivery.service'
 import { syncShippingStatuses } from './shipping.poller'
 import { sendShipmentCreatedEmail, sendDeliveryConfirmationEmail } from '../../lib/email'
+import { cache } from '../../lib/cache'
 
 const router = Router()
+
+// ── GET /api/shipping/check-pincode ──────────────────────────────────────────
+// Public endpoint — checkout calls this on blur / once 6 digits are entered to
+// confirm Delhivery delivers to the customer's pincode. Cached for 7 days
+// because pincode-level serviceability changes very rarely.
+//
+// Response is intentionally generous on the "unknown" case (Delhivery outage,
+// missing token, timeout) — we return ok:true so the storefront falls back to
+// permitting checkout instead of hard-blocking on a 3rd-party hiccup.
+
+router.get('/check-pincode', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const pin = String(req.query.pin ?? '').trim()
+
+    // Format guard up front — never burns a Delhivery call on garbage input.
+    if (!/^[1-9][0-9]{5}$/.test(pin)) {
+      res.status(400).json({
+        ok: false,
+        serviceable: false,
+        reason: 'invalid_format',
+        message: 'Pincode must be exactly 6 digits and cannot start with 0',
+      })
+      return
+    }
+
+    const cacheKey = `pincode:serviceability:${pin}`
+    const cached = await cache.get<{
+      serviceable: boolean; prepaid: boolean; oda: boolean
+      city: string | null; state: string | null
+    }>(cacheKey)
+    if (cached) {
+      res.json({ ok: true, pin, cached: true, ...cached })
+      return
+    }
+
+    try {
+      const result = await checkPincodeServiceability(pin)
+      // 7 days — pincode coverage changes rarely; long TTL keeps Delhivery API
+      // calls minimal even under heavy checkout traffic.
+      await cache.set(cacheKey, {
+        serviceable: result.serviceable,
+        prepaid:     result.prepaid,
+        oda:         result.oda,
+        city:        result.city,
+        state:       result.state,
+      }, 60 * 60 * 24 * 7)
+
+      res.json({
+        ok: true, pin, cached: false,
+        serviceable: result.serviceable,
+        prepaid:     result.prepaid,
+        oda:         result.oda,
+        city:        result.city,
+        state:       result.state,
+      })
+    } catch (err: any) {
+      // Upstream Delhivery problem (token missing, network, timeout, 5xx).
+      // Don't fail the customer's checkout because of it — return a soft
+      // "unknown" status that the frontend interprets as "let them try".
+      console.error('[check-pincode] upstream error:', err?.message ?? err)
+      res.status(200).json({
+        ok: false,
+        pin,
+        serviceable: null,
+        reason: 'upstream_unavailable',
+        message: 'We could not verify delivery for this pincode right now. You can still proceed.',
+      })
+    }
+  } catch (err) { next(err) }
+})
 
 // ── POST /api/shipping/:orderId/create ────────────────────────────────────────
 

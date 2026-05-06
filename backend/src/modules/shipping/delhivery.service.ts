@@ -137,6 +137,82 @@ export async function trackDelhiveryShipment(awb: string) {
   return res.json()
 }
 
+// ─── Pincode serviceability ──────────────────────────────────────────────────
+
+export interface PincodeServiceability {
+  serviceable: boolean
+  /** Prepaid delivery is accepted (the only mode we use — we don't offer COD). */
+  prepaid:     boolean
+  /** Out-of-delivery-area zone — usually means longer transit / extra charge. */
+  oda:         boolean
+  city:        string | null
+  state:       string | null
+  /** Raw Delhivery response, useful for debugging when the API misbehaves. */
+  raw?:        unknown
+}
+
+/**
+ * Checks whether Delhivery delivers to a given Indian pincode.
+ * Calls https://track.delhivery.com/c/api/pin-codes/json/?filter_codes=XXXXXX
+ *
+ * Throws if DELHIVERY_TOKEN is missing or the upstream request fails — callers
+ * should treat any throw as "unknown" (not "unserviceable") so a 3rd-party
+ * outage doesn't block legitimate checkout traffic.
+ */
+export async function checkPincodeServiceability(pin: string): Promise<PincodeServiceability> {
+  const token = TOKEN()
+  if (!token) throw new Error('DELHIVERY_TOKEN is not configured')
+
+  const url = `${BASE()}/c/api/pin-codes/json/?filter_codes=${encodeURIComponent(pin)}`
+
+  // 6 second timeout — checkout cannot hang waiting on a slow upstream.
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 6000)
+
+  let res: Response
+  try {
+    res = await fetch(url, { headers: headers(), signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+
+  if (!res.ok) {
+    throw new Error(`Delhivery pincode lookup failed: ${res.status} ${res.statusText}`)
+  }
+
+  const json = (await res.json()) as {
+    delivery_codes?: Array<{
+      postal_code?: {
+        pin?:        number | string
+        city?:       string
+        state_code?: string
+        pre_paid?:   string
+        cod?:        string
+        is_oda?:     string
+      }
+    }>
+  }
+
+  const entry = json?.delivery_codes?.[0]?.postal_code
+  if (!entry) {
+    return { serviceable: false, prepaid: false, oda: false, city: null, state: null }
+  }
+
+  // Delhivery returns "Y" / "N" strings.
+  const prepaid = (entry.pre_paid ?? '').toUpperCase() === 'Y'
+  const oda     = (entry.is_oda   ?? '').toUpperCase() === 'Y'
+
+  return {
+    // We only sell prepaid — a COD-only pincode is effectively non-serviceable
+    // for us, so gate on prepaid==Y, not on the entry merely existing.
+    serviceable: prepaid,
+    prepaid,
+    oda,
+    city:  entry.city       ?? null,
+    state: entry.state_code ?? null,
+  }
+}
+
 /**
  * Maps Delhivery webhook status string to our ShippingStatus enum.
  */
