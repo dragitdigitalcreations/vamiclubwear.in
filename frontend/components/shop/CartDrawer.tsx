@@ -124,7 +124,8 @@ export function CartDrawer() {
 
                           <button
                             onClick={() => removeItem(item.variantId)}
-                            className="text-xs text-muted hover:text-on-background transition-colors"
+                            className="inline-flex min-h-[40px] items-center px-2 -mx-2 text-xs font-medium text-muted hover:text-red-500 transition-colors"
+                            aria-label={`Remove ${item.productName} from cart`}
                           >
                             Remove
                           </button>

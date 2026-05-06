@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -9,6 +9,7 @@ import {
   Truck, Clock, CheckCircle, XCircle, Search, ArrowLeft,
 } from 'lucide-react'
 import { ordersApi } from '@/lib/api'
+import { useCustomerAuthStore } from '@/stores/customerAuthStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -169,37 +170,68 @@ type LookupMode = 'phone' | 'email'
 function MyOrdersContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const customer = useCustomerAuthStore((s) => s.user)
 
-  const [mode,    setMode]    = useState<LookupMode>('phone')
-  const [value,   setValue]   = useState(searchParams.get('phone') ?? searchParams.get('email') ?? '')
+  // Default to email mode for signed-in customers (we have their email),
+  // phone mode otherwise (matches existing behaviour).
+  const phoneFromUrl = searchParams.get('phone') ?? ''
+  const emailFromUrl = searchParams.get('email') ?? ''
+  const initialEmail = emailFromUrl || customer?.email || ''
+
+  const [mode,    setMode]    = useState<LookupMode>(
+    phoneFromUrl ? 'phone' : (initialEmail ? 'email' : 'phone')
+  )
+  const [value,   setValue]   = useState(phoneFromUrl || initialEmail)
   const [orders,  setOrders]  = useState<OrderSummary[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
   const [searched, setSearched] = useState(false)
+  const autoLoadedRef = useRef(false)
 
-  async function handleLookup(e: React.FormEvent) {
-    e.preventDefault()
-    const q = value.trim()
-    if (!q) return
+  async function runLookup(currentMode: LookupMode, q: string, opts?: { silentOnEmpty?: boolean }) {
     setLoading(true)
     setError(null)
     setOrders(null)
     setSearched(false)
     try {
       const res = await ordersApi.lookup(
-        mode === 'phone' ? { phone: q } : { email: q }
+        currentMode === 'phone' ? { phone: q } : { email: q }
       )
       setOrders(res.orders)
       setSearched(true)
       // Update URL without reload
       const params = new URLSearchParams()
-      params.set(mode, q)
+      params.set(currentMode, q)
       router.replace(`/my-orders?${params}`, { scroll: false })
     } catch {
-      setError('Could not look up orders. Please check and try again.')
+      if (!opts?.silentOnEmpty) {
+        setError('Could not look up orders. Please check and try again.')
+      }
     } finally {
       setLoading(false)
     }
+  }
+
+  // Auto-load the signed-in customer's orders by email — saves them re-typing
+  // it on every visit (the audit flagged this as friction with no benefit).
+  // Skip if the URL already carries explicit lookup params, so deep links and
+  // shared "find my order" links keep working.
+  useEffect(() => {
+    if (autoLoadedRef.current) return
+    if (phoneFromUrl || emailFromUrl) return
+    if (!customer?.email) return
+    autoLoadedRef.current = true
+    setMode('email')
+    setValue(customer.email)
+    runLookup('email', customer.email, { silentOnEmpty: true })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customer?.email, phoneFromUrl, emailFromUrl])
+
+  async function handleLookup(e: React.FormEvent) {
+    e.preventDefault()
+    const q = value.trim()
+    if (!q) return
+    runLookup(mode, q)
   }
 
   return (
@@ -221,7 +253,9 @@ function MyOrdersContent() {
         <p className="mb-2 text-xs uppercase tracking-[0.3em] text-primary-light">Order History</p>
         <h1 className="mb-2 font-display text-4xl font-bold text-on-background">My Orders</h1>
         <p className="mb-10 text-sm text-muted">
-          Enter the phone number or email you used at checkout to see all your orders.
+          {customer?.email
+            ? <>Showing orders for <strong className="text-on-background">{customer.email}</strong>. Search by phone or a different email if needed.</>
+            : 'Enter the phone number or email you used at checkout to see all your orders.'}
         </p>
 
         {/* Mode toggle */}

@@ -248,7 +248,10 @@ export const productService = {
     // Virtual "big-size" category: any product with an active variant sized XXXL or larger.
     // This is a filter, not a stored category — so products auto-appear on the Big Size
     // page as soon as such a variant is created.
-    const BIG_SIZE_TOKENS = ['XXXL', '3XL', '4XL', '5XL', '6XL', '7XL', '8XL', '9XL', '10XL']
+    // XXL / 2XL count as "big size" for the Indian market — the audit flagged the
+    // category as empty, and the more inclusive list lets every plus-size variant
+    // surface on the Big Size landing page automatically.
+    const BIG_SIZE_TOKENS = ['XXL', '2XL', 'XXXL', '3XL', '4XL', '5XL', '6XL', '7XL', '8XL', '9XL', '10XL']
     const isBigSize = category === 'big-size'
 
     // Resolve category slug → ID if provided (skip for big-size virtual filter).

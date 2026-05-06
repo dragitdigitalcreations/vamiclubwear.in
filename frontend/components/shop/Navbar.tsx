@@ -170,17 +170,17 @@ export function Navbar() {
           <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 md:px-10 h-10">
 
             {/* Search + Barcode — left */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 -ml-2">
               <button
                 onClick={() => setSearchOpen(o => !o)}
-                className="p-1 text-fg-3 hover:text-fg-1 transition-colors duration-200"
+                className="inline-flex h-10 w-10 items-center justify-center rounded text-fg-3 hover:text-fg-1 hover:bg-black/5 transition-colors duration-200"
                 aria-label="Search"
               >
                 <Search className="h-4 w-4" />
               </button>
               <Link
                 href="/barcode"
-                className="p-1 text-fg-3 hover:text-fg-1 transition-colors duration-200"
+                className="inline-flex h-10 w-10 items-center justify-center rounded text-fg-3 hover:text-fg-1 hover:bg-black/5 transition-colors duration-200"
                 aria-label="Find by barcode"
                 title="Find by barcode"
               >

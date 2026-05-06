@@ -15,7 +15,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.i
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Vami Clubwear — Women's Fashion in Malappuram, Manjeri | Plus Size, Anarkali, Abaya",
+    // Kept under 60 chars so Google doesn't truncate the SERP title.
+    default: 'Vami Clubwear — Plus Size Anarkali, Abaya | Manjeri',
     template: '%s | Vami Clubwear',
   },
   description:

@@ -10,7 +10,8 @@ const POLICY_LINKS = [
   { href: '/shipping', label: 'Shipping & Returns' },
   { href: '/returns',  label: 'Returns'            },
   { href: '/sizing',   label: 'Size Guide'         },
-  { href: '/about',    label: 'Terms & Conditions' },
+  { href: '/terms',    label: 'Terms & Conditions' },
+  { href: '/privacy',  label: 'Privacy Policy'     },
 ]
 
 const CUSTOMER_CARE_LINKS = [
@@ -141,8 +142,6 @@ export function Footer() {
             <Column heading="Social">
               <li><FooterLink href={IG_URL}      label="Instagram" external /></li>
               <li><FooterLink href={whatsappUrl} label="WhatsApp"  external /></li>
-              <li><FooterLink href="#"           label="Facebook"  external /></li>
-              <li><FooterLink href="#"           label="Pinterest" external /></li>
             </Column>
           </div>
 
@@ -199,9 +198,10 @@ export function Footer() {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] text-fg-3 hover:text-fg-1 transition-colors"
+            aria-label="Chat with Vami Clubwear on WhatsApp"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.14em] text-fg-3 hover:text-fg-1 transition-colors"
           >
-            <MessageCircle className="h-3.5 w-3.5" />
+            <MessageCircle className="h-5 w-5" />
             Chat on WhatsApp
           </a>
         </div>

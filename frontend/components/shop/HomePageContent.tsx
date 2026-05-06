@@ -84,9 +84,12 @@ function HeroSection() {
   return (
     <section
       className="relative overflow-hidden w-full aspect-[3/5] sm:aspect-auto sm:h-[793px]"
+      aria-label="Vami Clubwear models wearing the new season's Indo-Western collection"
     >
       {/* Mobile background — image at natural cover size, no extra zoom */}
       <div
+        role="img"
+        aria-label="Vami Clubwear models wearing the new season's Indo-Western collection"
         className="absolute inset-0 block sm:hidden"
         style={{
           backgroundImage: 'url(/hero-models.webp)',
@@ -98,6 +101,8 @@ function HeroSection() {
       />
       {/* Desktop background — contain so every model is fully visible in frame */}
       <div
+        role="img"
+        aria-label="Vami Clubwear models wearing the new season's Indo-Western collection"
         className="absolute inset-0 hidden sm:block"
         style={{
           backgroundImage: 'url(/hero-models.webp)',
@@ -516,11 +521,16 @@ function PromoSection() {
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           viewport={{ once: true }}
         >
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'url(/promo-a.webp)',
-            backgroundSize: 'cover', backgroundPosition: 'center 35%',
-            backgroundColor: '#EDE8E1',
-          }} />
+          <div
+            role="img"
+            aria-label="Vami Clubwear Indo-Western collection — model wearing fusion outfit"
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'url(/promo-a.webp)',
+              backgroundSize: 'cover', backgroundPosition: 'center 35%',
+              backgroundColor: '#EDE8E1',
+            }}
+          />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-[#EDE8E1]/70 via-[#EDE8E1]/20 to-transparent" />
 
           <div className="relative z-10 flex h-full flex-col items-end px-6 pt-8 text-right">
@@ -568,11 +578,16 @@ function PromoSection() {
               willChange: 'transform',
             }}
           >
-            <div className="w-full h-full" style={{
-              backgroundImage: 'url(/promo-b.webp)',
-              backgroundSize: 'cover', backgroundPosition: '50% center',
-              backgroundColor: '#3A2A22',
-            }} />
+            <div
+              role="img"
+              aria-label="The Everyday Edit — premium women's outfits starting at ₹1,499"
+              className="w-full h-full"
+              style={{
+                backgroundImage: 'url(/promo-b.webp)',
+                backgroundSize: 'cover', backgroundPosition: '50% center',
+                backgroundColor: '#3A2A22',
+              }}
+            />
           </motion.div>
 
           <div className="pointer-events-none absolute inset-0"
@@ -583,11 +598,16 @@ function PromoSection() {
             className="absolute overflow-hidden"
             style={{ top: 0, left: 0, width: '42%', aspectRatio: '1/1', zIndex: 3 }}
           >
-            <div className="w-full h-full" style={{
-              backgroundImage: 'url(/promo-accent.webp)',
-              backgroundSize: 'cover', backgroundPosition: 'center',
-              backgroundColor: '#F2EBE0',
-            }} />
+            <div
+              role="img"
+              aria-label="Vami Clubwear accent product detail"
+              className="w-full h-full"
+              style={{
+                backgroundImage: 'url(/promo-accent.webp)',
+                backgroundSize: 'cover', backgroundPosition: 'center',
+                backgroundColor: '#F2EBE0',
+              }}
+            />
           </div>
 
           {/* Bottom-left text overlay */}
@@ -633,11 +653,16 @@ function PromoSection() {
         className="absolute pointer-events-none"
         style={{ left: 0, top: 0, width: '50%', height: '100%', zIndex: 1 }}
       >
-        <div className="w-full h-full" style={{
-          backgroundImage: 'url(/promo-a.webp)',
-          backgroundSize: 'cover', backgroundPosition: 'center 65%',
-          backgroundColor: '#EDE8E1',
-        }} />
+        <div
+          role="img"
+          aria-label="Vami Clubwear Indo-Western collection — model wearing fusion outfit"
+          className="w-full h-full"
+          style={{
+            backgroundImage: 'url(/promo-a.webp)',
+            backgroundSize: 'cover', backgroundPosition: 'center 65%',
+            backgroundColor: '#EDE8E1',
+          }}
+        />
         <div className="absolute inset-0" style={{
           background: 'linear-gradient(to right, rgba(245,241,236,0.3) 0%, rgba(245,241,236,0.08) 60%, transparent 100%)',
         }} />
@@ -661,10 +686,15 @@ function PromoSection() {
             willChange: 'transform',
           }}
         >
-          <div className="w-full h-full" style={{
-            backgroundImage: 'url(/promo-b.webp)',
-            backgroundSize: 'auto 90%', backgroundPosition: '35% center',
-          }} />
+          <div
+            role="img"
+            aria-label="The Everyday Edit — premium women's outfits starting at ₹1,499"
+            className="w-full h-full"
+            style={{
+              backgroundImage: 'url(/promo-b.webp)',
+              backgroundSize: 'auto 90%', backgroundPosition: '35% center',
+            }}
+          />
         </motion.div>
       </div>
 
@@ -675,6 +705,8 @@ function PromoSection() {
         style={{ left: '50%', bottom: 0, width: '309px', height: '309px', zIndex: 3 }}
       >
         <div
+          role="img"
+          aria-label="Vami Clubwear accent product detail"
           className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"
           style={{
             backgroundImage: 'url(/promo-accent.webp)',
@@ -1106,19 +1138,26 @@ function ModestCollectionBanner() {
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           viewport={{ once: true }}
         >
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'url(/modest-collection.webp)',
-            backgroundSize: 'cover',
-            backgroundPosition: '80% 25%',
-            backgroundRepeat: 'no-repeat',
-            backgroundColor: '#8B94AE',
-          }} />
+          <div
+            role="img"
+            aria-label="Modest collection — abayas and floor-length gowns by Vami Clubwear"
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'url(/modest-collection.webp)',
+              backgroundSize: 'cover',
+              backgroundPosition: '80% 25%',
+              backgroundRepeat: 'no-repeat',
+              backgroundColor: '#8B94AE',
+            }}
+          />
         </motion.div>
       </div>
 
       {/* ── Desktop: original overlay layout ── */}
       <div className="relative overflow-hidden w-full hidden md:block" style={{ aspectRatio: '600/310' }}>
         <div
+          role="img"
+          aria-label="Modest collection — abayas and floor-length gowns by Vami Clubwear"
           className="absolute inset-0"
           style={{
             backgroundImage: 'url(/modest-collection.webp)',

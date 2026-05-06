@@ -174,16 +174,32 @@ export default function CheckoutPage() {
     if (!form.customerName.trim())  e.customerName  = 'Please enter your full name'
     if (form.customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customerEmail))
       e.customerEmail = 'That email address looks incomplete — check for typos'
+    const phoneDigits = form.customerPhone.replace(/\D/g, '')
     if (!form.customerPhone.trim()) {
       e.customerPhone = isPickup
         ? 'We need a phone number to call you when your order is ready'
         : 'We need a phone number to coordinate delivery'
+    } else if (phoneDigits.length < 10 || phoneDigits.length > 13) {
+      e.customerPhone = 'Please enter a valid 10-digit Indian mobile number'
+    } else if (!/^[6-9]/.test(phoneDigits.slice(-10))) {
+      e.customerPhone = 'Indian mobile numbers start with 6, 7, 8 or 9'
     }
     // Pickup orders skip address validation — the customer collects from the store.
     if (!isPickup) {
-      if (!form.address.trim()) e.address = 'Please enter your house / street / area'
+      if (!form.address.trim()) {
+        e.address = 'Please enter your house / street / area'
+      } else if (form.address.trim().length < 8) {
+        e.address = 'That looks too short — please include house no., street and area'
+      }
       if (!form.city.trim())    e.city    = 'Please enter your city'
-      if (!form.pincode.trim()) e.pincode = 'Please enter your 6-digit pincode'
+      // Indian PIN codes are exactly 6 digits and never start with 0.
+      // Rejecting "00000…" / non-numeric values up front avoids silent failed shipments.
+      const pin = form.pincode.trim()
+      if (!pin) {
+        e.pincode = 'Please enter your 6-digit pincode'
+      } else if (!/^[1-9][0-9]{5}$/.test(pin)) {
+        e.pincode = 'Pincode must be exactly 6 digits and cannot start with 0'
+      }
     }
     setFieldErrors(e)
 
@@ -498,21 +514,74 @@ export default function CheckoutPage() {
             </div>
           </div>
 
+          {/* Error summary banner — appears on validate() failure and is what
+              we scroll to so customers see WHICH fields need attention. */}
+          {Object.keys(fieldErrors).length > 0 && (
+            <div
+              ref={errorSummaryRef}
+              role="alert"
+              aria-live="polite"
+              className="border border-red-500/40 bg-red-500/10 p-4 space-y-2"
+            >
+              <p className="text-sm font-semibold text-red-300 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Please fix the highlighted fields before continuing
+              </p>
+              <ul className="space-y-1 pl-6 list-disc text-xs text-red-300">
+                {FIELD_ORDER.filter((k) => fieldErrors[k]).map((k) => (
+                  <li key={k}>
+                    <button type="button" onClick={() => focusField(k)} className="underline underline-offset-2 hover:text-red-200">
+                      {FIELD_LABELS[k]} — {fieldErrors[k]}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Contact */}
           <div className="space-y-4">
             <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-on-background">Contact</h2>
             <div>
-              <input {...f('customerName')} placeholder="Full Name *" className={inp(fieldErrors.customerName)} />
-              {fieldErrors.customerName && <p className="mt-1 text-xs text-red-400">{fieldErrors.customerName}</p>}
+              <input
+                {...f('customerName')}
+                ref={(el) => { fieldRefs.current.customerName = el }}
+                placeholder="Full Name *"
+                autoComplete="name"
+                aria-invalid={!!fieldErrors.customerName}
+                aria-describedby={fieldErrors.customerName ? 'err-customerName' : undefined}
+                className={inp(fieldErrors.customerName)}
+              />
+              {fieldErrors.customerName && <p id="err-customerName" className="mt-1 text-xs text-red-400">{fieldErrors.customerName}</p>}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <input {...f('customerPhone')} type="tel" placeholder="Phone *" className={inp(fieldErrors.customerPhone)} />
-                {fieldErrors.customerPhone && <p className="mt-1 text-xs text-red-400">{fieldErrors.customerPhone}</p>}
+                <input
+                  {...f('customerPhone')}
+                  ref={(el) => { fieldRefs.current.customerPhone = el }}
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  maxLength={15}
+                  placeholder="Phone *"
+                  aria-invalid={!!fieldErrors.customerPhone}
+                  aria-describedby={fieldErrors.customerPhone ? 'err-customerPhone' : undefined}
+                  className={inp(fieldErrors.customerPhone)}
+                />
+                {fieldErrors.customerPhone && <p id="err-customerPhone" className="mt-1 text-xs text-red-400">{fieldErrors.customerPhone}</p>}
               </div>
               <div>
-                <input {...f('customerEmail')} type="email" placeholder="Email" className={inp(fieldErrors.customerEmail)} />
-                {fieldErrors.customerEmail && <p className="mt-1 text-xs text-red-400">{fieldErrors.customerEmail}</p>}
+                <input
+                  {...f('customerEmail')}
+                  ref={(el) => { fieldRefs.current.customerEmail = el }}
+                  type="email"
+                  autoComplete="email"
+                  placeholder="Email"
+                  aria-invalid={!!fieldErrors.customerEmail}
+                  aria-describedby={fieldErrors.customerEmail ? 'err-customerEmail' : undefined}
+                  className={inp(fieldErrors.customerEmail)}
+                />
+                {fieldErrors.customerEmail && <p id="err-customerEmail" className="mt-1 text-xs text-red-400">{fieldErrors.customerEmail}</p>}
               </div>
             </div>
           </div>
@@ -533,20 +602,48 @@ export default function CheckoutPage() {
                 )}
               </div>
               <div>
-                <input {...f('address')} placeholder="House / Flat, Street, Area *" className={inp(fieldErrors.address)} />
-                {fieldErrors.address && <p className="mt-1 text-xs text-red-400">{fieldErrors.address}</p>}
+                <input
+                  {...f('address')}
+                  ref={(el) => { fieldRefs.current.address = el }}
+                  placeholder="House / Flat, Street, Area *"
+                  autoComplete="street-address"
+                  aria-invalid={!!fieldErrors.address}
+                  aria-describedby={fieldErrors.address ? 'err-address' : undefined}
+                  className={inp(fieldErrors.address)}
+                />
+                {fieldErrors.address && <p id="err-address" className="mt-1 text-xs text-red-400">{fieldErrors.address}</p>}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <input {...f('city')} placeholder="City *" className={inp(fieldErrors.city)} />
-                  {fieldErrors.city && <p className="mt-1 text-xs text-red-400">{fieldErrors.city}</p>}
+                  <input
+                    {...f('city')}
+                    ref={(el) => { fieldRefs.current.city = el }}
+                    placeholder="City *"
+                    autoComplete="address-level2"
+                    aria-invalid={!!fieldErrors.city}
+                    aria-describedby={fieldErrors.city ? 'err-city' : undefined}
+                    className={inp(fieldErrors.city)}
+                  />
+                  {fieldErrors.city && <p id="err-city" className="mt-1 text-xs text-red-400">{fieldErrors.city}</p>}
                 </div>
                 <div>
-                  <input {...f('pincode')} placeholder="Pincode *" className={inp(fieldErrors.pincode)} />
-                  {fieldErrors.pincode && <p className="mt-1 text-xs text-red-400">{fieldErrors.pincode}</p>}
+                  <input
+                    {...f('pincode')}
+                    ref={(el) => { fieldRefs.current.pincode = el }}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    pattern="[1-9][0-9]{5}"
+                    maxLength={6}
+                    placeholder="Pincode *"
+                    aria-invalid={!!fieldErrors.pincode}
+                    aria-describedby={fieldErrors.pincode ? 'err-pincode' : undefined}
+                    className={inp(fieldErrors.pincode)}
+                  />
+                  {fieldErrors.pincode && <p id="err-pincode" className="mt-1 text-xs text-red-400">{fieldErrors.pincode}</p>}
                 </div>
               </div>
-              <input {...f('state')} placeholder="State (e.g. Kerala)" className={inp()} />
+              <input {...f('state')} placeholder="State (e.g. Kerala)" autoComplete="address-level1" className={inp()} />
               <textarea
                 {...f('notes')}
                 rows={2}
