@@ -3,6 +3,7 @@
 // The interactive client component picks up filters/pagination after hydration.
 
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { serverProductsApi } from '@/lib/server-api'
 import type { Product } from '@/types/product'
 import { getPrimaryImage } from '@/types/product'
@@ -17,6 +18,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   ...Object.fromEntries(CATEGORIES.map((c) => [c.slug, c.label])),
   'big-size': 'Big Size',
 }
+
+// Whitelist of category slugs we will serve a listing page for. Any other value
+// of ?category= is treated as a 404 — otherwise unknown slugs render a thin
+// "no results" page that Google flags as a Soft 404.
+const KNOWN_CATEGORY_SLUGS = new Set<string>([
+  ...CATEGORIES.map((c) => c.slug),
+  'big-size',
+])
 
 const CATEGORY_BLURBS: Record<string, string> = {
   'anarkali':       'Floor-grazing Anarkalis with intricate zari work, sheer dupattas and statement embroidery — handcrafted for festive evenings, mehndis and receptions, available up to XXXL.',
@@ -64,6 +73,12 @@ export default async function ProductsPage({ searchParams }: PageProps) {
   const category = searchParams?.category ?? ''
   const sort     = searchParams?.sort     ?? 'newest'
   const page     = Number(searchParams?.page ?? '1') || 1
+
+  // Reject unknown category slugs with a real 404 — prevents Google from
+  // indexing thin /products?category=foo pages as Soft 404s.
+  if (category && !KNOWN_CATEGORY_SLUGS.has(category)) {
+    notFound()
+  }
 
   let products: Product[] = []
   let total = 0
