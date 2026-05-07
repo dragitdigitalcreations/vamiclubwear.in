@@ -184,7 +184,11 @@ router.post('/:orderId/create', requireAuth, async (req: Request, res: Response,
         })
       : null
 
-    sendShipmentCreatedEmail({
+    // Awaited so the response carries an accurate emailSent flag and the
+    // shipmentEmailSentAt column reflects reality. Worst case: ~3-4s extra
+    // on the admin's "Create Shipment" click — acceptable since the AWB is
+    // already saved and the customer is waiting on email anyway.
+    const emailResult = await sendShipmentCreatedEmail({
       orderNumber:     order.orderNumber,
       invoiceNumber:   order.invoiceNumber,
       invoiceDate:     new Date(),
@@ -203,12 +207,23 @@ router.post('/:orderId/create', requireAuth, async (req: Request, res: Response,
       couponCode:      redemption?.coupon?.code ?? null,
       shippingFee:     Number(order.shippingFee),
       total:           Number(order.total),
-    }).catch((e) => console.error('[email] shipment email failed:', e))
+    })
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        shipmentEmailSentAt:    emailResult.ok ? new Date() : null,
+        shipmentEmailLastError: emailResult.ok ? null : emailResult.error,
+      },
+    })
+    if (!emailResult.ok) {
+      console.error(`[email] Shipment email FAILED for ${order.orderNumber}: ${emailResult.error}`)
+    }
 
     res.json({
       awbNumber:   result.awbNumber,
       trackingUrl: result.trackingUrl,
       status:      updated.shippingStatus,
+      emailSent:   emailResult.ok,
     })
   } catch (err) { next(err) }
 })
@@ -277,7 +292,7 @@ router.post('/:orderId/resend-email', requireAuth, async (req: Request, res: Res
         })
       : null
 
-    await sendShipmentCreatedEmail({
+    const r = await sendShipmentCreatedEmail({
       orderNumber:     order.orderNumber,
       invoiceNumber:   order.invoiceNumber,
       invoiceDate:     new Date(),
@@ -298,6 +313,18 @@ router.post('/:orderId/resend-email', requireAuth, async (req: Request, res: Res
       total:           Number(order.total),
     })
 
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        shipmentEmailSentAt:    r.ok ? new Date() : order.shipmentEmailSentAt,
+        shipmentEmailLastError: r.ok ? null : r.error,
+      },
+    })
+
+    if (!r.ok) {
+      res.status(502).json({ ok: false, error: r.error, sentTo: order.customerEmail })
+      return
+    }
     res.json({ ok: true, sentTo: order.customerEmail })
   } catch (err) { next(err) }
 })
@@ -381,14 +408,37 @@ router.post('/webhook', async (req: Request, res: Response, next: NextFunction) 
 
       await prisma.order.update({ where: { id: order.id }, data: updates })
 
-      // Send delivery confirmation email
-      if (newShippingStatus === 'DELIVERED' && order.customerEmail) {
-        sendDeliveryConfirmationEmail({
-          orderNumber:   order.orderNumber,
-          customerName:  order.customerName,
-          customerEmail: order.customerEmail,
-          total:         Number(order.total),
-        }).catch((e) => console.error('[email] delivery email failed:', e))
+      // Delivery confirmation email — awaited + idempotency-gated on
+      // deliveryEmailSentAt so the webhook AND the poller can't both fire it
+      // when Delhivery flips to delivered and we double-mail the customer.
+      // First one to arrive wins; the other becomes a no-op.
+      if (
+        newShippingStatus === 'DELIVERED' &&
+        order.customerEmail &&
+        !order.deliveryEmailSentAt
+      ) {
+        try {
+          const r = await sendDeliveryConfirmationEmail({
+            orderNumber:   order.orderNumber,
+            customerName:  order.customerName,
+            customerEmail: order.customerEmail,
+            total:         Number(order.total),
+          })
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              deliveryEmailSentAt:    r.ok ? new Date() : null,
+              deliveryEmailLastError: r.ok ? null : r.error,
+            },
+          })
+          if (!r.ok) console.error(`[email] Webhook delivery email FAILED for ${order.orderNumber}: ${r.error}`)
+        } catch (e: any) {
+          console.error('[email] webhook delivery email threw:', e)
+          await prisma.order.update({
+            where: { id: order.id },
+            data:  { deliveryEmailLastError: e?.message ?? String(e) },
+          }).catch(() => {})
+        }
       }
     }
 

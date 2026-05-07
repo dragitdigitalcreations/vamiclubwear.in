@@ -42,4 +42,12 @@ router.patch('/:id/pickup', requireAuth, orderController.updatePickup)
 // re-send the customer order confirmation if Resend dropped the original.
 router.post('/:id/resend-confirmation', requireAuth, orderController.resendConfirmation)
 
+// POST /api/orders/:id/resend-delivery [manager] — re-send the delivery
+// confirmation. Works for both DELIVERY (post-courier) and PICKUP (post-pickup) orders.
+router.post('/:id/resend-delivery', requireAuth, orderController.resendDelivery)
+
+// POST /api/orders/:id/resend-pickup-ready [manager] — re-send the "ready to
+// collect" email. Pickup-only.
+router.post('/:id/resend-pickup-ready', requireAuth, orderController.resendPickupReady)
+
 export default router

@@ -321,6 +321,19 @@ export const ordersApi = {
       `/orders/${id}/resend-confirmation`, { method: 'POST' }
     ),
 
+  // Re-send the delivery confirmation. Works for both DELIVERY (after courier
+  // delivers) and PICKUP (after staff marks PICKED_UP) orders.
+  resendDelivery: (id: string) =>
+    request<{ ok: true; sentTo: string }>(
+      `/orders/${id}/resend-delivery`, { method: 'POST' }
+    ),
+
+  // Re-send the "your order is ready to collect" email. Pickup-only.
+  resendPickupReady: (id: string) =>
+    request<{ ok: true; sentTo: string }>(
+      `/orders/${id}/resend-pickup-ready`, { method: 'POST' }
+    ),
+
   // Advance the pickup workflow — only valid on PICKUP orders.
   // stage: 'READY' marks the order packed and waiting for collection;
   //        'PICKED_UP' marks the order completed (auto-bumps to DELIVERED).

@@ -77,14 +77,15 @@ export async function syncShippingStatuses(): Promise<SyncResult> {
       shippingStatus: { in: ACTIVE_STATUSES as any },
     },
     select: {
-      id:             true,
-      orderNumber:    true,
-      awbNumber:      true,
-      status:         true,
-      shippingStatus: true,
-      customerName:   true,
-      customerEmail:  true,
-      total:          true,
+      id:                  true,
+      orderNumber:         true,
+      awbNumber:           true,
+      status:              true,
+      shippingStatus:      true,
+      customerName:        true,
+      customerEmail:       true,
+      total:               true,
+      deliveryEmailSentAt: true,
     },
   })
 
@@ -117,14 +118,36 @@ export async function syncShippingStatuses(): Promise<SyncResult> {
 
       await prisma.order.update({ where: { id: order.id }, data: updates })
 
-      // Email when the package actually lands
-      if (mapped === 'DELIVERED' && order.customerEmail) {
-        sendDeliveryConfirmationEmail({
-          orderNumber:   order.orderNumber,
-          customerName:  order.customerName,
-          customerEmail: order.customerEmail,
-          total:         Number(order.total),
-        }).catch((e) => console.error('[shipping-poll] delivery email failed:', e))
+      // Email when the package actually lands. Idempotency-gated on
+      // deliveryEmailSentAt so we don't double-send when Delhivery's webhook
+      // fires the same DELIVERED transition concurrently with this sweep.
+      if (
+        mapped === 'DELIVERED' &&
+        order.customerEmail &&
+        !order.deliveryEmailSentAt
+      ) {
+        try {
+          const r = await sendDeliveryConfirmationEmail({
+            orderNumber:   order.orderNumber,
+            customerName:  order.customerName,
+            customerEmail: order.customerEmail,
+            total:         Number(order.total),
+          })
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              deliveryEmailSentAt:    r.ok ? new Date() : null,
+              deliveryEmailLastError: r.ok ? null : r.error,
+            },
+          })
+          if (!r.ok) console.error(`[shipping-poll] Delivery email FAILED for ${order.orderNumber}: ${r.error}`)
+        } catch (e: any) {
+          console.error('[shipping-poll] delivery email threw:', e)
+          await prisma.order.update({
+            where: { id: order.id },
+            data:  { deliveryEmailLastError: e?.message ?? String(e) },
+          }).catch(() => {})
+        }
       }
 
       result.updated++

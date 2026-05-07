@@ -3,9 +3,14 @@ import { prisma } from '../../lib/prisma'
 import { CreateOrderInput, UpdateOrderStatusInput, ListOrdersQuery } from './order.schema'
 import { NotFoundError, InsufficientStockError, ConflictError } from '../../utils/errors'
 import { generateOrderNumber } from '../../utils/orderNumber'
-import { sendOrderConfirmationToCustomer, sendOrderNotificationToStore, sendPickupReadyEmail } from '../../lib/email'
+import {
+  sendOrderConfirmationToCustomer,
+  sendOrderNotificationToStore,
+  sendPickupReadyEmail,
+  sendShipmentCreatedEmail,
+  sendDeliveryConfirmationEmail,
+} from '../../lib/email'
 import { createDelhiveryShipment, mapDelhiveryStatus } from '../shipping/delhivery.service'
-import { sendShipmentCreatedEmail } from '../../lib/email'
 import { couponService } from '../coupon/coupon.service'
 import { calcShippingFee } from '../../utils/shipping'
 
@@ -429,7 +434,10 @@ export const orderService = {
               })
             : null
 
-          sendShipmentCreatedEmail({
+          // Awaited so we can stamp shipmentEmailSentAt on success — without
+          // this the retry sweep can't tell whether the customer ever got
+          // their tracking link.
+          const emailResult = await sendShipmentCreatedEmail({
             orderNumber:     order.orderNumber,
             invoiceNumber:   order.invoiceNumber,
             invoiceDate:     new Date(),
@@ -448,7 +456,17 @@ export const orderService = {
             couponCode:      redemption?.coupon?.code ?? null,
             shippingFee:     Number(order.shippingFee),
             total:           Number(order.total),
-          }).catch(() => {})
+          })
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              shipmentEmailSentAt:    emailResult.ok ? new Date() : null,
+              shipmentEmailLastError: emailResult.ok ? null : emailResult.error,
+            },
+          })
+          if (!emailResult.ok) {
+            console.error(`[email] Order ${order.orderNumber}: shipment email FAILED — ${emailResult.error}`)
+          }
 
         } catch (err) {
           console.error('[shipping] Auto-create Delhivery shipment failed:', err)
@@ -488,16 +506,207 @@ export const orderService = {
 
     const updated = await prisma.order.update({ where: { id }, data })
 
-    // Fire-and-forget pickup-ready email — only on the READY transition and
-    // only the first time (pickupReadyAt was null beforehand).
+    // Pickup-ready email — only on the READY transition, only the first time
+    // (pickupReadyAt was null beforehand). Awaited + persisted so the retry
+    // sweep can recover any send that didn't make it.
     if (stage === 'READY' && !order.pickupReadyAt && updated.customerEmail) {
-      sendPickupReadyEmail({
-        orderNumber:   updated.orderNumber,
-        customerName:  updated.customerName,
-        customerEmail: updated.customerEmail,
-      }).catch((e) => console.error('[email] pickup-ready email failed:', e))
+      try {
+        const r = await sendPickupReadyEmail({
+          orderNumber:   updated.orderNumber,
+          customerName:  updated.customerName,
+          customerEmail: updated.customerEmail,
+        })
+        await prisma.order.update({
+          where: { id: updated.id },
+          data: {
+            pickupReadyEmailSentAt:    r.ok ? new Date() : null,
+            pickupReadyEmailLastError: r.ok ? null : r.error,
+          },
+        })
+        if (!r.ok) console.error(`[email] Pickup-ready email FAILED for ${updated.orderNumber} — ${r.error}`)
+      } catch (e: any) {
+        console.error('[email] pickup-ready email threw:', e)
+        await prisma.order.update({
+          where: { id: updated.id },
+          data:  { pickupReadyEmailLastError: e?.message ?? String(e) },
+        }).catch(() => {})
+      }
+    }
+
+    // Pickup orders never go through Delhivery, so the courier-driven
+    // delivery-confirmation path can't reach them — fire it here when the
+    // customer actually collects, gated on deliveryEmailSentAt for idempotency.
+    if (stage === 'PICKED_UP' && updated.customerEmail && !order.deliveryEmailSentAt) {
+      try {
+        const r = await sendDeliveryConfirmationEmail({
+          orderNumber:   updated.orderNumber,
+          customerName:  updated.customerName,
+          customerEmail: updated.customerEmail,
+          total:         Number(updated.total),
+        })
+        await prisma.order.update({
+          where: { id: updated.id },
+          data: {
+            deliveryEmailSentAt:    r.ok ? new Date() : null,
+            deliveryEmailLastError: r.ok ? null : r.error,
+          },
+        })
+        if (!r.ok) console.error(`[email] Pickup delivery email FAILED for ${updated.orderNumber} — ${r.error}`)
+      } catch (e: any) {
+        console.error('[email] pickup delivery email threw:', e)
+        await prisma.order.update({
+          where: { id: updated.id },
+          data:  { deliveryEmailLastError: e?.message ?? String(e) },
+        }).catch(() => {})
+      }
     }
 
     return updated
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Resend the "your order has shipped" / invoice email. Used by the admin
+  // resend button and the retry sweep. Returns { result, sentTo } shaped the
+  // same as resendOrderConfirmation so the controller layer is symmetric.
+  // ─────────────────────────────────────────────────────────────────────────
+  async resendShipmentEmail(id: string) {
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            variant: {
+              select: {
+                sku: true, size: true, color: true,
+                product: {
+                  select: {
+                    name:            true,
+                    barcode:         true,
+                    perColorBarcode: true,
+                    colorBarcodes:   { select: { color: true, barcode: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+    if (!order) throw new NotFoundError(`Order ${id}`)
+    if (!order.customerEmail) throw new ConflictError('Order has no customer email on file')
+    if (!order.awbNumber || !order.trackingUrl) {
+      throw new ConflictError('No AWB / tracking URL on this order — create the shipment first')
+    }
+
+    const emailItems = order.items.map((i) => {
+      const p = i.variant.product
+      const colorBarcode = p.perColorBarcode
+        ? p.colorBarcodes.find((c) => c.color === i.variant.color)?.barcode ?? null
+        : null
+      return {
+        name:    p.name,
+        sku:     i.variant.sku,
+        size:    i.variant.size,
+        color:   i.variant.color,
+        qty:     i.quantity,
+        price:   Number(i.unitPrice),
+        barcode: p.perColorBarcode ? colorBarcode : (p.barcode ?? null),
+      }
+    })
+
+    const redemption = (order.discount && Number(order.discount) > 0)
+      ? await prisma.couponRedemption.findFirst({
+          where:   { orderNumber: order.orderNumber },
+          select:  { coupon: { select: { code: true } } },
+          orderBy: { createdAt: 'desc' },
+        })
+      : null
+
+    const result = await sendShipmentCreatedEmail({
+      orderNumber:     order.orderNumber,
+      invoiceNumber:   order.invoiceNumber,
+      invoiceDate:     new Date(),
+      customerName:    order.customerName,
+      customerEmail:   order.customerEmail,
+      customerPhone:   order.customerPhone,
+      shippingAddress: order.shippingAddress,
+      shippingCity:    order.shippingCity,
+      shippingState:   order.shippingState,
+      shippingPincode: order.shippingPincode,
+      awbNumber:       order.awbNumber,
+      trackingUrl:     order.trackingUrl,
+      items:           emailItems,
+      subtotal:        Number(order.subtotal),
+      discount:        Number(order.discount),
+      couponCode:      redemption?.coupon?.code ?? null,
+      shippingFee:     Number(order.shippingFee),
+      total:           Number(order.total),
+    })
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        shipmentEmailSentAt:    result.ok ? new Date() : order.shipmentEmailSentAt,
+        shipmentEmailLastError: result.ok ? null : result.error,
+      },
+    })
+
+    return { result, sentTo: order.customerEmail }
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Resend the delivery confirmation. Works for both DELIVERY (Delhivery's
+  // webhook + poller already wire this on the first delivered scan) and
+  // PICKUP (sent on PICKED_UP transition) orders.
+  // ─────────────────────────────────────────────────────────────────────────
+  async resendDeliveryEmail(id: string) {
+    const order = await prisma.order.findUnique({ where: { id } })
+    if (!order) throw new NotFoundError(`Order ${id}`)
+    if (!order.customerEmail) throw new ConflictError('Order has no customer email on file')
+
+    const result = await sendDeliveryConfirmationEmail({
+      orderNumber:   order.orderNumber,
+      customerName:  order.customerName,
+      customerEmail: order.customerEmail,
+      total:         Number(order.total),
+    })
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        deliveryEmailSentAt:    result.ok ? new Date() : order.deliveryEmailSentAt,
+        deliveryEmailLastError: result.ok ? null : result.error,
+      },
+    })
+
+    return { result, sentTo: order.customerEmail }
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Resend the pickup-ready email. Pickup-only.
+  // ─────────────────────────────────────────────────────────────────────────
+  async resendPickupReadyEmail(id: string) {
+    const order = await prisma.order.findUnique({ where: { id } })
+    if (!order) throw new NotFoundError(`Order ${id}`)
+    if (!order.customerEmail) throw new ConflictError('Order has no customer email on file')
+    if (order.fulfillmentType !== 'PICKUP') {
+      throw new ConflictError('Pickup-ready emails are only valid on store-pickup orders')
+    }
+
+    const result = await sendPickupReadyEmail({
+      orderNumber:   order.orderNumber,
+      customerName:  order.customerName,
+      customerEmail: order.customerEmail,
+    })
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        pickupReadyEmailSentAt:    result.ok ? new Date() : order.pickupReadyEmailSentAt,
+        pickupReadyEmailLastError: result.ok ? null : result.error,
+      },
+    })
+
+    return { result, sentTo: order.customerEmail }
   },
 }

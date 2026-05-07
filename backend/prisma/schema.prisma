@@ -263,14 +263,21 @@ model Order {
   invoiceStatus        InvoiceStatus   @default(PENDING)
   invoiceNumber        String?
   invoicePdfUrl        String?
-  // Transactional-email send tracking. confirmationEmailSentAt stamps when the
-  // customer confirmation went out successfully; storeEmailSentAt stamps the
-  // admin notification. Both stay null on failure so the retry sweep can find
-  // them. confirmationEmailLastError keeps the last Resend error message so an
-  // admin can see why the send failed without digging through container logs.
+  // Transactional-email send tracking. <type>EmailSentAt stamps when each
+  // email landed successfully; *LastError stores the Resend error verbatim
+  // so admins can see *why* a send failed. Null sentAt + non-null lastError
+  // = pending retry (background sweep finds it inside a 24h lookback). Each
+  // call site checks sentAt before re-sending so the webhook + poller can't
+  // double-deliver the same email.
   confirmationEmailSentAt    DateTime?
   storeEmailSentAt           DateTime?
   confirmationEmailLastError String?
+  shipmentEmailSentAt        DateTime?
+  shipmentEmailLastError     String?
+  deliveryEmailSentAt        DateTime?
+  deliveryEmailLastError     String?
+  pickupReadyEmailSentAt     DateTime?
+  pickupReadyEmailLastError  String?
   items                OrderItem[]
   subtotal             Decimal         @db.Decimal(10, 2)
   discount             Decimal         @default(0) @db.Decimal(10, 2)
@@ -286,6 +293,9 @@ model Order {
   @@index([awbNumber])
   @@index([fulfillmentType])
   @@index([confirmationEmailSentAt])
+  @@index([shipmentEmailSentAt])
+  @@index([deliveryEmailSentAt])
+  @@index([pickupReadyEmailSentAt])
 }
 
 model OrderItem {

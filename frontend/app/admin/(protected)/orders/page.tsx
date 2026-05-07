@@ -65,6 +65,12 @@ type OrderDetail = {
   confirmationEmailSentAt:    string | null
   storeEmailSentAt:           string | null
   confirmationEmailLastError: string | null
+  shipmentEmailSentAt:        string | null
+  shipmentEmailLastError:     string | null
+  deliveryEmailSentAt:        string | null
+  deliveryEmailLastError:     string | null
+  pickupReadyEmailSentAt:     string | null
+  pickupReadyEmailLastError:  string | null
   items: Array<{
     id: string
     quantity:  number
@@ -294,6 +300,36 @@ function OrderDrawer({
     }
   }
 
+  const [resendingDelivery, setResendingDelivery] = useState(false)
+  async function handleResendDelivery() {
+    if (!order) return
+    setResendingDelivery(true)
+    try {
+      const result = await ordersApi.resendDelivery(order.id)
+      setOrder((o) => o ? { ...o, deliveryEmailSentAt: new Date().toISOString(), deliveryEmailLastError: null } : o)
+      toast.success(`Delivery confirmation sent to ${result.sentTo}`)
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to resend delivery email')
+    } finally {
+      setResendingDelivery(false)
+    }
+  }
+
+  const [resendingPickupReady, setResendingPickupReady] = useState(false)
+  async function handleResendPickupReady() {
+    if (!order) return
+    setResendingPickupReady(true)
+    try {
+      const result = await ordersApi.resendPickupReady(order.id)
+      setOrder((o) => o ? { ...o, pickupReadyEmailSentAt: new Date().toISOString(), pickupReadyEmailLastError: null } : o)
+      toast.success(`Pickup-ready email sent to ${result.sentTo}`)
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to resend pickup-ready email')
+    } finally {
+      setResendingPickupReady(false)
+    }
+  }
+
   async function handlePickupAdvance(stage: 'READY' | 'PICKED_UP') {
     if (!order) return
     setPickupBusy(stage)
@@ -520,6 +556,112 @@ function OrderDrawer({
                         {resendingConfirm
                           ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Sending…</>
                           : <>Send Confirmation Email Now</>}
+                      </button>
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {/* Pickup-ready email status — only shown for pickup orders that
+                  have been marked READY (the email is fired on that transition).
+                  Mirrors the Confirmation Email panel above. */}
+              {isPickup && order.pickupReadyAt && order.customerEmail && (
+                <section>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-widest text-muted">Pickup-Ready Email</h3>
+                  </div>
+                  {order.pickupReadyEmailSentAt ? (
+                    <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-emerald-400">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        <span>Sent to {order.customerEmail}</span>
+                      </div>
+                      <p className="text-[10px] text-muted">
+                        {new Date(order.pickupReadyEmailSentAt).toLocaleString('en-IN')}
+                      </p>
+                      <button
+                        onClick={handleResendPickupReady}
+                        disabled={resendingPickupReady}
+                        className="flex w-full items-center justify-center gap-2 rounded border border-border py-2 text-[11px] font-semibold uppercase tracking-widest text-muted hover:bg-surface-elevated hover:text-on-background disabled:opacity-50 transition-colors"
+                      >
+                        {resendingPickupReady
+                          ? <><Loader2 className="h-3 w-3 animate-spin" />Sending…</>
+                          : <>Resend Pickup-Ready</>}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="rounded border border-amber-500/40 bg-amber-500/5 p-3 space-y-2">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-amber-400">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        <span>Pickup-ready email not sent</span>
+                      </div>
+                      <p className="text-[11px] text-muted">
+                        The customer at <span className="text-on-background">{order.customerEmail}</span> hasn’t been told their order is ready to collect.
+                        {order.pickupReadyEmailLastError && (
+                          <> Last error: <span className="font-mono text-amber-300">{order.pickupReadyEmailLastError}</span></>
+                        )}
+                      </p>
+                      <button
+                        onClick={handleResendPickupReady}
+                        disabled={resendingPickupReady}
+                        className="flex w-full items-center justify-center gap-2 bg-amber-500/20 border border-amber-500/40 py-2.5 text-xs font-semibold uppercase tracking-widest text-amber-300 hover:bg-amber-500/30 disabled:opacity-50 transition-colors"
+                      >
+                        {resendingPickupReady
+                          ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Sending…</>
+                          : <>Send Pickup-Ready Email Now</>}
+                      </button>
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {/* Delivery confirmation email status — shown once the order has
+                  reached a delivered terminal state (courier DELIVERED, or
+                  pickup PICKED_UP). Same shape as the Confirmation panel. */}
+              {(order.shippingStatus === 'DELIVERED' || order.pickedUpAt) && order.customerEmail && (
+                <section>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-widest text-muted">Delivery Confirmation Email</h3>
+                  </div>
+                  {order.deliveryEmailSentAt ? (
+                    <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-emerald-400">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        <span>Sent to {order.customerEmail}</span>
+                      </div>
+                      <p className="text-[10px] text-muted">
+                        {new Date(order.deliveryEmailSentAt).toLocaleString('en-IN')}
+                      </p>
+                      <button
+                        onClick={handleResendDelivery}
+                        disabled={resendingDelivery}
+                        className="flex w-full items-center justify-center gap-2 rounded border border-border py-2 text-[11px] font-semibold uppercase tracking-widest text-muted hover:bg-surface-elevated hover:text-on-background disabled:opacity-50 transition-colors"
+                      >
+                        {resendingDelivery
+                          ? <><Loader2 className="h-3 w-3 animate-spin" />Sending…</>
+                          : <>Resend Delivery Email</>}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="rounded border border-amber-500/40 bg-amber-500/5 p-3 space-y-2">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-amber-400">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        <span>Delivery confirmation not sent</span>
+                      </div>
+                      <p className="text-[11px] text-muted">
+                        The customer at <span className="text-on-background">{order.customerEmail}</span> hasn’t received the delivery confirmation.
+                        {order.deliveryEmailLastError && (
+                          <> Last error: <span className="font-mono text-amber-300">{order.deliveryEmailLastError}</span></>
+                        )}
+                      </p>
+                      <button
+                        onClick={handleResendDelivery}
+                        disabled={resendingDelivery}
+                        className="flex w-full items-center justify-center gap-2 bg-amber-500/20 border border-amber-500/40 py-2.5 text-xs font-semibold uppercase tracking-widest text-amber-300 hover:bg-amber-500/30 disabled:opacity-50 transition-colors"
+                      >
+                        {resendingDelivery
+                          ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Sending…</>
+                          : <>Send Delivery Email Now</>}
                       </button>
                     </div>
                   )}
