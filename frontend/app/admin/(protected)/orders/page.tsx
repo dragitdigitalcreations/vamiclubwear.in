@@ -865,7 +865,14 @@ function OrderDrawer({
                 <div className="text-xs space-y-1">
                   <div className="flex justify-between">
                     <span className="text-muted">Order No.</span>
-                    <span className="font-mono text-on-background">{order.orderNumber}</span>
+                    <div className="text-right">
+                      <span className="font-mono text-on-background">
+                        {order.invoiceNumber || order.orderNumber}
+                      </span>
+                      {order.invoiceNumber && (
+                        <p className="font-mono text-[10px] text-muted">{order.orderNumber}</p>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted">Customer</span>
