@@ -174,7 +174,15 @@ export const orderService = {
       }
     }
 
-    // ── 6. Send emails (fire-and-forget — never block the response) ──────────
+    // ── 6. Send transactional emails ─────────────────────────────────────────
+    // Awaited (not fire-and-forget) so we can stamp confirmationEmailSentAt /
+    // storeEmailSentAt on success and confirmationEmailLastError on failure.
+    // The persisted timestamps are what powers the admin "Resend confirmation"
+    // button and the background retry sweep — without them a Resend rejection
+    // would silently strand the customer (which is the exact bug we just hit).
+    //
+    // Worst case: Resend takes ~3-4s to time out — acceptable since the order
+    // and inventory are already committed; the customer is on the success page.
     const emailItems = createdOrder.items.map((item) => ({
       name:  item.variant?.product?.name ?? 'Item',
       sku:   item.variant?.sku ?? '',
@@ -191,12 +199,93 @@ export const orderService = {
       total:           Number(createdOrder.total),
       fulfillmentType: createdOrder.fulfillmentType,
     }
-    Promise.all([
-      sendOrderConfirmationToCustomer(emailData),
-      sendOrderNotificationToStore(emailData),
-    ]).catch((err) => console.error('[email] Failed to send order emails:', err))
+    try {
+      const [custResult, storeResult] = await Promise.all([
+        sendOrderConfirmationToCustomer(emailData),
+        sendOrderNotificationToStore(emailData),
+      ])
+      await prisma.order.update({
+        where: { id: createdOrder.id },
+        data: {
+          confirmationEmailSentAt:    custResult.ok  ? new Date() : null,
+          storeEmailSentAt:           storeResult.ok ? new Date() : null,
+          confirmationEmailLastError: custResult.ok ? null : custResult.error,
+        },
+      })
+      if (!custResult.ok) {
+        console.error(`[email] Order ${createdOrder.orderNumber}: customer confirmation FAILED — ${custResult.error}`)
+      }
+      if (!storeResult.ok) {
+        console.error(`[email] Order ${createdOrder.orderNumber}: store notification FAILED — ${storeResult.error}`)
+      }
+    } catch (err: any) {
+      // Defensive — send() itself shouldn't throw any more, but if it does we
+      // still want the order to succeed and the failure recorded for retry.
+      const msg = err?.message ?? String(err)
+      console.error(`[email] Unexpected error sending emails for ${createdOrder.orderNumber}:`, err)
+      await prisma.order.update({
+        where: { id: createdOrder.id },
+        data:  { confirmationEmailLastError: msg },
+      }).catch(() => {})
+    }
 
     return createdOrder
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Resend the customer order-confirmation email for an existing order. Used
+  // by the admin "Resend confirmation" button when the original send failed
+  // (Resend down, key not loaded, unverified domain, etc.) and by the boot
+  // retry sweep that backfills any orders whose initial send didn't make it.
+  // Returns the SendResult so callers can surface the exact error.
+  // ─────────────────────────────────────────────────────────────────────────
+  async resendOrderConfirmation(id: string) {
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            variant: {
+              select: {
+                sku: true, size: true, color: true,
+                product: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    })
+    if (!order) throw new NotFoundError(`Order ${id}`)
+    if (!order.customerEmail) {
+      throw new ConflictError('Order has no customer email on file')
+    }
+
+    const emailItems = order.items.map((item) => ({
+      name:  item.variant?.product?.name ?? 'Item',
+      sku:   item.variant?.sku ?? '',
+      size:  item.variant?.size ?? null,
+      color: item.variant?.color ?? null,
+      qty:   item.quantity,
+      price: Number(item.unitPrice),
+    }))
+    const result = await sendOrderConfirmationToCustomer({
+      orderNumber:     order.orderNumber,
+      customerName:    order.customerName,
+      customerEmail:   order.customerEmail,
+      items:           emailItems,
+      total:           Number(order.total),
+      fulfillmentType: order.fulfillmentType,
+    })
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        confirmationEmailSentAt:    result.ok ? new Date() : order.confirmationEmailSentAt,
+        confirmationEmailLastError: result.ok ? null : result.error,
+      },
+    })
+
+    return { result, sentTo: order.customerEmail }
   },
 
   // ─────────────────────────────────────────────────────────────────────────

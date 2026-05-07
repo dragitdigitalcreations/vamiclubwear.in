@@ -38,4 +38,8 @@ router.patch(
 //   body: { stage: 'READY' | 'PICKED_UP' }
 router.patch('/:id/pickup', requireAuth, orderController.updatePickup)
 
+// POST /api/orders/:id/resend-confirmation [manager] — recovery button:
+// re-send the customer order confirmation if Resend dropped the original.
+router.post('/:id/resend-confirmation', requireAuth, orderController.resendConfirmation)
+
 export default router

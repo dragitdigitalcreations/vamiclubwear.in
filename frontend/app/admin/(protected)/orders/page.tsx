@@ -62,6 +62,9 @@ type OrderDetail = {
   invoicePdfUrl:   string | null
   notes:           string | null
   createdAt:       string
+  confirmationEmailSentAt:    string | null
+  storeEmailSentAt:           string | null
+  confirmationEmailLastError: string | null
   items: Array<{
     id: string
     quantity:  number
@@ -274,6 +277,23 @@ function OrderDrawer({
     }
   }
 
+  // Recovery for the *initial* order-confirmation email (separate from the
+  // shipment/tracking email above). Works on both DELIVERY and PICKUP orders.
+  const [resendingConfirm, setResendingConfirm] = useState(false)
+  async function handleResendConfirmation() {
+    if (!order) return
+    setResendingConfirm(true)
+    try {
+      const result = await ordersApi.resendConfirmation(order.id)
+      setOrder((o) => o ? { ...o, confirmationEmailSentAt: new Date().toISOString(), confirmationEmailLastError: null } : o)
+      toast.success(`Confirmation email sent to ${result.sentTo}`)
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to resend confirmation email')
+    } finally {
+      setResendingConfirm(false)
+    }
+  }
+
   async function handlePickupAdvance(stage: 'READY' | 'PICKED_UP') {
     if (!order) return
     setPickupBusy(stage)
@@ -451,6 +471,60 @@ function OrderDrawer({
                   )}
                 </div>
               </section>
+
+              {/* Order-confirmation email status — visible whenever the order
+                  has a customer email. Yellow alert if the initial send didn't
+                  go out (the bug we just hit), green check otherwise.
+                  The Resend button works for both DELIVERY and PICKUP orders. */}
+              {order.customerEmail && (
+                <section>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-widest text-muted">Confirmation Email</h3>
+                  </div>
+                  {order.confirmationEmailSentAt ? (
+                    <div className="rounded border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-emerald-400">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        <span>Sent to {order.customerEmail}</span>
+                      </div>
+                      <p className="text-[10px] text-muted">
+                        {new Date(order.confirmationEmailSentAt).toLocaleString('en-IN')}
+                      </p>
+                      <button
+                        onClick={handleResendConfirmation}
+                        disabled={resendingConfirm}
+                        className="flex w-full items-center justify-center gap-2 rounded border border-border py-2 text-[11px] font-semibold uppercase tracking-widest text-muted hover:bg-surface-elevated hover:text-on-background disabled:opacity-50 transition-colors"
+                      >
+                        {resendingConfirm
+                          ? <><Loader2 className="h-3 w-3 animate-spin" />Sending…</>
+                          : <>Resend Confirmation</>}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="rounded border border-amber-500/40 bg-amber-500/5 p-3 space-y-2">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-amber-400">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        <span>Confirmation email not sent</span>
+                      </div>
+                      <p className="text-[11px] text-muted">
+                        The customer at <span className="text-on-background">{order.customerEmail}</span> hasn’t received their order confirmation.
+                        {order.confirmationEmailLastError && (
+                          <> Last error: <span className="font-mono text-amber-300">{order.confirmationEmailLastError}</span></>
+                        )}
+                      </p>
+                      <button
+                        onClick={handleResendConfirmation}
+                        disabled={resendingConfirm}
+                        className="flex w-full items-center justify-center gap-2 bg-amber-500/20 border border-amber-500/40 py-2.5 text-xs font-semibold uppercase tracking-widest text-amber-300 hover:bg-amber-500/30 disabled:opacity-50 transition-colors"
+                      >
+                        {resendingConfirm
+                          ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Sending…</>
+                          : <>Send Confirmation Email Now</>}
+                      </button>
+                    </div>
+                  )}
+                </section>
+              )}
 
               {/* Items */}
               <section>

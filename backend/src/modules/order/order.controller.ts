@@ -63,4 +63,23 @@ export const orderController = {
       res.json(order)
     } catch (err) { next(err) }
   },
+
+  // POST /api/orders/:id/resend-confirmation — re-send the customer order
+  // confirmation email. Surfaces the Resend error verbatim on failure so the
+  // admin can see *why* (unverified domain, missing key, etc.) rather than
+  // just "send failed."
+  resendConfirmation: async (
+    req: Request<{ id: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { result, sentTo } = await orderService.resendOrderConfirmation(req.params.id)
+      if (!result.ok) {
+        res.status(502).json({ ok: false, error: result.error, sentTo })
+        return
+      }
+      res.json({ ok: true, sentTo })
+    } catch (err) { next(err) }
+  },
 }

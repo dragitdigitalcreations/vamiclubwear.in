@@ -313,6 +313,14 @@ export const ordersApi = {
       body: JSON.stringify({ status }),
     }),
 
+  // Re-send the customer order confirmation. Recovery for orders whose
+  // initial Resend send failed silently (unverified domain, missing key,
+  // transient API outage). Works for both DELIVERY and PICKUP orders.
+  resendConfirmation: (id: string) =>
+    request<{ ok: true; sentTo: string }>(
+      `/orders/${id}/resend-confirmation`, { method: 'POST' }
+    ),
+
   // Advance the pickup workflow — only valid on PICKUP orders.
   // stage: 'READY' marks the order packed and waiting for collection;
   //        'PICKED_UP' marks the order completed (auto-bumps to DELIVERED).

@@ -26,6 +26,8 @@ import { errorHandler } from './middleware/errorHandler'
 import { prisma } from './lib/prisma'
 import { ensureCategories } from './lib/ensureCategories'
 import { startShippingPoller } from './modules/shipping/shipping.poller'
+import { startOrderEmailRetrySweep } from './lib/orderEmailRetry'
+import { probeResendHealth } from './lib/email'
 
 const app = express()
 const PORT = process.env.PORT ?? 3001
@@ -100,6 +102,22 @@ app.listen(PORT, async () => {
   // DELIVERED automatically by polling Delhivery, so admins don't have to
   // depend on Delhivery's webhook firing.
   startShippingPoller()
+
+  // Resend smoke-test on boot — surfaces a missing/invalid RESEND_API_KEY in
+  // the container logs immediately rather than letting the next checkout be
+  // the canary. Non-blocking; just logs the result.
+  probeResendHealth()
+    .then((r) => {
+      if (r.ok) console.log(`[email] Health check OK — ${r.detail}`)
+      else      console.error(`[email] Health check FAILED — ${r.detail}. Order confirmations will not be sent until this is fixed.`)
+    })
+    .catch((err) => console.error('[email] Health check threw:', err))
+
+  // Retry sweep — backfills order confirmations for any order whose initial
+  // send didn't make it (Resend down, key wasn't loaded, etc.). Runs once 30s
+  // after boot and every 15 min thereafter.
+  startOrderEmailRetrySweep()
+
   console.log('[server] Endpoints:')
   console.log(`  GET  http://localhost:${PORT}/health`)
   console.log(`  *    http://localhost:${PORT}/api/products`)

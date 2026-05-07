@@ -5,30 +5,61 @@ import { requireAuth, requireAdmin } from '../../middleware/auth'
 import { prisma } from '../../lib/prisma'
 import { Resend } from 'resend'
 import { sendAdminInvite } from '../../lib/email'
+import { probeResendHealth } from '../../lib/email'
+import { retryFailedOrderEmails } from '../../lib/orderEmailRetry'
 
 const router = Router()
 
 // ── GET /api/admin/test-email — smoke-test Resend config ─────────────────────
+// Reports the read-only health probe (does the key work? is the from-domain
+// verified?) and then attempts an actual send to STORE_EMAIL. Both results are
+// returned so the admin sees *exactly* where the pipeline breaks.
 router.get('/test-email', async (_req: Request, res: Response) => {
   const key = process.env.RESEND_API_KEY
   if (!key) {
     res.status(500).json({ ok: false, error: 'RESEND_API_KEY not set in environment' })
     return
   }
+  const fromAddr = process.env.RESEND_FROM ?? 'Vami Clubwear <orders@vamiclubwear.in>'
+  const to       = process.env.STORE_EMAIL ?? 'vamiclubwear@gmail.com'
+
+  const health = await probeResendHealth()
+
   try {
     const resend = new Resend(key)
-    const from   = process.env.RESEND_FROM ?? 'Vami Clubwear <orders@vamiclubwear.in>'
-    const to     = process.env.STORE_EMAIL ?? 'vamiclubwear@gmail.com'
-    await resend.emails.send({
-      from,
+    const result = await resend.emails.send({
+      from:    fromAddr,
       to,
       subject: 'Vami Clubwear — Email test ✓',
       text:    'Resend is working. Order, shipment and delivery emails are live.',
     })
-    res.json({ ok: true, message: `Test email sent to ${to}` })
+    if ((result as any)?.error) {
+      const e = (result as any).error
+      res.status(502).json({
+        ok: false,
+        health,
+        from: fromAddr,
+        to,
+        error: e?.message ?? JSON.stringify(e),
+        hint:  'Most common cause: the from-domain is not verified in Resend. Verify vamiclubwear.in (or change RESEND_FROM to a verified address).',
+      })
+      return
+    }
+    res.json({ ok: true, health, from: fromAddr, to, message: `Test email sent to ${to}`, id: (result as any)?.data?.id ?? null })
   } catch (err: any) {
-    res.status(500).json({ ok: false, error: err.message ?? String(err) })
+    res.status(500).json({ ok: false, health, from: fromAddr, to, error: err.message ?? String(err) })
   }
+})
+
+// ── POST /api/admin/email-retry-sweep — manual trigger for the retry sweep ───
+// One-click "resend any orders whose confirmation didn't go out." Used after
+// fixing a Resend config issue (verifying the domain, swapping the key) so the
+// admin doesn't have to wait up to 15 min for the next scheduled sweep.
+router.post('/email-retry-sweep', requireAuth, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await retryFailedOrderEmails()
+    res.json(result)
+  } catch (err) { next(err) }
 })
 
 // ── GET /api/admin/users — list admin users (ADMIN only) ─────────────────────

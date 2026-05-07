@@ -32,22 +32,70 @@ function getResend(): Resend | null {
 const from = () => process.env.RESEND_FROM ?? 'Vami Clubwear <orders@vamiclubwear.in>'
 const storeEmail = () => process.env.STORE_EMAIL ?? 'vamiclubwear@gmail.com'
 
-async function send(to: string, subject: string, html: string, text: string) {
+// Returns { ok: true, id } on a real Resend acknowledgement, or { ok: false,
+// error } in every other case (key missing, Resend rejected the body, network
+// error). Callers use this to persist sent timestamps and surface failures to
+// admins instead of swallowing them via a fire-and-forget Promise.
+export type SendResult =
+  | { ok: true;  id: string | null }
+  | { ok: false; error: string }
+
+async function sendOnce(to: string, subject: string, html: string, text: string): Promise<SendResult> {
   const r = getResend()
   if (!r) {
-    console.warn(`[email] Skipped send to ${to} (subject: "${subject}") — Resend not configured`)
-    return
+    const error = 'RESEND_API_KEY is not configured on the server'
+    console.warn(`[email] Skipped send to ${to} (subject: "${subject}") — ${error}`)
+    return { ok: false, error }
   }
   try {
     const result = await r.emails.send({ from: from(), to, subject, html, text })
-    if ((result as any)?.error) {
-      console.error(`[email] Resend rejected send to ${to}:`, (result as any).error)
-    } else {
-      console.log(`[email] Sent to ${to} (subject: "${subject}")`, (result as any)?.data?.id ?? '')
+    const apiError = (result as any)?.error
+    if (apiError) {
+      const msg = apiError?.message ?? JSON.stringify(apiError)
+      console.error(`[email] Resend rejected send to ${to} (subject: "${subject}"):`, apiError)
+      return { ok: false, error: `Resend: ${msg}` }
     }
-  } catch (err) {
+    const id = (result as any)?.data?.id ?? null
+    console.log(`[email] Sent to ${to} (subject: "${subject}") id=${id ?? '<none>'}`)
+    return { ok: true, id }
+  } catch (err: any) {
+    const msg = err?.message ?? String(err)
     console.error(`[email] Send failed to ${to} (subject: "${subject}"):`, err)
-    throw err
+    return { ok: false, error: msg }
+  }
+}
+
+// One automatic retry on failure with a short backoff — covers transient
+// Resend / network blips so customers don't lose their confirmation over a
+// 5xx that clears up a second later.
+async function send(to: string, subject: string, html: string, text: string): Promise<SendResult> {
+  const first = await sendOnce(to, subject, html, text)
+  if (first.ok) return first
+  // Don't retry config errors — they won't fix themselves
+  if (first.error.startsWith('RESEND_API_KEY')) return first
+  await new Promise((r) => setTimeout(r, 750))
+  const second = await sendOnce(to, subject, html, text)
+  if (!second.ok) {
+    console.error(`[email] Both attempts failed for ${to} (subject: "${subject}"). Last error: ${second.error}`)
+  }
+  return second
+}
+
+// One-shot smoke test used at startup so the operator sees, in the boot logs,
+// whether Resend is reachable with the configured key. Does not actually send
+// an email — uses the read-only domains.list endpoint.
+export async function probeResendHealth(): Promise<{ ok: boolean; detail: string }> {
+  const r = getResend()
+  if (!r) return { ok: false, detail: 'RESEND_API_KEY not set' }
+  try {
+    const res = await (r as any).domains.list()
+    if ((res as any)?.error) {
+      const e = (res as any).error
+      return { ok: false, detail: e?.message ?? JSON.stringify(e) }
+    }
+    return { ok: true, detail: `Resend reachable (key prefix ${(process.env.RESEND_API_KEY ?? '').slice(0, 7)}…)` }
+  } catch (err: any) {
+    return { ok: false, detail: err?.message ?? String(err) }
   }
 }
 
@@ -141,8 +189,8 @@ function buildOrderRows(items: OrderItem[]): string {
   }).join('')
 }
 
-export async function sendOrderConfirmationToCustomer(data: OrderEmailData): Promise<void> {
-  if (!data.customerEmail) return
+export async function sendOrderConfirmationToCustomer(data: OrderEmailData): Promise<SendResult> {
+  if (!data.customerEmail) return { ok: false, error: 'No customer email on order' }
   const isPickup = data.fulfillmentType === 'PICKUP'
 
   const fulfillmentBlock = isPickup
@@ -184,7 +232,7 @@ export async function sendOrderConfirmationToCustomer(data: OrderEmailData): Pro
       <p style="margin-top:20px;font-size:13px;color:#777;">${closingLine}</p>
     </div>
   `)
-  await send(
+  return send(
     data.customerEmail,
     `Order Confirmed — ${data.orderNumber} | Vami Clubwear`,
     html,
@@ -194,9 +242,9 @@ export async function sendOrderConfirmationToCustomer(data: OrderEmailData): Pro
   )
 }
 
-export async function sendOrderNotificationToStore(data: OrderEmailData): Promise<void> {
+export async function sendOrderNotificationToStore(data: OrderEmailData): Promise<SendResult> {
   const to = storeEmail()
-  if (!to) return
+  if (!to) return { ok: false, error: 'STORE_EMAIL not configured' }
   const isPickup = data.fulfillmentType === 'PICKUP'
   const html = wrapHtml(`
     <div class="body">
@@ -219,7 +267,7 @@ export async function sendOrderNotificationToStore(data: OrderEmailData): Promis
       </table>
     </div>
   `)
-  await send(
+  return send(
     to,
     `[NEW ORDER${isPickup ? ' · PICKUP' : ''}] ${data.orderNumber} — ₹${data.total.toLocaleString('en-IN')}`,
     html,
@@ -235,8 +283,8 @@ interface PickupReadyEmailData {
   customerEmail?: string | null
 }
 
-export async function sendPickupReadyEmail(data: PickupReadyEmailData): Promise<void> {
-  if (!data.customerEmail) return
+export async function sendPickupReadyEmail(data: PickupReadyEmailData): Promise<SendResult> {
+  if (!data.customerEmail) return { ok: false, error: 'No customer email on order' }
   const html = wrapHtml(`
     <div class="body">
       <h2>Your order is ready to collect${data.customerName ? `, ${data.customerName.split(' ')[0]}` : ''}!</h2>
@@ -253,7 +301,7 @@ export async function sendPickupReadyEmail(data: PickupReadyEmailData): Promise<
       </p>
     </div>
   `)
-  await send(
+  return send(
     data.customerEmail,
     `Ready to Collect — ${data.orderNumber} | Vami Clubwear`,
     html,
@@ -335,8 +383,8 @@ function buildInvoiceRows(items: InvoiceItem[]): string {
   }).join('')
 }
 
-export async function sendShipmentCreatedEmail(data: ShipmentInvoiceData): Promise<void> {
-  if (!data.customerEmail) return
+export async function sendShipmentCreatedEmail(data: ShipmentInvoiceData): Promise<SendResult> {
+  if (!data.customerEmail) return { ok: false, error: 'No customer email on order' }
 
   // GST is included in displayed prices in India for B2C apparel. Apparel
   // attracts 5% GST when MRP ≤ ₹1000, 12% above — split it out for the
@@ -516,7 +564,7 @@ export async function sendShipmentCreatedEmail(data: ShipmentInvoiceData): Promi
     `\nShipping: ${data.shippingFee === 0 ? 'FREE' : fmtINR(data.shippingFee)}` +
     `\nGrand Total: ${fmtINR(data.total)}\n\nPaid in full · Razorpay`
 
-  await send(
+  return send(
     data.customerEmail,
     `Invoice & Tracking — ${data.orderNumber} | Vami Clubwear`,
     html,
@@ -533,8 +581,8 @@ interface DeliveryEmailData {
   total:         number
 }
 
-export async function sendDeliveryConfirmationEmail(data: DeliveryEmailData): Promise<void> {
-  if (!data.customerEmail) return
+export async function sendDeliveryConfirmationEmail(data: DeliveryEmailData): Promise<SendResult> {
+  if (!data.customerEmail) return { ok: false, error: 'No customer email on order' }
   const html = wrapHtml(`
     <div class="body">
       <h2>Order Delivered${data.customerName ? ` — Thank you, ${data.customerName.split(' ')[0]}` : ''}!</h2>
@@ -549,7 +597,7 @@ export async function sendDeliveryConfirmationEmail(data: DeliveryEmailData): Pr
       </p>
     </div>
   `)
-  await send(data.customerEmail, `Delivered: Order ${data.orderNumber} | Vami Clubwear`, html,
+  return send(data.customerEmail, `Delivered: Order ${data.orderNumber} | Vami Clubwear`, html,
     `Your order ${data.orderNumber} has been delivered. Thank you for shopping with Vami Clubwear!`)
 }
 
@@ -561,7 +609,7 @@ export async function sendAdminInvite(opts: {
   role:     string
   tempPass: string
   loginUrl: string
-}): Promise<void> {
+}): Promise<SendResult> {
   const html = wrapHtml(`
     <div class="body">
       <h2>You've been added to Vami Clubwear Admin</h2>
@@ -584,6 +632,6 @@ export async function sendAdminInvite(opts: {
       </p>
     </div>
   `)
-  await send(opts.to, `You've been invited to Vami Clubwear Admin`, html,
+  return send(opts.to, `You've been invited to Vami Clubwear Admin`, html,
     `You've been invited. Email: ${opts.to}, Password: ${opts.tempPass}. Login at: ${opts.loginUrl}`)
 }
