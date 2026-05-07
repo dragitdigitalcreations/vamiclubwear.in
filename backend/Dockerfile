@@ -32,4 +32,9 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 EXPOSE 8080
-CMD ["node", "dist/index.js"]
+# Run pending migrations before starting the server. Without this, schema
+# changes ship in code but never reach the DB on Cloud Run, which surfaces as
+# "column does not exist" 500s on every endpoint that touches the new field.
+# We invoke npm start (which is `prisma migrate deploy && node dist/index.js`)
+# instead of execing node directly so the migrate step always runs first.
+CMD ["npm", "start"]
