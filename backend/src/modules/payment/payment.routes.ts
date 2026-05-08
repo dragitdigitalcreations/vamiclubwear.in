@@ -134,15 +134,18 @@ router.post('/verify', async (req: Request, res: Response, next: NextFunction) =
 
     const { rzpOrderId, rzpPaymentId, rzpSignature, items, couponCode, fulfillmentType, ...customer } = parsed.data
 
-    // Verify Razorpay signature
+    // Verify Razorpay signature. If the secret is missing we MUST refuse —
+    // silently passing would let a forged callback create a paid order.
     const keySecret = process.env.RAZORPAY_KEY_SECRET
-    if (keySecret) {
-      const body      = `${rzpOrderId}|${rzpPaymentId}`
-      const expected  = crypto.createHmac('sha256', keySecret).update(body).digest('hex')
-      if (expected !== rzpSignature) {
-        res.status(400).json({ error: 'Payment verification failed. Please contact support.' })
-        return
-      }
+    if (!keySecret) {
+      res.status(503).json({ error: 'Payment verification is not configured. Please contact support.' })
+      return
+    }
+    const body      = `${rzpOrderId}|${rzpPaymentId}`
+    const expected  = crypto.createHmac('sha256', keySecret).update(body).digest('hex')
+    if (expected !== rzpSignature) {
+      res.status(400).json({ error: 'Payment verification failed. Please contact support.' })
+      return
     }
 
     // Create DB order + deduct inventory

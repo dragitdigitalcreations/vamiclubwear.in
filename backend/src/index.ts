@@ -15,6 +15,17 @@ if (process.env.JWT_SECRET === 'vami-dev-secret-change-in-production' && process
   console.error('[startup] JWT_SECRET is still the default value — set a strong secret before deploying.')
   process.exit(1)
 }
+// In production, integrations whose silent absence would weaken security
+// (Google audience check, Razorpay signature verification) must be set.
+if (process.env.NODE_ENV === 'production') {
+  const PROD_REQUIRED = ['GOOGLE_CLIENT_ID', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET']
+  const prodMissing = PROD_REQUIRED.filter((k) => !process.env[k])
+  if (prodMissing.length) {
+    console.error(`[startup] Missing production-required env: ${prodMissing.join(', ')}`)
+    console.error('[startup] Without these, OAuth audience and Razorpay HMAC verification silently no-op.')
+    process.exit(1)
+  }
+}
 
 import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
@@ -31,6 +42,11 @@ import { probeResendHealth } from './lib/email'
 
 const app = express()
 const PORT = process.env.PORT ?? 3001
+
+// Cloud Run / Railway terminate TLS at a load balancer and forward the real
+// client IP in X-Forwarded-For. Without this, express-rate-limit keys every
+// request to the LB IP and the global limit becomes a planet-wide cap.
+app.set('trust proxy', 1)
 
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(helmet())

@@ -1,7 +1,12 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../../lib/prisma'
+import { requireAuth } from '../../middleware/auth'
 
 const router = Router()
+
+// All stats endpoints require an authenticated admin/manager/staff session.
+// Without this, revenue, order volume, and stock signals leak publicly.
+router.use(requireAuth)
 
 // GET /api/stats/summary
 router.get('/summary', async (_req: Request, res: Response, next: NextFunction) => {
