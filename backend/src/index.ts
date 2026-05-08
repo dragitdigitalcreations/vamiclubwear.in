@@ -15,17 +15,19 @@ if (process.env.JWT_SECRET === 'vami-dev-secret-change-in-production' && process
   console.error('[startup] JWT_SECRET is still the default value — set a strong secret before deploying.')
   process.exit(1)
 }
-// Razorpay keys must be set in production — without RAZORPAY_KEY_SECRET the
-// HMAC signature check on /payment/verify silently no-ops, letting a forged
-// callback create a paid order. GOOGLE_CLIENT_ID is intentionally not gated:
-// the storefront tolerates a missing Google Sign-In config (the modal shows
-// a "not configured" fallback) and we don't want to block deploys here.
+// Production must set every env whose silent absence would weaken security:
+//   RAZORPAY_KEY_SECRET — without it, /payment/verify HMAC check no-ops and
+//                         a forged callback can create a paid order.
+//   GOOGLE_CLIENT_ID    — same value as NEXT_PUBLIC_GOOGLE_CLIENT_ID on the
+//                         frontend; without it, customer.routes accepts a
+//                         Google ID token from any OAuth client (account
+//                         takeover via attacker-controlled Google app).
 if (process.env.NODE_ENV === 'production') {
-  const PROD_REQUIRED = ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET']
+  const PROD_REQUIRED = ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'GOOGLE_CLIENT_ID']
   const prodMissing = PROD_REQUIRED.filter((k) => !process.env[k])
   if (prodMissing.length) {
     console.error(`[startup] Missing production-required env: ${prodMissing.join(', ')}`)
-    console.error('[startup] Razorpay HMAC verification cannot run without these.')
+    console.error('[startup] These gate signature/audience checks that must not silently no-op.')
     process.exit(1)
   }
 }
