@@ -118,6 +118,19 @@ export const productController = {
     }
   },
 
+  // ── Facets ─────────────────────────────────────────────────────────────────
+
+  getFacets: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const cat = typeof req.query.category === 'string' ? req.query.category : undefined
+      const facets = await productService.getFacets(cat)
+      res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+      res.json(facets)
+    } catch (err) {
+      next(err)
+    }
+  },
+
   // ── Showcase Videos ────────────────────────────────────────────────────────
 
   getShowcaseVideos: async (_req: Request, res: Response, next: NextFunction) => {

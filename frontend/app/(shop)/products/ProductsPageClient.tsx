@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback, Suspense } from 'react'
+import { useEffect, useState, useCallback, useMemo, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { SlidersHorizontal, X } from 'lucide-react'
 import { Product } from '@/types/product'
 import { ProductCard, ProductCardSkeleton } from '@/components/shop/ProductCard'
 import { productsApi } from '@/lib/api'
@@ -44,6 +45,24 @@ interface InitialData {
   category: string
   sort: string
   page: number
+  sizes: string
+  colors: string
+}
+
+type Facets = {
+  sizes: string[]
+  colors: Array<{ name: string; hex: string | null }>
+}
+
+// CSV ↔ array helpers — kept inline so the URL stays the source of truth and
+// we never have to reconcile a separate `selectedSizes` state with searchParams.
+function csvToArr(s: string): string[] {
+  return s ? s.split(',').map((v) => v.trim()).filter(Boolean) : []
+}
+function toggleCsv(csv: string, value: string): string {
+  const set = new Set(csvToArr(csv))
+  if (set.has(value)) set.delete(value); else set.add(value)
+  return Array.from(set).join(',')
 }
 
 function ProductsContent({ initial }: { initial?: InitialData }) {
@@ -53,18 +72,28 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
   const categorySlug = searchParams.get('category') ?? ''
   const sortParam    = searchParams.get('sort') ?? 'newest'
   const pageParam    = Number(searchParams.get('page') ?? '1')
+  const sizesParam   = searchParams.get('sizes')  ?? ''
+  const colorsParam  = searchParams.get('colors') ?? ''
+
+  const selectedSizes  = useMemo(() => csvToArr(sizesParam),  [sizesParam])
+  const selectedColors = useMemo(() => csvToArr(colorsParam), [colorsParam])
 
   // Hydrate with SSR data when the URL matches the server-fetched query.
   const matchesInitial = !!initial
     && initial.category === categorySlug
     && initial.sort     === sortParam
     && initial.page     === pageParam
+    && initial.sizes    === sizesParam
+    && initial.colors   === colorsParam
 
   const [products,   setProducts]   = useState<Product[]>(matchesInitial ? initial!.products   : [])
   const [totalPages, setTotalPages] = useState(           matchesInitial ? initial!.totalPages : 1)
   const [total,      setTotal]      = useState(           matchesInitial ? initial!.total      : 0)
   const [loading,    setLoading]    = useState(!matchesInitial)
   const [hydrated,   setHydrated]   = useState(false)
+
+  const [facets, setFacets] = useState<Facets>({ sizes: [], colors: [] })
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -75,8 +104,10 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
         category: categorySlug || undefined,
         isActive: 'true' as any,
         // Pass sort as a custom param — the service resolves it server-side
-        ...(sortParam === 'price-asc'  && { sortBy: 'price',      sortDir: 'asc'  } as any),
-        ...(sortParam === 'price-desc' && { sortBy: 'price',      sortDir: 'desc' } as any),
+        ...(sortParam === 'price-asc'  && { sortBy: 'price', sortDir: 'asc'  } as const),
+        ...(sortParam === 'price-desc' && { sortBy: 'price', sortDir: 'desc' } as const),
+        ...(sizesParam  && { sizes:  sizesParam  }),
+        ...(colorsParam && { colors: colorsParam }),
       })
       setProducts((result as any).data ?? [])
       setTotalPages((result as any).totalPages ?? 1)
@@ -87,7 +118,7 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
     } finally {
       setLoading(false)
     }
-  }, [categorySlug, sortParam, pageParam])
+  }, [categorySlug, sortParam, pageParam, sizesParam, colorsParam])
 
   useEffect(() => {
     // First mount with matching SSR data — skip the refetch to avoid flash.
@@ -99,10 +130,30 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
     load()
   }, [load, hydrated, matchesInitial])
 
+  // Refetch facets whenever the category changes so the chip row only shows
+  // sizes/colours that exist in that collection. Big-size is a virtual filter
+  // so we always fetch the global facet set there.
+  useEffect(() => {
+    let cancelled = false
+    const cat = categorySlug && categorySlug !== 'big-size' ? categorySlug : undefined
+    productsApi.facets(cat)
+      .then((f) => { if (!cancelled) setFacets(f) })
+      .catch(() => { if (!cancelled) setFacets({ sizes: [], colors: [] }) })
+    return () => { cancelled = true }
+  }, [categorySlug])
+
   function setParam(key: string, value: string) {
     const p = new URLSearchParams(searchParams.toString())
     if (value) p.set(key, value); else p.delete(key)
     p.delete('page')
+    router.push(`/products?${p}`)
+  }
+
+  function toggleSize(size: string)  { setParam('sizes',  toggleCsv(sizesParam,  size))  }
+  function toggleColor(color: string) { setParam('colors', toggleCsv(colorsParam, color)) }
+  function clearAllVariantFilters() {
+    const p = new URLSearchParams(searchParams.toString())
+    p.delete('sizes'); p.delete('colors'); p.delete('page')
     router.push(`/products?${p}`)
   }
 
@@ -111,6 +162,8 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
     params.set('page', String(p))
     router.push(`/products?${params}`)
   }
+
+  const activeFilterCount = selectedSizes.length + selectedColors.length
 
   return (
     <div className="pt-24">
@@ -165,21 +218,164 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
             })}
           </div>
 
-          {/* Sort dropdown */}
-          <label className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted flex-shrink-0">
-            <span>Sort</span>
-            <select
-              value={sortParam}
-              onChange={(e) => setParam('sort', e.target.value === 'newest' ? '' : e.target.value)}
-              className="rounded-full border border-border bg-transparent px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-on-background outline-none focus:border-on-background"
-              aria-label="Sort products"
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Filters toggle — opens size/colour panel below */}
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((v) => !v)}
+              aria-expanded={filtersOpen}
+              aria-controls="variant-filter-panel"
+              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors ${
+                filtersOpen || activeFilterCount > 0
+                  ? 'border-on-background text-on-background'
+                  : 'border-border text-muted hover:border-on-background hover:text-on-background'
+              }`}
             >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </label>
+              <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="rounded-full bg-on-background text-white px-1.5 py-0.5 text-[10px] leading-none">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+
+            {/* Sort dropdown */}
+            <label className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+              <span>Sort</span>
+              <select
+                value={sortParam}
+                onChange={(e) => setParam('sort', e.target.value === 'newest' ? '' : e.target.value)}
+                className="rounded-full border border-border bg-transparent px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-on-background outline-none focus:border-on-background"
+                aria-label="Sort products"
+              >
+                {SORT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
+
+        {/* Variant filter panel */}
+        <AnimatePresence initial={false}>
+          {filtersOpen && (
+            <motion.div
+              id="variant-filter-panel"
+              key="variant-filter-panel"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden border-t border-border"
+            >
+              <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-5 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Sizes */}
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Size</p>
+                  {facets.sizes.length === 0 ? (
+                    <p className="text-xs text-muted">No sizes available in this collection.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {facets.sizes.map((s) => {
+                        const active = selectedSizes.some((v) => v.toLowerCase() === s.toLowerCase())
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            aria-pressed={active}
+                            onClick={() => toggleSize(s)}
+                            className={`min-w-[2.5rem] rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors ${
+                              active
+                                ? 'border-on-background bg-on-background text-white'
+                                : 'border-border text-muted hover:border-on-background hover:text-on-background'
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Colours */}
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Colour</p>
+                  {facets.colors.length === 0 ? (
+                    <p className="text-xs text-muted">No colours available in this collection.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {facets.colors.map(({ name, hex }) => {
+                        const active = selectedColors.some((v) => v.toLowerCase() === name.toLowerCase())
+                        return (
+                          <button
+                            key={name}
+                            type="button"
+                            aria-pressed={active}
+                            onClick={() => toggleColor(name)}
+                            className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors ${
+                              active
+                                ? 'border-on-background bg-on-background text-white'
+                                : 'border-border text-muted hover:border-on-background hover:text-on-background'
+                            }`}
+                          >
+                            <span
+                              className="inline-block h-3 w-3 rounded-full border border-border"
+                              style={hex ? { backgroundColor: hex } : undefined}
+                              aria-hidden
+                            />
+                            <span>{name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Active filter pills — always visible when something is selected so
+            shoppers can see and remove individual filters without opening the
+            panel. */}
+        {activeFilterCount > 0 && (
+          <div className="border-t border-border">
+            <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-3 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Active</span>
+              {selectedSizes.map((s) => (
+                <button
+                  key={`pill-size-${s}`}
+                  type="button"
+                  onClick={() => toggleSize(s)}
+                  className="flex items-center gap-1.5 rounded-full border border-on-background bg-on-background/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-on-background"
+                >
+                  <span>Size: {s}</span>
+                  <X className="h-3 w-3" aria-hidden />
+                </button>
+              ))}
+              {selectedColors.map((c) => (
+                <button
+                  key={`pill-color-${c}`}
+                  type="button"
+                  onClick={() => toggleColor(c)}
+                  className="flex items-center gap-1.5 rounded-full border border-on-background bg-on-background/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-on-background"
+                >
+                  <span>{c}</span>
+                  <X className="h-3 w-3" aria-hidden />
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={clearAllVariantFilters}
+                className="ml-auto text-[11px] font-semibold uppercase tracking-[0.18em] text-muted hover:text-on-background"
+              >
+                Clear all
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Grid */}
@@ -212,12 +408,22 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
               <p className="mt-2 text-sm text-muted max-w-md">
                 {categorySlug === 'big-size'
                   ? 'New plus-size pieces (XXL through XXXL) are stitched and added every few days. In the meantime, browse our full collection — most styles can be tailored to your size on request.'
-                  : 'Try a different category or browse all collections.'}
+                  : activeFilterCount > 0
+                    ? 'Try clearing some filters or browse another category.'
+                    : 'Try a different category or browse all collections.'}
               </p>
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={clearAllVariantFilters}
+                    className="rounded-full bg-on-background px-6 py-2.5 text-xs font-semibold uppercase tracking-widest text-white hover:opacity-90 transition-opacity"
+                  >
+                    Clear filters
+                  </button>
+                )}
                 <button
                   onClick={() => setParam('category', '')}
-                  className="rounded-full bg-on-background px-6 py-2.5 text-xs font-semibold uppercase tracking-widest text-white hover:opacity-90 transition-opacity"
+                  className="rounded-full border border-border px-6 py-2.5 text-xs font-semibold uppercase tracking-widest text-on-background hover:border-on-background transition-colors"
                 >
                   Browse All
                 </button>
@@ -233,7 +439,7 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
             </motion.div>
           ) : (
             <motion.div
-              key={`grid-${categorySlug}-${sortParam}-${pageParam}`}
+              key={`grid-${categorySlug}-${sortParam}-${pageParam}-${sizesParam}-${colorsParam}`}
               className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4"
             >
               {products.map((product, i) => (

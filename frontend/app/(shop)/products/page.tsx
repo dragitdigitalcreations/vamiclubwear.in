@@ -43,7 +43,13 @@ const DEFAULT_BLURB =
   'Vami Clubwear is a Manjeri, Kerala–based label specialising in Indo-Western fusion wear, modest fashion and a dedicated big-size aesthetic collection for plus-size women. Every piece is handcrafted with attention to embroidery, fabric and fit — Anarkalis, salwars, shararas, churidars, gowns and dupattas, sized inclusively up to XXXL. Free shipping across India, online prepaid only.'
 
 interface PageProps {
-  searchParams?: { category?: string; sort?: string; page?: string }
+  searchParams?: {
+    category?: string
+    sort?: string
+    page?: string
+    sizes?: string
+    colors?: string
+  }
 }
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
@@ -73,6 +79,8 @@ export default async function ProductsPage({ searchParams }: PageProps) {
   const category = searchParams?.category ?? ''
   const sort     = searchParams?.sort     ?? 'newest'
   const page     = Number(searchParams?.page ?? '1') || 1
+  const sizes    = searchParams?.sizes    ?? ''
+  const colors   = searchParams?.colors   ?? ''
 
   // Reject unknown category slugs with a real 404 — prevents Google from
   // indexing thin /products?category=foo pages as Soft 404s.
@@ -94,6 +102,8 @@ export default async function ProductsPage({ searchParams }: PageProps) {
         isActive: 'true',
         ...(sort === 'price-asc'  && { sortBy: 'price', sortDir: 'asc'  }),
         ...(sort === 'price-desc' && { sortBy: 'price', sortDir: 'desc' }),
+        ...(sizes  && { sizes  }),
+        ...(colors && { colors }),
       },
       60,
     )
@@ -173,7 +183,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
       </div>
 
       <ProductsPageClient
-        initial={{ products, total, totalPages, category, sort, page }}
+        initial={{ products, total, totalPages, category, sort, page, sizes, colors }}
       />
     </>
   )

@@ -79,6 +79,23 @@ export type CreateCategoryInput = z.infer<typeof createCategorySchema>
 
 // ── List query ───────────────────────────────────────────────────────────────
 
+// CSV string → trimmed, deduped, non-empty array. Cap entries so a malicious
+// caller can't force a huge `IN (...)` clause.
+const csvList = z
+  .string()
+  .max(500)
+  .transform((s) =>
+    Array.from(
+      new Set(
+        s
+          .split(',')
+          .map((v) => v.trim())
+          .filter(Boolean),
+      ),
+    ).slice(0, 30),
+  )
+  .pipe(z.array(z.string()).max(30))
+
 export const listProductsSchema = z.object({
   page:        z.coerce.number().int().min(1).default(1),
   limit:       z.coerce.number().int().min(1).max(100).default(20),
@@ -88,6 +105,15 @@ export const listProductsSchema = z.object({
   isActive:    z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
   isFeatured:  z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
   search:      z.string().max(100).optional(),
+  // Comma-separated lists of variant sizes / colours to filter by. Match is
+  // case-insensitive on the variant side (XL == xl).
+  sizes:       csvList.optional(),
+  colors:      csvList.optional(),
+  // Sort. `newest` (createdAt desc) is the default; `price` orders by basePrice
+  // — a per-variant lowest-price sort would need a window query and isn't worth
+  // the complexity for the storefront listing.
+  sortBy:      z.enum(['createdAt', 'price']).optional(),
+  sortDir:     z.enum(['asc', 'desc']).optional(),
 })
 
 export type ListProductsQuery = z.infer<typeof listProductsSchema>

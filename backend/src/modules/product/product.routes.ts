@@ -45,6 +45,7 @@ router.post(
 )
 
 router.get('/showcase-videos', productController.getShowcaseVideos)
+router.get('/facets',          productController.getFacets)
 router.get('/slug/:slug',      productController.getProductBySlug)
 router.get('/:id',             productController.getProduct)
 

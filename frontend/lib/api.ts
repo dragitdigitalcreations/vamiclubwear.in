@@ -112,10 +112,15 @@ export const productsApi = {
     isActive?: 'true' | 'false'
     isFeatured?: 'true' | 'false'
     search?: string
+    // Comma-separated; the backend splits and matches case-insensitively.
+    sizes?: string
+    colors?: string
+    sortBy?: 'createdAt' | 'price'
+    sortDir?: 'asc' | 'desc'
   } = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params)
-        .filter(([, v]) => v !== undefined)
+        .filter(([, v]) => v !== undefined && v !== '')
         .map(([k, v]) => [k, String(v)])
     ).toString()
     return request<{
@@ -125,6 +130,14 @@ export const productsApi = {
       limit: number
       totalPages: number
     }>(`/products${qs ? `?${qs}` : ''}`)
+  },
+
+  facets: (category?: string) => {
+    const qs = category ? `?category=${encodeURIComponent(category)}` : ''
+    return request<{
+      sizes: string[]
+      colors: Array<{ name: string; hex: string | null }>
+    }>(`/products/facets${qs}`)
   },
 
   get: (id: string) => request(`/products/${id}`),

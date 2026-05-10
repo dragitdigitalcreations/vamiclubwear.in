@@ -218,13 +218,17 @@ export const productService = {
       })
 
       cache.delPattern('products:list:*').catch(() => {})
+      cache.delPattern('products:facets:*').catch(() => {})
 
       return created
     })
   },
 
   async listProducts(query: ListProductsQuery) {
-    const { page, limit, categoryId, category, isActive, isFeatured, search } = query
+    const {
+      page, limit, categoryId, category, isActive, isFeatured, search,
+      sizes, colors, sortBy, sortDir,
+    } = query
     const skip = (page - 1) * limit
 
     // Build a deterministic cache key from the normalized query. Skip caching
@@ -236,6 +240,10 @@ export const productService = {
       category:   category   ?? null,
       isActive:   isActive   ?? null,
       isFeatured: isFeatured ?? null,
+      sizes:      sizes      ? [...sizes].sort()  : null,
+      colors:     colors     ? [...colors].sort() : null,
+      sortBy:     sortBy     ?? null,
+      sortDir:    sortDir    ?? null,
     })}` : null
 
     if (cacheKey) {
@@ -293,20 +301,44 @@ export const productService = {
       }
     }
 
+    // Combine size/colour filters with the big-size virtual filter into a
+    // single AND of `variants: { some: ... }` clauses so each constraint must
+    // be satisfied by at least one active variant — otherwise stacking them
+    // into one `some` would let, say, "size XS or big-size token" satisfy a
+    // colour-only filter through an unrelated variant.
+    const variantSomeFilters: Prisma.ProductVariantWhereInput[] = []
+    if (isBigSize) {
+      variantSomeFilters.push({
+        isActive: true,
+        OR: BIG_SIZE_TOKENS.map((s) => ({
+          size: { equals: s, mode: 'insensitive' as const },
+        })),
+      })
+    }
+    if (sizes && sizes.length > 0) {
+      variantSomeFilters.push({
+        isActive: true,
+        OR: sizes.map((s) => ({
+          size: { equals: s, mode: 'insensitive' as const },
+        })),
+      })
+    }
+    if (colors && colors.length > 0) {
+      variantSomeFilters.push({
+        isActive: true,
+        OR: colors.map((c) => ({
+          color: { equals: c, mode: 'insensitive' as const },
+        })),
+      })
+    }
+
     const where: Prisma.ProductWhereInput = {
       deletedAt: null,
       ...(resolvedCategoryId !== undefined && { categoryId: resolvedCategoryId }),
       ...(isActive           !== undefined && { isActive }),
       ...(isFeatured         !== undefined && { isFeatured }),
-      ...(isBigSize && {
-        variants: {
-          some: {
-            isActive: true,
-            OR: BIG_SIZE_TOKENS.map((s) => ({
-              size: { equals: s, mode: 'insensitive' as const },
-            })),
-          },
-        },
+      ...(variantSomeFilters.length > 0 && {
+        AND: variantSomeFilters.map((f) => ({ variants: { some: f } })),
       }),
       ...(search             !== undefined && (
         productIdsFromSearch !== undefined
@@ -320,12 +352,20 @@ export const productService = {
       )),
     }
 
+    // Resolve sort. Default is newest-first by createdAt. `price` orders by
+    // basePrice — variant prices are usually equal across sizes, and a true
+    // min(variant.price) sort would require a join+window query.
+    const orderBy: Prisma.ProductOrderByWithRelationInput =
+      sortBy === 'price'
+        ? { basePrice: sortDir === 'asc' ? 'asc' : 'desc' }
+        : { createdAt: sortDir === 'asc' ? 'asc' : 'desc' }
+
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         include: productListInclude,
       }),
       prisma.product.count({ where }),
@@ -553,9 +593,80 @@ export const productService = {
       cache.del(`product:slug:${existing.slug}`).catch(() => {})
       cache.del(`product:slug:${updated.slug}`).catch(() => {})
       cache.delPattern('products:list:*').catch(() => {})
+      cache.delPattern('products:facets:*').catch(() => {})
 
       return updated
     })
+  },
+
+  // ── Facets ─────────────────────────────────────────────────────────────────
+  // Distinct sizes & colours across active, non-deleted products. Optionally
+  // narrowed to a category slug so the chip row on /products?category=anarkali
+  // only shows sizes/colours that exist in that collection.
+
+  async getFacets(category?: string) {
+    const cacheKey = `products:facets:${category ?? 'all'}`
+    const cached = await cache.get<{
+      sizes: string[]
+      colors: Array<{ name: string; hex: string | null }>
+    }>(cacheKey)
+    if (cached !== null) return cached
+
+    let categoryId: string | undefined
+    if (category && category !== 'big-size') {
+      const cat = await prisma.category.findUnique({
+        where: { slug: category },
+        select: { id: true },
+      })
+      if (!cat) return { sizes: [], colors: [] }
+      categoryId = cat.id
+    }
+
+    const variants = await prisma.productVariant.findMany({
+      where: {
+        isActive: true,
+        product: {
+          isActive: true,
+          deletedAt: null,
+          ...(categoryId && { categoryId }),
+        },
+      },
+      select: { size: true, color: true, colorHex: true },
+    })
+
+    // Canonical size order so XS → … → 10XL renders predictably regardless of
+    // insertion order in the DB. Unknown sizes drop to the end alphabetically.
+    const SIZE_ORDER = [
+      'XS', 'S', 'M', 'L', 'XL',
+      'XXL', '2XL', 'XXXL', '3XL',
+      '4XL', '5XL', '6XL', '7XL', '8XL', '9XL', '10XL',
+      'FREE SIZE', 'CUSTOM',
+    ]
+    const sizeRank = (s: string) => {
+      const i = SIZE_ORDER.indexOf(s.toUpperCase())
+      return i === -1 ? SIZE_ORDER.length : i
+    }
+
+    const sizeSet = new Set<string>()
+    const colorMap = new Map<string, string | null>()
+    for (const v of variants) {
+      const sz = (v.size ?? '').trim()
+      if (sz) sizeSet.add(sz)
+      const col = (v.color ?? '').trim()
+      if (col && !colorMap.has(col)) colorMap.set(col, v.colorHex ?? null)
+    }
+
+    const sizes = Array.from(sizeSet).sort((a, b) => {
+      const ra = sizeRank(a), rb = sizeRank(b)
+      return ra !== rb ? ra - rb : a.localeCompare(b)
+    })
+    const colors = Array.from(colorMap.entries())
+      .map(([name, hex]) => ({ name, hex }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+
+    const result = { sizes, colors }
+    cache.set(cacheKey, result, 60).catch(() => {})
+    return result
   },
 
   // ── Showcase Videos ────────────────────────────────────────────────────────
@@ -737,6 +848,7 @@ export const productService = {
 
     cache.del(`product:slug:${toDelete.slug}`).catch(() => {})
     cache.delPattern('products:list:*').catch(() => {})
+    cache.delPattern('products:facets:*').catch(() => {})
     return { ok: true, soft: orderedCount > 0 }
   },
 
