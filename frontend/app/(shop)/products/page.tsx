@@ -87,7 +87,9 @@ export default async function ProductsPage({ searchParams }: PageProps) {
     const result = await serverProductsApi.list(
       {
         page,
-        limit: 15,
+        // 20 fills 2-col mobile (10 rows), 4-col tablet (5 rows) and 5-col
+        // desktop (4 rows) without leaving an orphan card on the last row.
+        limit: 20,
         ...(category && { category }),
         isActive: 'true',
         ...(sort === 'price-asc'  && { sortBy: 'price', sortDir: 'asc'  }),
