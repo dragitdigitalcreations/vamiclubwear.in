@@ -102,12 +102,18 @@ export const inventoryService = {
   async search(q: string, limit = 20) {
     const term = q.trim()
     if (!term) return []
+    // Search across SKU, product name, and barcode (both single-mode and
+    // per-colour barcodes). Admins often type the barcode printed on the
+    // label rather than the internal SKU, so the Manual Order picker has
+    // to resolve either.
     return prisma.inventory.findMany({
       take: limit,
       where: {
         OR: [
           { variant: { sku: { contains: term, mode: 'insensitive' } } },
           { variant: { product: { name: { contains: term, mode: 'insensitive' } } } },
+          { variant: { product: { barcode: { contains: term, mode: 'insensitive' } } } },
+          { variant: { product: { colorBarcodes: { some: { barcode: { contains: term, mode: 'insensitive' } } } } } },
         ],
       },
       include: {

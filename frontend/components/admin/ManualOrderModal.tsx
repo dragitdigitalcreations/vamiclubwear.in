@@ -292,7 +292,7 @@ export function ManualOrderModal({ open, onClose, onCreated }: Props) {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
                     <input
                       value={query} onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search products by name or SKU…"
+                      placeholder="Search by name, SKU, or barcode…"
                       className="w-full bg-transparent border border-border pl-9 pr-3 py-2 text-sm text-on-background outline-none focus:border-on-background"
                     />
                     {searching && (
