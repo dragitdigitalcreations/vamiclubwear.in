@@ -4,10 +4,11 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   ChevronLeft, ChevronRight, X, Truck, FileText,
   ExternalLink, Loader2, Package, User, CheckCircle, RefreshCw, Store,
-  AlertTriangle,
+  AlertTriangle, PlusCircle,
 } from 'lucide-react'
-import { AdminHeader }  from '@/components/admin/AdminHeader'
-import { RBACGuard }    from '@/components/admin/RBACGuard'
+import { AdminHeader }       from '@/components/admin/AdminHeader'
+import { RBACGuard }         from '@/components/admin/RBACGuard'
+import { ManualOrderModal }  from '@/components/admin/ManualOrderModal'
 import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
@@ -1181,6 +1182,7 @@ export default function OrdersPage() {
   const [loadError,    setLoadError]    = useState<string | null>(null)
   const [selectedId,   setSelectedId]   = useState<string | null>(null)
   const [syncing,      setSyncing]      = useState(false)
+  const [manualOpen,   setManualOpen]   = useState(false)
   const limit = 20
 
   // Manual Delhivery sync — auto-poll runs every 15 min on the server, this
@@ -1269,6 +1271,14 @@ export default function OrdersPage() {
                 </button>
               ))}
             </div>
+            <button
+              onClick={() => setManualOpen(true)}
+              title="Record an order paid outside the storefront (orphan Razorpay payment, in-person sale, etc.)"
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-primary-light transition-colors hover:bg-primary/20"
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+              Manual Order
+            </button>
             <button
               onClick={syncShippingNow}
               disabled={syncing}
@@ -1415,6 +1425,12 @@ export default function OrdersPage() {
           )}
         </AnimatePresence>
       </div>
+
+      <ManualOrderModal
+        open={manualOpen}
+        onClose={() => setManualOpen(false)}
+        onCreated={() => load()}
+      />
     </RBACGuard>
   )
 }

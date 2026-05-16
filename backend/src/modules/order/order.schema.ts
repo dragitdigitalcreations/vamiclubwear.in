@@ -24,6 +24,17 @@ export const createOrderSchema = z.object({
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>
 
+// Admin-only manual order creation — used to recover orphan payments
+// (Razorpay captured but verify/webhook never landed) and for in-person
+// orders that bypass the storefront checkout entirely. Always lands as
+// paymentStatus = PAID and stamps the payment reference into notes for the
+// audit trail.
+export const createManualOrderSchema = createOrderSchema.extend({
+  paymentRef: z.string().min(1, 'Payment reference is required').max(200),
+})
+
+export type CreateManualOrderInput = z.infer<typeof createManualOrderSchema>
+
 export const updateOrderStatusSchema = z.object({
   status: z.enum(['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
 })

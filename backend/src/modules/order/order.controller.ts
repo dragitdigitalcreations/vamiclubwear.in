@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { orderService } from './order.service'
-import { CreateOrderInput, UpdateOrderStatusInput, ListOrdersQuery } from './order.schema'
+import { CreateOrderInput, CreateManualOrderInput, UpdateOrderStatusInput, ListOrdersQuery } from './order.schema'
 
 export const orderController = {
 
@@ -11,6 +11,20 @@ export const orderController = {
   ) => {
     try {
       const order = await orderService.createOrder(req.body)
+      res.status(201).json(order)
+    } catch (err) { next(err) }
+  },
+
+  // POST /api/orders/manual — admin recovery flow for orphan payments and
+  // in-person orders. Always stamps paymentStatus=PAID and folds the
+  // payment reference into the order notes for the audit trail.
+  createManualOrder: async (
+    req: Request<{}, {}, CreateManualOrderInput>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const order = await orderService.createManualOrder(req.body, req.adminUser?.email)
       res.status(201).json(order)
     } catch (err) { next(err) }
   },

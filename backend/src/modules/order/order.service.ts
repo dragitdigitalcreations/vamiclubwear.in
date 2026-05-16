@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from '../../lib/prisma'
-import { CreateOrderInput, UpdateOrderStatusInput, ListOrdersQuery } from './order.schema'
+import { CreateOrderInput, CreateManualOrderInput, UpdateOrderStatusInput, ListOrdersQuery } from './order.schema'
 import { NotFoundError, InsufficientStockError, ConflictError } from '../../utils/errors'
 import { generateOrderNumber } from '../../utils/orderNumber'
 import {
@@ -235,6 +235,31 @@ export const orderService = {
     }
 
     return createdOrder
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Manual order creation — used by admins to recover orphan payments
+  // (Razorpay captured but verify/webhook never landed) and to record
+  // in-person purchases. The order lands as paymentStatus = PAID and the
+  // payment reference (e.g. Razorpay payment id) is folded into notes for
+  // the audit trail. Goes through the normal createOrder path so inventory
+  // is deducted and confirmation emails fire just like a checkout.
+  // ─────────────────────────────────────────────────────────────────────────
+  async createManualOrder(input: CreateManualOrderInput, adminEmail?: string) {
+    const { paymentRef, notes, ...rest } = input
+    const stamp = adminEmail
+      ? `[Manual order by ${adminEmail} · Payment ref: ${paymentRef}]`
+      : `[Manual order · Payment ref: ${paymentRef}]`
+    const mergedNotes = [stamp, notes].filter(Boolean).join(' | ')
+
+    const created = await this.createOrder({ ...rest, notes: mergedNotes })
+
+    const updated = await prisma.order.update({
+      where: { id: created.id },
+      data:  { paymentStatus: 'PAID' },
+    })
+
+    return updated
   },
 
   // ─────────────────────────────────────────────────────────────────────────

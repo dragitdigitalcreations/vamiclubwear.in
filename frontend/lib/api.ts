@@ -201,7 +201,14 @@ export const inventoryApi = {
       id: string
       quantity: number
       reserved: number
-      variant: { id: string; sku: string; size: string | null; color: string | null; product: { name: string } }
+      variant: {
+        id: string
+        sku: string
+        size: string | null
+        color: string | null
+        price: number
+        product: { name: string }
+      }
       location: { id: string; name: string }
     }>>(`/inventory/search?q=${encodeURIComponent(q)}`),
 
@@ -324,6 +331,33 @@ export const ordersApi = {
     request(`/orders/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+    }),
+
+  // Admin manual order creation — used to recover orphan payments (Razorpay
+  // captured but verify/webhook never landed) and to record in-person sales.
+  // Lands as paymentStatus = PAID and stamps the payment reference in notes.
+  createManual: (payload: {
+    customerName?:    string
+    customerEmail?:   string
+    customerPhone?:   string
+    shippingAddress?: string
+    shippingCity?:    string
+    shippingState?:   string
+    shippingPincode?: string
+    fulfillmentType:  'DELIVERY' | 'PICKUP'
+    notes?:           string
+    paymentRef:       string
+    items: Array<{ variantId: string; quantity: number }>
+  }) =>
+    request<{
+      id: string
+      orderNumber: string
+      total: number
+      status: string
+      paymentStatus: string
+    }>('/orders/manual', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     }),
 
   // Re-send the customer order confirmation. Recovery for orders whose

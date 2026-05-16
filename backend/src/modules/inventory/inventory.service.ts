@@ -114,6 +114,7 @@ export const inventoryService = {
         variant: {
           select: {
             id: true, sku: true, size: true, color: true, fabric: true,
+            price: true,
             product: { select: { name: true } },
           },
         },

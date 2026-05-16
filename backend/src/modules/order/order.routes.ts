@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { orderController } from './order.controller'
 import { validate } from '../../middleware/validateRequest'
 import { requireAuth } from '../../middleware/auth'
-import { createOrderSchema, updateOrderStatusSchema, listOrdersSchema } from './order.schema'
+import { createOrderSchema, createManualOrderSchema, updateOrderStatusSchema, listOrdersSchema } from './order.schema'
 
 const router = Router()
 
@@ -16,6 +16,15 @@ router.post(
   requireAuth,
   validate(createOrderSchema),
   orderController.createOrder
+)
+
+// POST /api/orders/manual [manager] — manual recovery for orphan Razorpay
+// payments and in-person orders. Stamps PAID + payment reference in notes.
+router.post(
+  '/manual',
+  requireAuth,
+  validate(createManualOrderSchema),
+  orderController.createManualOrder
 )
 
 router.get(
