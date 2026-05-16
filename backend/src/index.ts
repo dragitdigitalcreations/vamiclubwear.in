@@ -92,7 +92,14 @@ app.use(
 )
 
 // ── Body parser ───────────────────────────────────────────────────────────────
-app.use(express.json({ limit: '1mb' }))
+// Retain the raw bytes on req.rawBody so webhook routes can verify HMAC
+// signatures against the exact payload as signed by the sender (Razorpay
+// signs the bytes; re-serialising the parsed JSON would change whitespace
+// and break verification).
+app.use(express.json({
+  limit: '1mb',
+  verify: (req, _res, buf) => { (req as any).rawBody = buf },
+}))
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req: Request, res: Response) => {

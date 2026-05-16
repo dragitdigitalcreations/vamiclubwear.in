@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma'
 import { PosWebhookInput, DelhiveryWebhookInput } from './webhook.schema'
 import { mapDelhiveryStatus } from '../shipping/delhivery.service'
+import { paymentService } from '../payment/payment.service'
 import { NotFoundError } from '../../utils/errors'
 
 export const webhookService = {
@@ -150,6 +151,80 @@ export const webhookService = {
       })
 
       return { status: 'success', awb: AWB, shippingStatus: mappedStatus }
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      await prisma.webhookLog.update({
+        where: { id: log.id },
+        data: { status: 'FAILED', errorMessage: message },
+      })
+      throw err
+    }
+  },
+
+  /**
+   * Process a Razorpay webhook event. Acts as the server-side fallback when
+   * the browser never reaches /api/payment/verify (closed tab, network drop).
+   *
+   *   1. Log the raw payload (always)
+   *   2. On `payment.captured` / `order.paid`, look up the PaymentIntent by
+   *      Razorpay order id and ask paymentService to materialize it.
+   *      Atomic claim inside consumeIntent prevents double-creation when
+   *      /verify and the webhook race.
+   *
+   * Signature verification is done at the route layer — by the time we get
+   * here the payload is trusted.
+   */
+  async processRazorpayWebhook(payload: any, rawPayload: unknown) {
+    const log = await prisma.webhookLog.create({
+      data: {
+        source:  'RAZORPAY',
+        payload: rawPayload as object,
+        status:  'PENDING',
+      },
+    })
+
+    try {
+      const event = String(payload?.event ?? '')
+
+      // We only act on payment success events. order.paid covers most flows;
+      // payment.captured is the per-payment companion. Both reference the
+      // Razorpay order id we stored against the PaymentIntent.
+      const ACTIONABLE = new Set(['payment.captured', 'order.paid'])
+      if (!ACTIONABLE.has(event)) {
+        await prisma.webhookLog.update({
+          where: { id: log.id },
+          data:  { status: 'SKIPPED', processedAt: new Date() },
+        })
+        return { status: 'skipped', reason: `Event "${event}" not actionable` }
+      }
+
+      const rzpOrderId: string | undefined =
+        payload?.payload?.payment?.entity?.order_id ??
+        payload?.payload?.order?.entity?.id
+
+      if (!rzpOrderId) {
+        await prisma.webhookLog.update({
+          where: { id: log.id },
+          data:  { status: 'FAILED', errorMessage: 'No rzpOrderId in payload', processedAt: new Date() },
+        })
+        return { status: 'failed', reason: 'No rzpOrderId in payload' }
+      }
+
+      const result = await paymentService.consumeIntent(rzpOrderId)
+
+      await prisma.webhookLog.update({
+        where: { id: log.id },
+        data: {
+          status:      result.status === 'missing' ? 'FAILED' : 'SUCCESS',
+          errorMessage: result.status === 'missing'
+            ? `No PaymentIntent for rzpOrderId ${rzpOrderId}`
+            : null,
+          processedAt: new Date(),
+        },
+      })
+
+      return { status: result.status, rzpOrderId }
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'

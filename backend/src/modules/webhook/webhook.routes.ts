@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express'
+import crypto from 'crypto'
 import { webhookService } from './webhook.service'
 import { posWebhookSchema, delhiveryWebhookSchema } from './webhook.schema'
 
@@ -80,6 +81,64 @@ router.post('/delhivery', async (req: Request, res: Response, next: NextFunction
     await webhookService.processDelhiveryWebhook(parse.data, req.body)
   } catch (err) {
     // Can't send HTTP error after res.json() — log via Express error handler
+    next(err)
+  }
+})
+
+/**
+ * POST /api/webhooks/razorpay
+ *
+ * Razorpay webhook — server-side fallback that creates the order when the
+ * browser never makes it to /api/payment/verify (closed tab, network drop).
+ *
+ * Auth:   Header  X-Razorpay-Signature: <hex>  =  HMAC-SHA256 of the raw
+ *         request body using RAZORPAY_WEBHOOK_SECRET.
+ *
+ * Events handled: `payment.captured`, `order.paid`. Everything else is
+ * logged as SKIPPED so Razorpay marks delivery successful and doesn't retry.
+ *
+ * Always responds 200 quickly. The actual order-creation work happens
+ * synchronously before the response so the test webhook in the Razorpay
+ * dashboard reflects the real outcome.
+ */
+router.post('/razorpay', async (req: Request, res: Response, next: NextFunction) => {
+  // ── 1. Auth guard — refuse if the secret is missing OR the signature
+  //      doesn't match. Razorpay computes HMAC over the *raw bytes* of the
+  //      request body, so we use the rawBody buffer captured by the
+  //      express.json verify hook in src/index.ts. Falling back to the
+  //      stringified parsed body would change whitespace and break the HMAC.
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET
+  if (!secret) {
+    res.status(503).json({ error: 'Razorpay webhook not configured' })
+    return
+  }
+
+  const raw = (req as any).rawBody as Buffer | undefined
+  if (!raw) {
+    res.status(400).json({ error: 'Missing raw body — cannot verify signature' })
+    return
+  }
+
+  const provided = req.headers['x-razorpay-signature']
+  if (typeof provided !== 'string') {
+    res.status(401).json({ error: 'Missing signature header' })
+    return
+  }
+  const expected = crypto.createHmac('sha256', secret).update(raw).digest('hex')
+  // timingSafeEqual requires equal length; if not equal length, fail closed.
+  const provBuf = Buffer.from(provided, 'utf8')
+  const expBuf  = Buffer.from(expected, 'utf8')
+  if (provBuf.length !== expBuf.length || !crypto.timingSafeEqual(provBuf, expBuf)) {
+    res.status(401).json({ error: 'Invalid signature' })
+    return
+  }
+
+  // ── 2. Process synchronously — work is small and Razorpay accepts 200
+  //      well under the 5s budget.
+  try {
+    const result = await webhookService.processRazorpayWebhook(req.body, req.body)
+    res.status(200).json({ received: true, ...result })
+  } catch (err) {
     next(err)
   }
 })

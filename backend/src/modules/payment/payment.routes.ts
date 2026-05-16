@@ -2,22 +2,28 @@
  * Payment routes — Razorpay integration
  *
  * Required env vars:
- *   RAZORPAY_KEY_ID     — from Razorpay Dashboard → API Keys
- *   RAZORPAY_KEY_SECRET — from Razorpay Dashboard → API Keys
+ *   RAZORPAY_KEY_ID         — from Razorpay Dashboard → API Keys
+ *   RAZORPAY_KEY_SECRET     — from Razorpay Dashboard → API Keys
+ *   RAZORPAY_WEBHOOK_SECRET — from Razorpay Dashboard → Webhooks (used by /api/webhooks/razorpay)
  *
  * Flow (online prepaid only — Vami Clubwear does not offer COD):
- *   1. POST /api/payment/create-order  — creates Razorpay order, returns {orderId, amount, currency, keyId}
+ *   1. POST /api/payment/create-order  — creates Razorpay order + persists PaymentIntent,
+ *                                        returns {rzpOrderId, amount, currency, keyId}
  *   2. Frontend opens Razorpay checkout popup, customer pays
- *   3. POST /api/payment/verify        — verifies signature, creates DB order, deducts inventory
+ *   3. POST /api/payment/verify        — verifies signature, claims the intent + creates the Order
+ *
+ * If the browser never reaches /verify (tab closed, network drop), the Razorpay
+ * `payment.captured` webhook lands at /api/webhooks/razorpay and creates the
+ * order from the same PaymentIntent. The first path to atomically claim
+ * `consumedAt` wins; the loser short-circuits to the already-created order.
  */
 import { Router, Request, Response, NextFunction } from 'express'
 import crypto from 'crypto'
 import { z } from 'zod'
-import { orderService } from '../order/order.service'
 import { couponService } from '../coupon/coupon.service'
 import { prisma } from '../../lib/prisma'
-import { sendOrderConfirmationToCustomer, sendOrderNotificationToStore } from '../../lib/email'
 import { calcShippingFee } from '../../utils/shipping'
+import { paymentService } from './payment.service'
 
 const router = Router()
 
@@ -93,7 +99,7 @@ router.post('/create-order', async (req: Request, res: Response, next: NextFunct
 
     const razorpay = getRazorpay()
     if (!razorpay) {
-      // Razorpay not configured — return amount info only (COD will be used)
+      // Razorpay not configured — return amount info only (storefront surfaces a friendly error)
       res.json({ configured: false, amount })
       return
     }
@@ -102,6 +108,27 @@ router.post('/create-order', async (req: Request, res: Response, next: NextFunct
       amount:   amountPaise,
       currency: 'INR',
       receipt:  `rcpt_${Date.now()}`,
+    })
+
+    // Persist the intent so the webhook can rebuild the order if the browser
+    // never lands /verify. Stored before we tell the client to open Razorpay
+    // so a webhook race never finds a missing intent.
+    await prisma.paymentIntent.create({
+      data: {
+        rzpOrderId:      rzpOrder.id,
+        customerName:    parsed.data.customerName,
+        customerEmail:   parsed.data.customerEmail,
+        customerPhone:   parsed.data.customerPhone,
+        fulfillmentType,
+        shippingAddress: parsed.data.address,
+        shippingCity:    parsed.data.city,
+        shippingState:   parsed.data.state,
+        shippingPincode: parsed.data.pincode,
+        notes:           parsed.data.notes,
+        couponCode,
+        items,
+        amount,
+      },
     })
 
     res.json({
@@ -116,9 +143,11 @@ router.post('/create-order', async (req: Request, res: Response, next: NextFunct
 })
 
 // ── POST /api/payment/verify ─────────────────────────────────────────────────
-// Called after successful Razorpay payment to verify signature + create order
+// Called after successful Razorpay payment to verify signature + materialize
+// the order from the previously-stored PaymentIntent. Idempotent: if the
+// /webhooks/razorpay fallback already claimed the intent, returns that order.
 
-const verifySchema = customerSchema.extend({
+const verifySchema = z.object({
   rzpOrderId:   z.string(),
   rzpPaymentId: z.string(),
   rzpSignature: z.string(),
@@ -132,7 +161,7 @@ router.post('/verify', async (req: Request, res: Response, next: NextFunction) =
       return
     }
 
-    const { rzpOrderId, rzpPaymentId, rzpSignature, items, couponCode, fulfillmentType, ...customer } = parsed.data
+    const { rzpOrderId, rzpPaymentId, rzpSignature } = parsed.data
 
     // Verify Razorpay signature. If the secret is missing we MUST refuse —
     // silently passing would let a forged callback create a paid order.
@@ -148,28 +177,23 @@ router.post('/verify', async (req: Request, res: Response, next: NextFunction) =
       return
     }
 
-    // Create DB order + deduct inventory
-    const order = await orderService.createOrder({
-      customerName:    customer.customerName,
-      customerEmail:   customer.customerEmail,
-      customerPhone:   customer.customerPhone,
-      // Pickup orders skip shipping address even if the client sent stale values
-      shippingAddress: fulfillmentType === 'PICKUP' ? undefined : customer.address,
-      shippingCity:    fulfillmentType === 'PICKUP' ? undefined : customer.city,
-      shippingState:   fulfillmentType === 'PICKUP' ? undefined : customer.state,
-      shippingPincode: fulfillmentType === 'PICKUP' ? undefined : customer.pincode,
-      fulfillmentType,
-      notes:           customer.notes,
-      couponCode,
-      items,
-    })
+    const result = await paymentService.consumeIntent(rzpOrderId)
 
-    // Update payment status
-    await prisma.order.update({
-      where: { id: order.id },
-      data:  { paymentStatus: 'PAID' },
-    })
+    if (result.status === 'missing') {
+      // No intent for this rzpOrderId — either /create-order was never called
+      // for this id, or the row was wiped manually. Don't 500; surface clearly.
+      res.status(404).json({ error: 'Order intent not found. Please contact support with your payment id.' })
+      return
+    }
 
+    if (result.status === 'race') {
+      // Webhook claimed in the same instant — its createOrder is in flight.
+      // Tell the client to retry verify once; the second call will hit `already`.
+      res.status(202).json({ pending: true })
+      return
+    }
+
+    const order = result.order
     res.status(201).json({
       orderNumber: order.orderNumber,
       total:       order.total,

@@ -312,6 +312,38 @@ model OrderItem {
 }
 
 // ─────────────────────────────────────────────
+// PAYMENT INTENT
+// Snapshot of the customer payload submitted to /api/payment/create-order
+// before Razorpay charges the card. Used to rebuild the order on the
+// /webhooks/razorpay fallback path when the browser never reaches /verify
+// (closed tab, network drop, etc.). Atomic claim via `consumedAt` prevents
+// /verify and the webhook from both creating the same order.
+// ─────────────────────────────────────────────
+
+model PaymentIntent {
+  id              String          @id @default(cuid())
+  rzpOrderId      String          @unique
+  customerName    String?
+  customerEmail   String?
+  customerPhone   String?
+  fulfillmentType FulfillmentType @default(DELIVERY)
+  shippingAddress String?
+  shippingCity    String?
+  shippingState   String?
+  shippingPincode String?
+  notes           String?
+  couponCode      String?
+  items           Json            // [{ variantId, quantity }]
+  amount          Decimal         @db.Decimal(10, 2)
+  consumedAt      DateTime?       // set the moment a worker claims this intent
+  orderId         String?         // populated after the Order row is created
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([consumedAt])
+}
+
+// ─────────────────────────────────────────────
 // WEBHOOK LOG
 // Generic audit trail for external POS events.
 // Not coupled to any specific POS system.
