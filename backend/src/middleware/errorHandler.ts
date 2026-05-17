@@ -53,6 +53,20 @@ export function errorHandler(
     return
   }
 
+  // Neon auto-pause + Cloud Run cold start: the first request to a sleeping DB
+  // throws a connection error. Return 503 with a retryable message so the
+  // client can prompt the user to try again instead of showing a generic 500.
+  // P1001 can't reach, P1002 timed out, P1008 operation timeout, P1017 server closed.
+  if (
+    err instanceof Prisma.PrismaClientInitializationError ||
+    (err instanceof Prisma.PrismaClientKnownRequestError &&
+      ['P1001', 'P1002', 'P1008', 'P1017'].includes(err.code))
+  ) {
+    console.error('[db-connection] Transient Prisma connection error:', err.message)
+    res.status(503).json({ error: 'Database waking up, please try again in a moment.' })
+    return
+  }
+
   // Unknown — log internally, don't leak details to client
   console.error('[error]', err)
   res.status(500).json({

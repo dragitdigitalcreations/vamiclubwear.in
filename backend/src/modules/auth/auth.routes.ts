@@ -3,9 +3,32 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import rateLimit from 'express-rate-limit'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 import { prisma } from '../../lib/prisma'
 import { AppError, ForbiddenError } from '../../utils/errors'
 import { requireAuth } from '../../middleware/auth'
+
+// Neon auto-pauses on idle and Cloud Run cold-starts spin up fresh Prisma
+// clients — the very first DB call in either case can fail with a transient
+// connection error. Retry those (and only those) so a sleeping DB doesn't
+// surface as a login failure to the admin.
+async function withDbRetry<T>(fn: () => Promise<T>, attempts = 3, delayMs = 300): Promise<T> {
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn()
+    } catch (err) {
+      const isTransient =
+        err instanceof Prisma.PrismaClientInitializationError ||
+        (err instanceof Prisma.PrismaClientKnownRequestError &&
+          ['P1001', 'P1002', 'P1008', 'P1017'].includes(err.code))
+      if (!isTransient || i === attempts - 1) throw err
+      lastErr = err
+      await new Promise((r) => setTimeout(r, delayMs * (i + 1)))
+    }
+  }
+  throw lastErr
+}
 
 // 5 attempts per 60 seconds per IP
 const loginLimiter = rateLimit({
@@ -36,7 +59,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response, next: Ne
 
     const { email, password } = parsed.data
 
-    const admin = await prisma.adminUser.findUnique({ where: { email } })
+    const admin = await withDbRetry(() =>
+      prisma.adminUser.findUnique({ where: { email } })
+    )
     if (!admin || !admin.isActive) {
       throw new ForbiddenError('Invalid credentials')
     }
@@ -52,11 +77,14 @@ router.post('/login', loginLimiter, async (req: Request, res: Response, next: Ne
       { expiresIn: JWT_EXPIRES }
     )
 
-    // Update last login
-    await prisma.adminUser.update({
-      where: { id: admin.id },
-      data:  { lastLoginAt: new Date() },
-    })
+    // Update last login — also retried because the second DB call is just as
+    // exposed to a Neon wake-up failure as the first.
+    await withDbRetry(() =>
+      prisma.adminUser.update({
+        where: { id: admin.id },
+        data:  { lastLoginAt: new Date() },
+      })
+    )
 
     res.json({
       token,
