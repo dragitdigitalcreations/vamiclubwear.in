@@ -242,7 +242,7 @@ export function Navbar() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }}
               className="overflow-hidden border-b border-border bg-[#FAF8F5]"
             >
               <form
@@ -286,7 +286,7 @@ export function Navbar() {
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
-              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] as const }}
               className="fixed inset-y-0 left-0 z-50 w-72 bg-[#FAF8F5] shadow-z5 flex flex-col md:hidden"
             >
               {/* Drawer header */}

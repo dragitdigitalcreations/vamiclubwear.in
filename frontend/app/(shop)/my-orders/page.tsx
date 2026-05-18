@@ -93,7 +93,7 @@ function OrderCard({ order }: { order: OrderSummary }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] as const }}
             className="overflow-hidden"
           >
             <div className="border-t border-border px-4 py-4 space-y-4">

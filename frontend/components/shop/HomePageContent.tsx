@@ -17,7 +17,7 @@ const fadeUp = {
   hidden:  { opacity: 0, y: 32 },
   visible: (i = 0) => ({
     opacity: 1, y: 0,
-    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: i * 0.1 },
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as const, delay: i * 0.1 },
   }),
 }
 
@@ -125,7 +125,7 @@ function HeroSection() {
           <motion.h2
             initial={{ opacity: 0, y: 36 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] as const }}
             className="text-fg-1 uppercase leading-[0.95]"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
@@ -140,7 +140,7 @@ function HeroSection() {
           <motion.p
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] as const, delay: 0.2 }}
             className="mt-1 sm:mt-6 text-fg-2"
             style={{
               fontFamily: 'var(--font-poppins), Poppins, sans-serif',
@@ -156,7 +156,7 @@ function HeroSection() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.38 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] as const, delay: 0.38 }}
             className="absolute left-6 bottom-[150px] sm:static sm:mt-8 sm:pt-0"
           >
             <Link
@@ -518,7 +518,7 @@ function PromoSection() {
           style={{ aspectRatio: '3/4' }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
           viewport={{ once: true }}
         >
           <div
@@ -564,7 +564,7 @@ function PromoSection() {
           style={{ aspectRatio: '3/4' }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const, delay: 0.1 }}
           viewport={{ once: true }}
         >
           {/* Parallaxed brown background — taller div gives Y travel head-room */}
@@ -722,7 +722,7 @@ function PromoSection() {
         style={{ left: '27%', top: '36%', zIndex: 4, maxWidth: '230px' }}
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] as const }}
         viewport={{ once: true, margin: '-80px' }}
       >
         <h2
@@ -928,7 +928,7 @@ function CustomerReviewsSection() {
                 key={active?.id ?? activeIdx}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
                 className="flex flex-col gap-5"
               >
                 <p className="text-center font-poppins text-lg font-light leading-[1.7] text-black md:text-xl">
@@ -1093,7 +1093,7 @@ function ModestCollectionBanner() {
           className="flex flex-col items-center justify-center bg-[#121212] px-6 py-14 text-center text-white"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
           viewport={{ once: true }}
         >
           <h2 className="text-white uppercase leading-[1]" style={{
@@ -1135,7 +1135,7 @@ function ModestCollectionBanner() {
           style={{ aspectRatio: '4/5' }}
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] as const }}
           viewport={{ once: true }}
         >
           <div

@@ -31,7 +31,7 @@ export function CartDrawer() {
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+            transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] as const }}
             className="fixed right-0 top-0 bottom-0 z-50 flex w-full max-w-md flex-col bg-surface shadow-2xl"
           >
             {/* Header */}

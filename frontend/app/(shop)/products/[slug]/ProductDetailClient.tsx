@@ -67,7 +67,7 @@ function MediaGallery({ media, selectedColor }: { media: ProductMedia[]; selecte
             initial={{ opacity: 0, scale: 1.03 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] as const }}
             className="absolute inset-0"
           >
             {current?.type === 'VIDEO' ? (
@@ -289,7 +289,7 @@ function StickyCartBar({
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 80, opacity: 0 }}
-      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] as const }}
       className="fixed bottom-0 inset-x-0 z-50 border-t border-border bg-background/95 backdrop-blur-md shadow-[0_-4px_24px_rgba(0,0,0,0.4)]"
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-8">
@@ -511,7 +511,7 @@ function RelatedProducts({ categorySlug, excludeId }: { categorySlug: string; ex
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+                transition={{ delay: i * 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}>
                 <ProductCard product={p} />
               </motion.div>
             ))}
@@ -659,7 +659,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
             >
               <p className="mb-2 text-xs font-medium uppercase tracking-[0.3em] text-primary-light">
                 {product.category.name}

@@ -11,7 +11,7 @@ const fadeUp = {
   hidden:  { opacity: 0, y: 20 },
   visible: (i = 0) => ({
     opacity: 1, y: 0,
-    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: i * 0.08 },
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const, delay: i * 0.08 },
   }),
 }
 
@@ -77,7 +77,7 @@ export default function CartPage() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -32, height: 0, marginBottom: 0 }}
-                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1], delay: i * 0.04 }}
+                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] as const, delay: i * 0.04 }}
                   className="mb-4 flex items-center gap-5 border border-border bg-surface px-5 py-5"
                 >
                   {/* Image */}

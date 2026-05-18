@@ -23,7 +23,7 @@ export function Toaster() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0,  scale: 1    }}
             exit={{    opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] as const }}
             className="flex w-[320px] items-start gap-3 border border-border bg-surface px-4 py-3 shadow-lg"
           >
             {ICONS[t.type]}

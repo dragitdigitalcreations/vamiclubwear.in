@@ -43,17 +43,18 @@ const DEFAULT_BLURB =
   'Vami Clubwear is a Manjeri, Kerala–based label specialising in Indo-Western fusion wear, modest fashion and a dedicated big-size aesthetic collection for plus-size women. Every piece is handcrafted with attention to embroidery, fabric and fit — Anarkalis, salwars, shararas, churidars, gowns and dupattas, sized inclusively up to XXXL. Free shipping across India, online prepaid only.'
 
 interface PageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     category?: string
     sort?: string
     page?: string
     sizes?: string
     colors?: string
-  }
+  }>
 }
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const cat = searchParams?.category
+  const params = (await searchParams) ?? {}
+  const cat = params.category
   const label = (cat && CATEGORY_LABELS[cat]) || ''
   const title = label ? `${label} Collection` : 'All Collections'
   const description = label
@@ -76,11 +77,12 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 }
 
 export default async function ProductsPage({ searchParams }: PageProps) {
-  const category = searchParams?.category ?? ''
-  const sort     = searchParams?.sort     ?? 'newest'
-  const page     = Number(searchParams?.page ?? '1') || 1
-  const sizes    = searchParams?.sizes    ?? ''
-  const colors   = searchParams?.colors   ?? ''
+  const params = (await searchParams) ?? {}
+  const category = params.category ?? ''
+  const sort     = params.sort     ?? 'newest'
+  const page     = Number(params.page ?? '1') || 1
+  const sizes    = params.sizes    ?? ''
+  const colors   = params.colors   ?? ''
 
   // Reject unknown category slugs with a real 404 — prevents Google from
   // indexing thin /products?category=foo pages as Soft 404s.

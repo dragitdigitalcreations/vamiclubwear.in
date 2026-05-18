@@ -1412,7 +1412,7 @@ export default function OrdersPage() {
               initial={{ x: 60, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 60, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] as const }}
               className="w-[400px] shrink-0 border-l border-border bg-surface overflow-hidden flex flex-col"
             >
               <OrderDrawer

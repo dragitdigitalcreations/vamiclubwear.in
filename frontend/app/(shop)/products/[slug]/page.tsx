@@ -12,14 +12,15 @@ import { ProductDetailClient } from './ProductDetailClient'
 export const revalidate = 30
 
 interface PageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.in'
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
   try {
-    const product = await serverProductsApi.getBySlug(params.slug)
+    const product = await serverProductsApi.getBySlug(slug)
     const imageUrl = product.media?.find((m: any) => m.isPrimary && m.type === 'IMAGE')?.url
                   ?? product.media?.find((m: any) => m.type === 'IMAGE')?.url
     const description =
@@ -29,12 +30,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {
       title: product.name,
       description,
-      alternates: { canonical: `${SITE_URL}/products/${params.slug}` },
+      alternates: { canonical: `${SITE_URL}/products/${slug}` },
       openGraph: {
         type: 'website',
         title: product.name,
         description,
-        url: `${SITE_URL}/products/${params.slug}`,
+        url: `${SITE_URL}/products/${slug}`,
         ...(imageUrl && { images: [{ url: imageUrl, width: 900, height: 1200, alt: product.name }] }),
       },
       twitter: {
@@ -88,10 +89,11 @@ function buildProductJsonLd(product: any) {
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
+  const { slug } = await params
   let product: any
 
   try {
-    product = await serverProductsApi.getBySlug(params.slug)
+    product = await serverProductsApi.getBySlug(slug)
   } catch (err: any) {
     notFound()
   }

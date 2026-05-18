@@ -80,7 +80,7 @@ export function FilterDrawer() {
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
-            transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
+            transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] as const }}
             className="fixed left-0 top-0 bottom-0 z-50 flex w-80 flex-col bg-surface shadow-z5"
           >
 

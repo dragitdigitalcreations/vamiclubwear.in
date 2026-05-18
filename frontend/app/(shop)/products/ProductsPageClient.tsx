@@ -34,7 +34,7 @@ const fadeUp = {
   hidden:  { opacity: 0, y: 24 },
   visible: (i = 0) => ({
     opacity: 1, y: 0,
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: i * 0.06 },
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: i * 0.06 },
   }),
 }
 
@@ -266,7 +266,7 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] as const }}
               className="overflow-hidden border-t border-border"
             >
               <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-5 grid grid-cols-1 md:grid-cols-2 gap-6">
