@@ -1708,17 +1708,17 @@ function SeoContentBlock() {
       </p>
       <h2>Shop Women&rsquo;s Fashion by Category</h2>
       <ul>
-        <li><a href="/products?category=anarkali">Shop Anarkali suits for women online in India</a></li>
-        <li><a href="/products?category=salwar">Shop festive salwar suits for women online</a></li>
-        <li><a href="/products?category=sharara-set">Shop sharara sets for women in India</a></li>
-        <li><a href="/products?category=cotton-salwar">Shop everyday cotton salwars for women</a></li>
-        <li><a href="/products?category=churidar-bit">Shop unstitched churidar fabric online</a></li>
-        <li><a href="/products?category=modest-wear">Shop modest wear &amp; abayas for women</a></li>
-        <li><a href="/products?category=pants">Shop Indo-Western fusion pants for women</a></li>
-        <li><a href="/products?category=duppatta">Shop designer dupattas online in India</a></li>
-        <li><a href="/products?category=big-size">Shop plus-size women&rsquo;s clothing (up to XXXL)</a></li>
-        <li><a href="/products">Shop the full Vami Clubwear women&rsquo;s collection</a></li>
-        <li><a href="/blog">Read the Vami Clubwear style journal &mdash; women&rsquo;s fashion tips &amp; plus-size styling inspiration</a></li>
+        <li><Link href="/products?category=anarkali">Shop Anarkali suits for women online in India</Link></li>
+        <li><Link href="/products?category=salwar">Shop festive salwar suits for women online</Link></li>
+        <li><Link href="/products?category=sharara-set">Shop sharara sets for women in India</Link></li>
+        <li><Link href="/products?category=cotton-salwar">Shop everyday cotton salwars for women</Link></li>
+        <li><Link href="/products?category=churidar-bit">Shop unstitched churidar fabric online</Link></li>
+        <li><Link href="/products?category=modest-wear">Shop modest wear &amp; abayas for women</Link></li>
+        <li><Link href="/products?category=pants">Shop Indo-Western fusion pants for women</Link></li>
+        <li><Link href="/products?category=duppatta">Shop designer dupattas online in India</Link></li>
+        <li><Link href="/products?category=big-size">Shop plus-size women&rsquo;s clothing (up to XXXL)</Link></li>
+        <li><Link href="/products">Shop the full Vami Clubwear women&rsquo;s collection</Link></li>
+        <li><Link href="/blog">Read the Vami Clubwear style journal &mdash; women&rsquo;s fashion tips &amp; plus-size styling inspiration</Link></li>
       </ul>
     </section>
   )
