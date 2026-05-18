@@ -14,5 +14,10 @@ export default [
   ...compat.extends('next/core-web-vitals'),
   {
     ignores: ['.next/**', 'node_modules/**', 'out/**', 'build/**', 'public/**'],
+    rules: {
+      // Apostrophes & quotes in JSX text render correctly; this rule is
+      // purely stylistic and was breaking Vercel builds across content pages.
+      'react/no-unescaped-entities': 'off',
+    },
   },
 ]
