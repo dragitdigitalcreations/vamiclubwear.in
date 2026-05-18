@@ -19,7 +19,7 @@ const SelectTrigger = React.forwardRef<
     className={cn(
       'flex h-9 w-full items-center justify-between rounded-md border border-border bg-input px-3 py-2',
       'text-sm text-on-background placeholder:text-muted',
-      'focus:outline-none focus:ring-1 focus:ring-ring',
+      'focus:outline-hidden focus:ring-1 focus:ring-ring',
       'disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
       className
     )}
@@ -69,7 +69,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        'relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-border bg-surface-elevated text-on-background shadow-md',
+        'relative z-50 max-h-96 min-w-32 overflow-hidden rounded-md border border-border bg-surface-elevated text-on-background shadow-md',
         'data-[state=open]:animate-in data-[state=closed]:animate-out',
         'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
         'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
@@ -84,7 +84,7 @@ const SelectContent = React.forwardRef<
       <SelectPrimitive.Viewport
         className={cn(
           'p-1',
-          position === 'popper' && 'h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]'
+          position === 'popper' && 'h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width)'
         )}
       >
         {children}
@@ -115,8 +115,8 @@ const SelectItem = React.forwardRef<
     ref={ref}
     className={cn(
       'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm',
-      'outline-none focus:bg-primary/20 focus:text-on-background',
-      'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'outline-hidden focus:bg-primary/20 focus:text-on-background',
+      'data-disabled:pointer-events-none data-disabled:opacity-50',
       className
     )}
     {...props}

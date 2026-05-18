@@ -15,10 +15,10 @@ export default function ProductDetailLoading() {
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
         {/* Gallery skeleton */}
         <div className="flex flex-col gap-4 md:flex-row-reverse">
-          <div className="skeleton aspect-[3/4] flex-1 rounded-lg" />
+          <div className="skeleton aspect-3/4 flex-1 rounded-lg" />
           <div className="flex gap-2 md:flex-col md:w-20">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="skeleton flex-shrink-0 h-20 w-16 rounded md:h-24 md:w-full" />
+              <div key={i} className="skeleton shrink-0 h-20 w-16 rounded md:h-24 md:w-full" />
             ))}
           </div>
         </div>

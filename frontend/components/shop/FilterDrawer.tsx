@@ -117,7 +117,7 @@ export function FilterDrawer() {
                     <button
                       key={opt.value}
                       onClick={() => setSort(opt.value)}
-                      className={`flex items-center justify-between rounded-[8px] px-4 py-2.5 text-sm transition-all duration-150 ${
+                      className={`flex items-center justify-between rounded-md px-4 py-2.5 text-sm transition-all duration-150 ${
                         sort === opt.value
                           ? 'bg-on-background text-white font-medium'
                           : 'bg-surface-elevated text-on-background hover:bg-border'
@@ -192,7 +192,7 @@ export function FilterDrawer() {
                     placeholder="Min ₹"
                     value={priceMin}
                     onChange={(e) => setPriceMin(e.target.value)}
-                    className="w-full rounded-[8px] border border-border bg-surface-elevated px-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-ring transition-colors"
+                    className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-ring transition-colors"
                   />
                   <span className="shrink-0 text-xs text-muted">–</span>
                   <input
@@ -200,7 +200,7 @@ export function FilterDrawer() {
                     placeholder="Max ₹"
                     value={priceMax}
                     onChange={(e) => setPriceMax(e.target.value)}
-                    className="w-full rounded-[8px] border border-border bg-surface-elevated px-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-ring transition-colors"
+                    className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-ring transition-colors"
                   />
                 </div>
               </div>
@@ -210,7 +210,7 @@ export function FilterDrawer() {
             <div className="border-t border-border px-6 py-4 space-y-2">
               <button
                 onClick={applyFilters}
-                className="w-full rounded-[10px] bg-on-background py-3 text-sm font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:bg-primary-dark"
+                className="w-full rounded-lg bg-on-background py-3 text-sm font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:bg-primary-dark"
               >
                 Apply Filters
                 {activeCount > 0 && ` (${activeCount})`}

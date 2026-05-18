@@ -69,7 +69,7 @@ export default function ReturnsPage() {
   }
 
   const inp = (err?: string) =>
-    `w-full border ${err ? 'border-red-500' : 'border-border'} bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors`
+    `w-full border ${err ? 'border-red-500' : 'border-border'} bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors`
 
   if (submitted) {
     return (
@@ -125,7 +125,7 @@ export default function ReturnsPage() {
       <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 md:px-8 py-10">
 
         {/* Notice — light-theme friendly: solid cream-yellow bg + deep amber text for AA contrast */}
-        <div className="flex gap-3 bg-[#FFF3D4] border border-[#D79B16] p-4 mb-8 rounded-[4px]">
+        <div className="flex gap-3 bg-[#FFF3D4] border border-[#D79B16] p-4 mb-8 rounded-xs">
           <AlertTriangle className="h-4 w-4 text-[#8A5A00] shrink-0 mt-0.5" />
           <p className="text-sm leading-relaxed text-[#4A3100]">
             Returns are accepted only for <strong className="text-[#2A1B00]">damaged goods</strong>.
@@ -176,7 +176,7 @@ export default function ReturnsPage() {
                 {...f('description')}
                 rows={5}
                 placeholder="Describe the damage in detail — what is damaged, how it arrived, etc. *"
-                className={`w-full border ${errors.description ? 'border-red-500' : 'border-border'} bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors resize-none`}
+                className={`w-full border ${errors.description ? 'border-red-500' : 'border-border'} bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors resize-none`}
               />
               {errors.description && <p className="mt-1 text-xs text-red-400">{errors.description}</p>}
               <p className="mt-1 text-[11px] text-muted">{form.description.length} / 2000 characters</p>

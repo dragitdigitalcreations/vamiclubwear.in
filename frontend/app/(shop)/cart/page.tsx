@@ -81,7 +81,7 @@ export default function CartPage() {
                   className="mb-4 flex items-center gap-5 border border-border bg-surface px-5 py-5"
                 >
                   {/* Image */}
-                  <div className="relative h-24 w-20 flex-shrink-0 overflow-hidden rounded bg-surface-elevated">
+                  <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded bg-surface-elevated">
                     {item.imageUrl ? (
                       <Image src={item.imageUrl} alt={item.productName} fill className="object-cover" sizes="80px" />
                     ) : (
@@ -112,7 +112,7 @@ export default function CartPage() {
                   </div>
 
                   {/* Qty + remove */}
-                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                  <div className="flex flex-col items-center gap-1 shrink-0">
                     <button
                       onClick={() => updateQuantity(item.variantId, 1)}
                       disabled={typeof item.stock === 'number' && item.quantity >= item.stock}

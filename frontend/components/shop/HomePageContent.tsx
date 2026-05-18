@@ -83,7 +83,7 @@ function ScrollDownMarquee() {
 function HeroSection() {
   return (
     <section
-      className="relative overflow-hidden w-full aspect-[3/5] sm:aspect-auto sm:h-[793px]"
+      className="relative overflow-hidden w-full aspect-3/5 sm:aspect-auto sm:h-[793px]"
       aria-label="Vami Clubwear models wearing the new season's Indo-Western collection"
     >
       {/* Mobile background — image at natural cover size, no extra zoom */}
@@ -114,7 +114,7 @@ function HeroSection() {
       />
 
       {/* Desktop wash kept centered; mobile wash removed so the models read cleanly behind the headline. */}
-      <div className="pointer-events-none absolute inset-0 hidden sm:block bg-gradient-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 hidden sm:block bg-linear-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
 
       <div className="relative z-10 flex h-full items-start sm:items-center px-6 pt-10 pb-10 sm:px-16 sm:py-0 lg:px-24">
         <div className="max-w-[560px] w-full flex flex-col">
@@ -263,7 +263,7 @@ function ThisJustIn() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => scroll('left')}
-            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            className="shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll left"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
@@ -275,7 +275,7 @@ function ThisJustIn() {
           >
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                  <div key={i} className="shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
                     <div className="bg-[#F5F1EC]" style={{ height: '315px' }}><HomeCardSkeleton /></div>
                     <div className="pt-2 space-y-1.5">
                       <div className="skeleton h-2.5 w-3/4 rounded" />
@@ -284,7 +284,7 @@ function ThisJustIn() {
                   </div>
                 ))
               : products.map((product, i) => (
-                  <div key={product.id} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                  <div key={product.id} className="shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
                     <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
                       <HomeCard product={product} priority={i < 4} />
                     </div>
@@ -298,7 +298,7 @@ function ThisJustIn() {
 
           <button
             onClick={() => scroll('right')}
-            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            className="shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll right"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
@@ -388,7 +388,7 @@ function CategorySection() {
 
           <button
             onClick={() => scroll('left')}
-            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            className="shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll left"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
@@ -400,7 +400,7 @@ function CategorySection() {
           >
             {loading
               ? Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                  <div key={i} className="shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
                     <div className="bg-[#F5F1EC]" style={{ height: '315px' }}><HomeCardSkeleton /></div>
                     <div className="pt-2 space-y-1.5">
                       <div className="skeleton h-2.5 w-2/3 rounded" />
@@ -413,7 +413,7 @@ function CategorySection() {
                     <Link
                       key={cat.slug}
                       href={`/products?category=${cat.slug}`}
-                      className="group flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]"
+                      className="group shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]"
                     >
                       <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
                         {imgUrl ? (
@@ -440,7 +440,7 @@ function CategorySection() {
 
           <button
             onClick={() => scroll('right')}
-            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            className="shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll right"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
@@ -531,7 +531,7 @@ function PromoSection() {
               backgroundColor: '#EDE8E1',
             }}
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-[#EDE8E1]/70 via-[#EDE8E1]/20 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-l from-[#EDE8E1]/70 via-[#EDE8E1]/20 to-transparent" />
 
           <div className="relative z-10 flex h-full flex-col items-end px-6 pt-8 text-right">
             <h2 className="text-[#111] uppercase leading-[0.95]" style={{
@@ -551,7 +551,7 @@ function PromoSection() {
             <Link
               href="/products"
               aria-label="Shop Indo-Western fusion outfits for women in India"
-              className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-white bg-white/80 px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#111] backdrop-blur-sm transition-all duration-300 hover:bg-[#111] hover:text-white"
+              className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-white bg-white/80 px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#111] backdrop-blur-xs transition-all duration-300 hover:bg-[#111] hover:text-white"
             >
               Shop Now
             </Link>
@@ -856,7 +856,7 @@ function CustomerReviewsSection() {
                 placeholder="Your name"
                 value={form.customerName}
                 onChange={(e) => setForm({ ...form, customerName: e.target.value })}
-                className="border-b border-black/20 bg-transparent py-2 text-sm text-black placeholder:text-black/40 focus:border-black focus:outline-none"
+                className="border-b border-black/20 bg-transparent py-2 text-sm text-black placeholder:text-black/40 focus:border-black focus:outline-hidden"
               />
               <input
                 type="email"
@@ -865,7 +865,7 @@ function CustomerReviewsSection() {
                 placeholder="Email (kept private)"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="border-b border-black/20 bg-transparent py-2 text-sm text-black placeholder:text-black/40 focus:border-black focus:outline-none"
+                className="border-b border-black/20 bg-transparent py-2 text-sm text-black placeholder:text-black/40 focus:border-black focus:outline-hidden"
               />
               <textarea
                 required
@@ -874,7 +874,7 @@ function CustomerReviewsSection() {
                 placeholder={`Tell us about your Vami moment… (max ${REVIEW_WORD_LIMIT} words)`}
                 value={form.body}
                 onChange={(e) => setForm({ ...form, body: clampWords(e.target.value, REVIEW_WORD_LIMIT) })}
-                className="resize-none border-b border-black/20 bg-transparent py-2 text-center font-poppins text-sm text-black placeholder:text-black/40 focus:border-black focus:outline-none"
+                className="resize-none border-b border-black/20 bg-transparent py-2 text-center font-poppins text-sm text-black placeholder:text-black/40 focus:border-black focus:outline-hidden"
               />
               <div className="text-right text-[10px] uppercase tracking-[0.18em] text-black/40">
                 {countWords(form.body)} / {REVIEW_WORD_LIMIT} words
@@ -1068,7 +1068,7 @@ function BenefitsCards() {
             viewport={{ once: true }} custom={i * 0.15}
             className="flex items-center gap-5 rounded-2xl border border-border bg-surface px-7 py-7"
           >
-            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-on-background text-white">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-on-background text-white">
               <Icon className="h-5 w-5" />
             </div>
             <div>
@@ -1096,7 +1096,7 @@ function ModestCollectionBanner() {
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
           viewport={{ once: true }}
         >
-          <h2 className="text-white uppercase leading-[1]" style={{
+          <h2 className="text-white uppercase leading-none" style={{
             fontFamily: 'var(--font-poppins), Poppins, sans-serif',
             fontWeight: 700,
             fontSize: 'clamp(30px, 8.5vw, 44px)',
@@ -1167,7 +1167,7 @@ function ModestCollectionBanner() {
           }}
         />
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#6E7992]/60 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#6E7992]/60 to-transparent" />
 
         <div className="relative z-10 flex h-full items-center px-16 lg:px-24">
           <div className="max-w-[460px]">
@@ -1305,7 +1305,7 @@ function FeaturedProducts() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => scroll('left')}
-            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            className="shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll left"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
@@ -1317,7 +1317,7 @@ function FeaturedProducts() {
           >
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                  <div key={i} className="shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
                     <div className="bg-[#F5F1EC]" style={{ height: '315px' }}><HomeCardSkeleton /></div>
                     <div className="pt-2 space-y-1.5">
                       <div className="skeleton h-2.5 w-3/4 rounded" />
@@ -1326,9 +1326,9 @@ function FeaturedProducts() {
                   </div>
                 ))
               : products.map((product, i) => (
-                  <div key={product.id} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                  <div key={product.id} className="shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
                     <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
-                      <span className="absolute left-3 top-3 z-10 rounded-full bg-black px-3 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-white">
+                      <span className="absolute left-3 top-3 z-10 rounded-full bg-black px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-white">
                         Sale
                       </span>
                       <HomeCard product={product} priority={i < 4} />
@@ -1343,7 +1343,7 @@ function FeaturedProducts() {
 
           <button
             onClick={() => scroll('right')}
-            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            className="shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll right"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
@@ -1433,7 +1433,7 @@ function TrendingSection() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => scroll('left')}
-            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            className="shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll left"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
@@ -1445,7 +1445,7 @@ function TrendingSection() {
           >
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                  <div key={i} className="shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
                     <div className="bg-[#F5F1EC]" style={{ height: '315px' }}><HomeCardSkeleton /></div>
                     <div className="pt-2 space-y-1.5">
                       <div className="skeleton h-2.5 w-3/4 rounded" />
@@ -1454,7 +1454,7 @@ function TrendingSection() {
                   </div>
                 ))
               : products.map((product, i) => (
-                  <div key={product.id} className="flex-shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
+                  <div key={product.id} className="shrink-0 flex flex-col snap-start w-[82vw] sm:w-[236px]">
                     <div className="relative overflow-hidden bg-[#F5F1EC]" style={{ height: '315px' }}>
                       <HomeCard product={product} priority={i < 4} />
                     </div>
@@ -1468,7 +1468,7 @@ function TrendingSection() {
 
           <button
             onClick={() => scroll('right')}
-            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            className="shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll right"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
@@ -1532,10 +1532,10 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
     <Link
       href={`/products/${item.slug}`}
       ref={containerRef as any}
-      className="group flex-shrink-0 flex flex-col snap-start w-[72vw] sm:w-[240px]"
+      className="group shrink-0 flex flex-col snap-start w-[72vw] sm:w-[240px]"
     >
-      {/* aspect-[4/7] matches ProductCard on the Collections grid */}
-      <div className="relative overflow-hidden bg-[#F5F1EC] aspect-[4/7] rounded-[4px]">
+      {/* aspect-4/7 matches ProductCard on the Collections grid */}
+      <div className="relative overflow-hidden bg-[#F5F1EC] aspect-4/7 rounded-xs">
         {!loaded && <div className="absolute inset-0 skeleton" />}
         <video
           ref={videoRef}
@@ -1546,8 +1546,8 @@ function VideoCard({ item }: { item: ShowcaseItem }) {
         />
 
         {/* Inset product card — matches reference look */}
-        <div className="absolute inset-x-2 bottom-2 flex items-center gap-2.5 rounded-[6px] bg-[#F6EFE2] p-2 shadow-[0_2px_6px_rgba(0,0,0,0.08)]">
-          <div className="relative h-[54px] w-[46px] flex-shrink-0 overflow-hidden rounded-[3px] bg-[#EFE9E1]">
+        <div className="absolute inset-x-2 bottom-2 flex items-center gap-2.5 rounded-sm bg-[#F6EFE2] p-2 shadow-[0_2px_6px_rgba(0,0,0,0.08)]">
+          <div className="relative h-[54px] w-[46px] shrink-0 overflow-hidden rounded-[3px] bg-[#EFE9E1]">
             {item.thumbnail ? (
               <Image
                 src={cloudinaryUrl(item.thumbnail, { w: 120 })}
@@ -1625,7 +1625,7 @@ function VideoShowcase() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => scroll('left')}
-            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            className="shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll left"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
@@ -1637,8 +1637,8 @@ function VideoShowcase() {
           >
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[72vw] sm:w-[240px]">
-                    <div className="bg-[#F5F1EC] aspect-[4/7] rounded-[4px]"><HomeCardSkeleton /></div>
+                  <div key={i} className="shrink-0 flex flex-col snap-start w-[72vw] sm:w-[240px]">
+                    <div className="bg-[#F5F1EC] aspect-4/7 rounded-xs"><HomeCardSkeleton /></div>
                     <div className="pt-3 px-1 space-y-1.5">
                       <div className="skeleton h-2.5 w-3/4 rounded" />
                       <div className="skeleton h-2.5 w-1/3 rounded" />
@@ -1647,8 +1647,8 @@ function VideoShowcase() {
                 ))
               : items.length === 0
                 ? Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex-shrink-0 flex flex-col snap-start w-[72vw] sm:w-[240px]">
-                      <div className="flex aspect-[4/7] w-full items-center justify-center bg-[#EFE9E1] text-[11px] font-medium uppercase tracking-[0.18em] text-fg-3/70 rounded-[4px]">
+                    <div key={i} className="shrink-0 flex flex-col snap-start w-[72vw] sm:w-[240px]">
+                      <div className="flex aspect-4/7 w-full items-center justify-center bg-[#EFE9E1] text-[11px] font-medium uppercase tracking-[0.18em] text-fg-3/70 rounded-xs">
                         Videos coming soon
                       </div>
                       <div className="pt-3 px-1">
@@ -1662,7 +1662,7 @@ function VideoShowcase() {
 
           <button
             onClick={() => scroll('right')}
-            className="flex-shrink-0 text-fg-1 hover:text-black transition-colors"
+            className="shrink-0 text-fg-1 hover:text-black transition-colors"
             aria-label="Scroll right"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={1.5} />

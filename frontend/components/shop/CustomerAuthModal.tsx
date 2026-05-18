@@ -84,7 +84,7 @@ export function CustomerAuthModal() {
     <AnimatePresence>
       {promptOpen && (
         <motion.div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 px-4 backdrop-blur-xs"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -136,7 +136,7 @@ export function CustomerAuthModal() {
             {/* Google button */}
             <div className="mt-8 flex flex-col items-center gap-3">
               {clientId ? (
-                <div ref={btnRef} className="flex min-h-[44px] w-full items-center justify-center [&>div]:w-full [&_iframe]:!w-full" />
+                <div ref={btnRef} className="flex min-h-[44px] w-full items-center justify-center [&>div]:w-full [&_iframe]:w-full!" />
               ) : (
                 <p className="text-[12px] text-red-400">
                   Google Sign-In not configured. Set <code>NEXT_PUBLIC_GOOGLE_CLIENT_ID</code>.

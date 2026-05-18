@@ -72,7 +72,7 @@ export function WishlistDrawer() {
                       <Link
                         href={`/products/${item.slug}`}
                         onClick={closeWishlist}
-                        className="relative h-24 w-20 flex-shrink-0 overflow-hidden rounded bg-surface-elevated"
+                        className="relative h-24 w-20 shrink-0 overflow-hidden rounded bg-surface-elevated"
                       >
                         {item.imageUrl ? (
                           <Image

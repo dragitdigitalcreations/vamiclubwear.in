@@ -26,7 +26,7 @@ export function AdminHeader({ title, subtitle }: AdminHeaderProps) {
           <input
             type="search"
             placeholder="Search products, orders..."
-            className="h-8 w-64 rounded-md border border-border bg-input pl-9 pr-3 text-sm text-on-background placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-ring"
+            className="h-8 w-64 rounded-md border border-border bg-input pl-9 pr-3 text-sm text-on-background placeholder:text-muted focus:outline-hidden focus:ring-1 focus:ring-ring"
           />
         </div>
 

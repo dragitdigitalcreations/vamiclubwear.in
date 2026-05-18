@@ -206,7 +206,7 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
                   role="tab"
                   aria-selected={active}
                   onClick={() => setParam('category', slug)}
-                  className={`flex-shrink-0 rounded-full border px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors ${
+                  className={`shrink-0 rounded-full border px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors ${
                     active
                       ? 'border-on-background bg-on-background text-white'
                       : 'border-border text-muted hover:border-on-background hover:text-on-background'
@@ -218,7 +218,7 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
             })}
           </div>
 
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             {/* Filters toggle — opens size/colour panel below */}
             <button
               type="button"
@@ -246,7 +246,7 @@ function ProductsContent({ initial }: { initial?: InitialData }) {
               <select
                 value={sortParam}
                 onChange={(e) => setParam('sort', e.target.value === 'newest' ? '' : e.target.value)}
-                className="rounded-full border border-border bg-transparent px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-on-background outline-none focus:border-on-background"
+                className="rounded-full border border-border bg-transparent px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-on-background outline-hidden focus:border-on-background"
                 aria-label="Sort products"
               >
                 {SORT_OPTIONS.map((o) => (
@@ -499,7 +499,7 @@ export default function ProductsPageClient({ initial }: { initial?: InitialData 
     <Suspense fallback={
       <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-10 py-10">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4">
-          {Array.from({ length: 20 }).map((_, i) => <div key={i} className="skeleton aspect-[3/4] rounded" />)}
+          {Array.from({ length: 20 }).map((_, i) => <div key={i} className="skeleton aspect-3/4 rounded" />)}
         </div>
       </div>
     }>

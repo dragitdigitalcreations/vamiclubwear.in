@@ -57,7 +57,7 @@ function MediaGallery({ media, selectedColor }: { media: ProductMedia[]; selecte
     <div className="flex flex-col gap-4 md:flex-row-reverse">
       {/* Main media */}
       <div
-        className="relative aspect-[3/4] flex-1 overflow-hidden bg-surface-elevated touch-pan-y"
+        className="relative aspect-3/4 flex-1 overflow-hidden bg-surface-elevated touch-pan-y"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
@@ -97,14 +97,14 @@ function MediaGallery({ media, selectedColor }: { media: ProductMedia[]; selecte
           <>
             <button
               onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center bg-white/85 text-on-background backdrop-blur-sm transition-colors hover:bg-white"
+              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center bg-white/85 text-on-background backdrop-blur-xs transition-colors hover:bg-white"
               aria-label="Previous"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center bg-white/85 text-on-background backdrop-blur-sm transition-colors hover:bg-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center bg-white/85 text-on-background backdrop-blur-xs transition-colors hover:bg-white"
               aria-label="Next"
             >
               <ChevronRight className="h-4 w-4" />
@@ -130,7 +130,7 @@ function MediaGallery({ media, selectedColor }: { media: ProductMedia[]; selecte
             <button
               key={item.id}
               onClick={() => setActive(i)}
-              className={`relative flex-shrink-0 h-20 w-16 overflow-hidden rounded border-2 transition-all duration-200 md:h-24 md:w-full ${
+              className={`relative shrink-0 h-20 w-16 overflow-hidden rounded border-2 transition-all duration-200 md:h-24 md:w-full ${
                 i === active ? 'border-on-background opacity-100' : 'border-transparent opacity-60 hover:opacity-100'
               }`}
             >
@@ -247,7 +247,7 @@ function VariantSelector({ product, selected, onChange }: VariantSelectorProps) 
                   onClick={() => available && setSelectedSize(size)}
                   disabled={!available}
                   title={available ? size : `${size} — unavailable`}
-                  className={`min-w-[3rem] border px-3 py-2 text-xs font-medium uppercase tracking-wider transition-all duration-200 ${
+                  className={`min-w-12 border px-3 py-2 text-xs font-medium uppercase tracking-wider transition-all duration-200 ${
                     selectedSize === size
                       ? 'border-on-background bg-on-background text-background'
                       : available
@@ -296,7 +296,7 @@ function StickyCartBar({
         <div className="flex items-center gap-3 min-w-0">
           {/* Thumbnail */}
           {product.media.find((m) => m.type === 'IMAGE') && (
-            <div className="relative h-12 w-9 flex-shrink-0 overflow-hidden rounded bg-surface-elevated">
+            <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded bg-surface-elevated">
               <Image
                 src={cloudinaryUrl(
                   product.media.find((m) => m.type === 'IMAGE')!.url,
@@ -319,7 +319,7 @@ function StickyCartBar({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           <span className="text-base font-semibold text-on-background hidden sm:block">
             ₹{price.toLocaleString('en-IN')}
           </span>
@@ -498,7 +498,7 @@ function RelatedProducts({ categorySlug, excludeId }: { categorySlug: string; ex
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
               <div key={i}>
-                <div className="skeleton aspect-[4/7] w-full rounded-[4px]" />
+                <div className="skeleton aspect-4/7 w-full rounded-xs" />
                 <div className="mt-3 space-y-2 px-1">
                   <div className="skeleton h-4 w-3/4 rounded" />
                   <div className="skeleton h-3 w-1/3 rounded" />
@@ -668,7 +668,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 <h1 className="font-display text-3xl font-bold leading-tight text-on-background md:text-4xl">
                   {product.name}
                 </h1>
-                <div className="mt-1 flex flex-shrink-0 items-center gap-2">
+                <div className="mt-1 flex shrink-0 items-center gap-2">
                   <button
                     onClick={() => toggleItem({
                       id:        product.id,

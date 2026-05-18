@@ -91,7 +91,7 @@ export default function BarcodeLookupPage() {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="Scan or type barcode…"
-            className="flex-1 bg-transparent text-base text-on-background placeholder:text-muted outline-none"
+            className="flex-1 bg-transparent text-base text-on-background placeholder:text-muted outline-hidden"
             autoComplete="off"
             spellCheck={false}
             inputMode="text"

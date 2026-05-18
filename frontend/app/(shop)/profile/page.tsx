@@ -165,7 +165,7 @@ function AddressSection() {
   })
 
   const inputCls = (err?: string) =>
-    `w-full border ${err ? 'border-red-500' : 'border-border'} bg-transparent px-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors rounded`
+    `w-full border ${err ? 'border-red-500' : 'border-border'} bg-transparent px-3 py-2 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors rounded`
 
   if (!loaded) return null
 
@@ -275,7 +275,7 @@ function TrackSection() {
           value={orderNum}
           onChange={e => setOrderNum(e.target.value)}
           placeholder="VCW-XXXXXX-XXXX"
-          className="flex-1 border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors rounded"
+          className="flex-1 border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors rounded"
         />
         <Link
           href={orderNum.trim() ? `/track?order=${encodeURIComponent(orderNum.trim())}` : '/track'}

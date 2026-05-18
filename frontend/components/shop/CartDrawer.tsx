@@ -66,7 +66,7 @@ export function CartDrawer() {
                   {items.map((item) => (
                     <li key={item.variantId} className="flex gap-4">
                       {/* Image */}
-                      <div className="relative h-24 w-20 flex-shrink-0 overflow-hidden rounded bg-surface-elevated">
+                      <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded bg-surface-elevated">
                         {item.imageUrl ? (
                           <Image
                             src={item.imageUrl}
@@ -110,7 +110,7 @@ export function CartDrawer() {
                             >
                               <Minus className="h-3 w-3" />
                             </button>
-                            <span className="min-w-[1.5rem] text-center text-xs font-medium text-on-background">
+                            <span className="min-w-6 text-center text-xs font-medium text-on-background">
                               {item.quantity}
                             </span>
                             <button

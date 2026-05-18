@@ -217,7 +217,7 @@ function StaffScanner() {
                 onBlur={() => { if (mode === 'scan') setTimeout(() => inputRef.current?.focus(), 100) }}
                 placeholder={mode === 'processing' ? 'Looking up product…' : 'Scan or type barcode'}
                 disabled={mode === 'processing'}
-                className="flex-1 bg-transparent text-base text-on-background placeholder:text-muted outline-none disabled:opacity-50"
+                className="flex-1 bg-transparent text-base text-on-background placeholder:text-muted outline-hidden disabled:opacity-50"
                 autoComplete="off"
                 spellCheck={false}
                 inputMode="text"

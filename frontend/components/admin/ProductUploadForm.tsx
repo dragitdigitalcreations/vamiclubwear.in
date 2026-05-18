@@ -272,7 +272,7 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
                   </span>
                   <input
                     id="slug"
-                    className="flex-1 bg-transparent px-2 py-2 text-sm text-on-background outline-none placeholder:text-muted"
+                    className="flex-1 bg-transparent px-2 py-2 text-sm text-on-background outline-hidden placeholder:text-muted"
                     placeholder="zari-fusion-suit"
                     {...register('slug', {
                       onChange: () => { setSlugManuallyEdited(true); setSlugConflict(false) },
@@ -352,7 +352,7 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
                               className="h-4 w-4 rounded-full border border-border"
                               style={{ backgroundColor: colorHex ?? '#888888' }}
                             />
-                            <span className="text-sm text-on-background min-w-[8rem]">{color}</span>
+                            <span className="text-sm text-on-background min-w-32">{color}</span>
                           </div>
                           <Input
                             placeholder="Scan or type the barcode for this colour…"
@@ -409,7 +409,7 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
               <select
                 id="categoryId"
                 {...register('categoryId')}
-                className="flex h-9 w-full rounded-md border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-full rounded-md border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-hidden focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">Select category…</option>
                 {categories.map((c) => (

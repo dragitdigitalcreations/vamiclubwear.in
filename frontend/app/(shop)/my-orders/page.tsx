@@ -287,7 +287,7 @@ function MyOrdersContent() {
               onChange={(e) => setValue(e.target.value)}
               placeholder={mode === 'phone' ? 'e.g. 9876543210' : 'e.g. you@email.com'}
               autoFocus
-              className="w-full border border-border bg-surface pl-10 pr-4 py-3 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors"
+              className="w-full border border-border bg-surface pl-10 pr-4 py-3 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
             />
           </div>
           <button

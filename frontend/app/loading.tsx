@@ -21,7 +21,7 @@ export default function HomeLoading() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i}>
-              <div className="skeleton aspect-[3/4] w-full rounded-[14px]" />
+              <div className="skeleton aspect-3/4 w-full rounded-[14px]" />
               <div className="mt-3 space-y-2 px-1">
                 <div className="skeleton h-4 w-3/4 rounded" />
                 <div className="skeleton h-3 w-1/3 rounded" />

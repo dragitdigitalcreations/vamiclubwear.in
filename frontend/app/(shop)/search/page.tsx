@@ -62,7 +62,7 @@ function SearchResults() {
             onChange={e => handleInput(e.target.value)}
             placeholder="Search products, fabrics, styles…"
             autoFocus
-            className="w-full border border-border bg-surface pl-11 pr-10 py-3 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors"
+            className="w-full border border-border bg-surface pl-11 pr-10 py-3 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
           />
           {query && (
             <button
@@ -78,7 +78,7 @@ function SearchResults() {
       {loading && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="aspect-[3/4] bg-surface-elevated animate-pulse" />
+            <div key={i} className="aspect-3/4 bg-surface-elevated animate-pulse" />
           ))}
         </div>
       )}

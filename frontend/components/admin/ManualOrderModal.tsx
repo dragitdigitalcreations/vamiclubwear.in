@@ -179,7 +179,7 @@ export function ManualOrderModal({ open, onClose, onCreated }: Props) {
         <>
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs"
             onClick={onClose}
           />
           <motion.div
@@ -216,18 +216,18 @@ export function ManualOrderModal({ open, onClose, onCreated }: Props) {
                   <input
                     value={customerName} onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Full name"
-                    className="w-full bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-none focus:border-on-background"
+                    className="w-full bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-hidden focus:border-on-background"
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="Phone *"
-                      className="bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-none focus:border-on-background"
+                      className="bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-hidden focus:border-on-background"
                     />
                     <input
                       value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)}
                       type="email" placeholder="Email (for confirmation)"
-                      className="bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-none focus:border-on-background"
+                      className="bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-hidden focus:border-on-background"
                     />
                   </div>
                 </section>
@@ -260,24 +260,24 @@ export function ManualOrderModal({ open, onClose, onCreated }: Props) {
                       <input
                         value={address} onChange={(e) => setAddress(e.target.value)}
                         placeholder="House / Flat, Street, Area *"
-                        className="w-full bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-none focus:border-on-background"
+                        className="w-full bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-hidden focus:border-on-background"
                       />
                       <div className="grid grid-cols-3 gap-2">
                         <input
                           value={city} onChange={(e) => setCity(e.target.value)}
                           placeholder="City *"
-                          className="bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-none focus:border-on-background"
+                          className="bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-hidden focus:border-on-background"
                         />
                         <input
                           value={stateName} onChange={(e) => setStateName(e.target.value)}
                           placeholder="State"
-                          className="bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-none focus:border-on-background"
+                          className="bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-hidden focus:border-on-background"
                         />
                         <input
                           value={pincode} onChange={(e) => setPincode(e.target.value)}
                           inputMode="numeric" maxLength={6}
                           placeholder="Pincode *"
-                          className="bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-none focus:border-on-background"
+                          className="bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-hidden focus:border-on-background"
                         />
                       </div>
                     </div>
@@ -293,7 +293,7 @@ export function ManualOrderModal({ open, onClose, onCreated }: Props) {
                     <input
                       value={query} onChange={(e) => setQuery(e.target.value)}
                       placeholder="Search by name, SKU, or barcode…"
-                      className="w-full bg-transparent border border-border pl-9 pr-3 py-2 text-sm text-on-background outline-none focus:border-on-background"
+                      className="w-full bg-transparent border border-border pl-9 pr-3 py-2 text-sm text-on-background outline-hidden focus:border-on-background"
                     />
                     {searching && (
                       <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted" />
@@ -348,7 +348,7 @@ export function ManualOrderModal({ open, onClose, onCreated }: Props) {
                               type="number" min={1} max={l.available || undefined}
                               value={l.quantity}
                               onChange={(e) => setLineQty(l.variantId, Number(e.target.value) || 1)}
-                              className="w-14 bg-transparent border border-border px-2 py-1 text-sm text-on-background text-center outline-none focus:border-on-background"
+                              className="w-14 bg-transparent border border-border px-2 py-1 text-sm text-on-background text-center outline-hidden focus:border-on-background"
                             />
                             <p className="w-20 text-right text-sm text-on-background">
                               ₹{(l.unitPrice * l.quantity).toLocaleString('en-IN')}
@@ -377,13 +377,13 @@ export function ManualOrderModal({ open, onClose, onCreated }: Props) {
                   <input
                     value={paymentRef} onChange={(e) => setPaymentRef(e.target.value)}
                     placeholder="e.g. pay_Sq2EDiHTcA9hNW (Razorpay payment id) *"
-                    className="w-full bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-none focus:border-on-background font-mono"
+                    className="w-full bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-hidden focus:border-on-background font-mono"
                   />
                   <textarea
                     value={notes} onChange={(e) => setNotes(e.target.value)}
                     rows={2}
                     placeholder="Internal notes (optional)"
-                    className="w-full bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-none focus:border-on-background resize-none"
+                    className="w-full bg-transparent border border-border px-3 py-2 text-sm text-on-background outline-hidden focus:border-on-background resize-none"
                   />
                 </section>
               </div>

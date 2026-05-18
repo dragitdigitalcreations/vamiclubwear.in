@@ -60,7 +60,7 @@ function ColumnHeading({ children }: { children: React.ReactNode }) {
 
 function FooterLink({ href, label, external }: { href: string; label: string; external?: boolean }) {
   const className =
-    'block text-[11px] font-medium uppercase tracking-[0.1em] text-fg-3 transition-colors hover:text-fg-1 text-center md:text-left'
+    'block text-[11px] font-medium uppercase tracking-widest text-fg-3 transition-colors hover:text-fg-1 text-center md:text-left'
   if (external) {
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
@@ -93,7 +93,7 @@ function Column({
 function PaymentMark({ label, src }: { label: string; src: string }) {
   return (
     <span
-      className="inline-flex h-9 w-[64px] items-center justify-center rounded-[6px] border-[1.5px] border-black bg-white px-2"
+      className="inline-flex h-9 w-[64px] items-center justify-center rounded-sm border-[1.5px] border-black bg-white px-2"
       title={label}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -160,7 +160,7 @@ export function Footer() {
             sits directly under the Policy↔Customer Care divider above. */}
         <div className="grid grid-cols-1 md:grid-cols-4 border-t-[1.5px] border-black">
           <div className="md:col-span-1 flex items-center justify-center md:justify-start gap-6 md:gap-8 px-6 md:px-8 py-10 md:py-12">
-            <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
+            <Link href="/" aria-label="Vami Clubwear — Home" className="shrink-0">
               <VamiLogo size="lg" />
             </Link>
           </div>

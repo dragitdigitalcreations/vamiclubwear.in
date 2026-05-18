@@ -170,7 +170,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
       onMouseLeave={() => setHovered(false)}
     >
       {/* ── Image container ── */}
-      <div className="relative overflow-hidden rounded-[4px] bg-surface-elevated aspect-[4/7]">
+      <div className="relative overflow-hidden rounded-xs bg-surface-elevated aspect-4/7">
 
         {/* Main image */}
         {imageUrl ? (
@@ -206,7 +206,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         {/* ── Badges top-left ── */}
         <div className="absolute left-2.5 top-2.5 z-10 flex flex-col gap-1">
           {isNew && (
-            <span className="rounded-sm bg-white/20 backdrop-blur-md border border-white/30 px-2 py-[3px] text-[9px] font-bold uppercase tracking-widest text-white shadow-sm">
+            <span className="rounded-sm bg-white/20 backdrop-blur-md border border-white/30 px-2 py-[3px] text-[9px] font-bold uppercase tracking-widest text-white shadow-xs">
               New
             </span>
           )}
@@ -223,8 +223,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             onClick={handleWishlist}
             className={`flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 ${
               wishlisted
-                ? 'bg-on-background text-white shadow-sm'
-                : 'bg-white/90 text-muted shadow-sm hover:bg-on-background hover:text-white'
+                ? 'bg-on-background text-white shadow-xs'
+                : 'bg-white/90 text-muted shadow-xs hover:bg-on-background hover:text-white'
             }`}
             aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
@@ -236,8 +236,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
               onClick={handleShareClick}
               className={`flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 ${
                 shareOpen
-                  ? 'bg-on-background text-white shadow-sm'
-                  : 'bg-white/90 text-muted shadow-sm hover:bg-on-background hover:text-white'
+                  ? 'bg-on-background text-white shadow-xs'
+                  : 'bg-white/90 text-muted shadow-xs hover:bg-on-background hover:text-white'
               }`}
               aria-label="Share product"
               aria-haspopup="menu"
@@ -337,7 +337,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
               <span
                 key={c.color}
                 title={c.color}
-                className="h-3 w-3 rounded-full border border-border/60 flex-shrink-0"
+                className="h-3 w-3 rounded-full border border-border/60 shrink-0"
                 style={{ backgroundColor: c.colorHex ?? '#888888' }}
               />
             ))}
@@ -360,7 +360,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 export function ProductCardSkeleton() {
   return (
     <div>
-      <div className="skeleton aspect-[4/7] w-full rounded-[4px]" />
+      <div className="skeleton aspect-4/7 w-full rounded-xs" />
       <div className="mt-3 space-y-2">
         <div className="skeleton h-4 w-3/4 rounded" />
         <div className="skeleton h-4 w-1/4 rounded" />

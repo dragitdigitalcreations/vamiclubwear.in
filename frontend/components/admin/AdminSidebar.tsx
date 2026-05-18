@@ -79,7 +79,7 @@ export function AdminSidebar() {
                 <Link
                   href={item.href}
                   className={cn(
-                    'group flex items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm font-medium transition-all duration-150',
+                    'group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
                     isActive
                       ? 'bg-on-background text-white'
                       : 'text-muted hover:bg-surface-elevated hover:text-on-background'
@@ -109,7 +109,7 @@ export function AdminSidebar() {
           </div>
           <button
             onClick={handleLogout}
-            className="rounded-[8px] p-1.5 text-muted hover:bg-surface-elevated hover:text-on-background transition-colors"
+            className="rounded-md p-1.5 text-muted hover:bg-surface-elevated hover:text-on-background transition-colors"
             title="Sign out"
           >
             <LogOut className="h-4 w-4" />

@@ -295,10 +295,10 @@ export function MediaUploader({ value, onChange, colorOptions = [] }: MediaUploa
                       item.error ? 'border-red-500/50' : 'border-border'
                     }`}
                   >
-                    <GripVertical className="h-4 w-4 flex-shrink-0 text-muted" />
+                    <GripVertical className="h-4 w-4 shrink-0 text-muted" />
 
                     {/* Thumbnail */}
-                    <div className="relative h-14 w-12 flex-shrink-0 overflow-hidden rounded bg-surface">
+                    <div className="relative h-14 w-12 shrink-0 overflow-hidden rounded bg-surface">
                       {item.uploading ? (
                         <div className="flex h-full items-center justify-center">
                           <Loader2 className="h-4 w-4 animate-spin text-muted" />
@@ -323,8 +323,8 @@ export function MediaUploader({ value, onChange, colorOptions = [] }: MediaUploa
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
                         {item.type === 'VIDEO'
-                          ? <Play className="h-3 w-3 text-muted flex-shrink-0" />
-                          : <ImageIcon className="h-3 w-3 text-muted flex-shrink-0" />
+                          ? <Play className="h-3 w-3 text-muted shrink-0" />
+                          : <ImageIcon className="h-3 w-3 text-muted shrink-0" />
                         }
                         <span className="text-xs text-muted truncate">
                           {item.uploading ? 'Uploading…' : item.error ? `Error: ${item.error}` : item.url.split('/').pop()}
@@ -340,7 +340,7 @@ export function MediaUploader({ value, onChange, colorOptions = [] }: MediaUploa
                               <div className="flex items-center gap-1.5">
                                 {swatchHex && (
                                   <span
-                                    className="h-3 w-3 flex-shrink-0 rounded-full border border-border"
+                                    className="h-3 w-3 shrink-0 rounded-full border border-border"
                                     style={{ backgroundColor: swatchHex }}
                                     aria-hidden
                                   />
@@ -348,7 +348,7 @@ export function MediaUploader({ value, onChange, colorOptions = [] }: MediaUploa
                                 <select
                                   value={tagColor}
                                   onChange={(e) => updateTagColor(item.id, e.target.value)}
-                                  className="flex-1 min-w-0 border-b border-border bg-transparent text-[11px] text-on-background focus:outline-none focus:border-on-background pb-0.5 transition-colors"
+                                  className="flex-1 min-w-0 border-b border-border bg-transparent text-[11px] text-on-background focus:outline-hidden focus:border-on-background pb-0.5 transition-colors"
                                   title="Bind this image to a colour variant"
                                 >
                                   <option value="">No colour binding — shown for every colour</option>
@@ -365,7 +365,7 @@ export function MediaUploader({ value, onChange, colorOptions = [] }: MediaUploa
                               value={tagText}
                               onChange={(e) => updateTagText(item.id, e.target.value)}
                               placeholder="Alt text (optional)"
-                              className="w-full border-b border-border bg-transparent text-xs text-on-background placeholder:text-muted focus:outline-none focus:border-on-background pb-0.5 transition-colors"
+                              className="w-full border-b border-border bg-transparent text-xs text-on-background placeholder:text-muted focus:outline-hidden focus:border-on-background pb-0.5 transition-colors"
                             />
                           </div>
                         )
@@ -373,7 +373,7 @@ export function MediaUploader({ value, onChange, colorOptions = [] }: MediaUploa
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       {item.type === 'IMAGE' && !item.uploading && !item.error && (
                         <button
                           type="button"

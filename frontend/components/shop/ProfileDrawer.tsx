@@ -86,7 +86,7 @@ function AddressSection() {
   })
 
   const inputCls = (err?: string) =>
-    `w-full border ${err ? 'border-red-500' : 'border-border'} bg-transparent px-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors rounded`
+    `w-full border ${err ? 'border-red-500' : 'border-border'} bg-transparent px-3 py-2 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors rounded`
 
   if (!loaded) return null
 
@@ -406,7 +406,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                     value={value}
                     onChange={e => setValue(e.target.value)}
                     placeholder={mode === 'phone' ? 'Your phone number' : 'Your email address'}
-                    className="flex-1 border border-border bg-transparent px-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors rounded"
+                    className="flex-1 border border-border bg-transparent px-3 py-2 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors rounded"
                   />
                   <button
                     type="submit"
@@ -504,7 +504,7 @@ function TrackSection({ onClose }: { onClose: () => void }) {
           value={orderNum}
           onChange={e => setOrderNum(e.target.value)}
           placeholder="VCW-XXXXXX-XXXX"
-          className="flex-1 border border-border bg-transparent px-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors rounded"
+          className="flex-1 border border-border bg-transparent px-3 py-2 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors rounded"
           onKeyDown={e => {
             if (e.key === 'Enter' && orderNum.trim()) onClose()
           }}

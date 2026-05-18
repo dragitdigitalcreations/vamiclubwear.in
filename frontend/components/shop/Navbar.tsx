@@ -93,7 +93,7 @@ export function Navbar() {
             />
 
             {/* Left: hamburger (mobile) + logo */}
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-3 shrink-0">
               <button
                 className="md:hidden p-1.5 -ml-1 text-fg-3 hover:text-fg-1 transition-colors"
                 onClick={() => setMobileOpen(o => !o)}
@@ -101,7 +101,7 @@ export function Navbar() {
               >
                 {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
-              <Link href="/" aria-label="Vami Clubwear — Home" className="flex-shrink-0">
+              <Link href="/" aria-label="Vami Clubwear — Home" className="shrink-0">
                 <VamiLogo size="md" />
               </Link>
             </div>
@@ -113,7 +113,7 @@ export function Navbar() {
                   key={href}
                   href={href}
                   className={cn(
-                    'px-5 py-[7px] rounded-full text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-200',
+                    'px-5 py-[7px] rounded-full text-[11px] font-semibold uppercase tracking-widest transition-colors duration-200',
                     isActive(href)
                       ? 'border border-fg-1 bg-transparent text-fg-1'
                       : 'bg-fg-1 text-white hover:bg-[#2a2a2a]'
@@ -128,7 +128,7 @@ export function Navbar() {
                 <button
                   onClick={() => setCatDropOpen(o => !o)}
                   className={cn(
-                    'flex items-center gap-1.5 px-5 py-[7px] rounded-full text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors duration-200',
+                    'flex items-center gap-1.5 px-5 py-[7px] rounded-full text-[11px] font-semibold uppercase tracking-widest transition-colors duration-200',
                     catDropOpen
                       ? 'border border-fg-1 bg-transparent text-fg-1'
                       : 'bg-fg-1 text-white hover:bg-[#2a2a2a]'
@@ -152,7 +152,7 @@ export function Navbar() {
                           key={cat.slug}
                           href={`/products?category=${cat.slug}`}
                           onClick={() => setCatDropOpen(false)}
-                          className="block px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.1em] text-fg-2 hover:bg-surface-elevated hover:text-fg-1 transition-colors duration-150"
+                          className="block px-5 py-2.5 text-[11px] font-medium uppercase tracking-widest text-fg-2 hover:bg-surface-elevated hover:text-fg-1 transition-colors duration-150"
                         >
                           {cat.label}
                         </Link>
@@ -249,19 +249,19 @@ export function Navbar() {
                 onSubmit={handleSearch}
                 className="mx-auto flex max-w-[1400px] items-center gap-4 px-5 md:px-10 py-3"
               >
-                <Search className="h-4 w-4 flex-shrink-0 text-fg-4" />
+                <Search className="h-4 w-4 shrink-0 text-fg-4" />
                 <input
                   ref={searchInputRef}
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search styles, fabrics, collections…"
-                  className="flex-1 bg-transparent text-sm text-fg-1 placeholder:text-fg-4 outline-none"
+                  className="flex-1 bg-transparent text-sm text-fg-1 placeholder:text-fg-4 outline-hidden"
                 />
                 <button
                   type="button"
                   onClick={() => { setSearchOpen(false); setSearchQuery('') }}
-                  className="flex-shrink-0 p-1 text-fg-4 hover:text-fg-1 transition-colors"
+                  className="shrink-0 p-1 text-fg-4 hover:text-fg-1 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -290,7 +290,7 @@ export function Navbar() {
               className="fixed inset-y-0 left-0 z-50 w-72 bg-[#FAF8F5] shadow-z5 flex flex-col md:hidden"
             >
               {/* Drawer header */}
-              <div className="flex items-center justify-between border-b border-border px-5 py-4 flex-shrink-0">
+              <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
                 <Link href="/" onClick={() => setMobileOpen(false)}>
                   <VamiLogo size="sm" />
                 </Link>
@@ -303,18 +303,18 @@ export function Navbar() {
               </div>
 
               {/* Mobile search */}
-              <div className="flex-shrink-0 px-4 pt-4 pb-3">
+              <div className="shrink-0 px-4 pt-4 pb-3">
                 <form
                   onSubmit={handleMobileSearch}
                   className="flex items-center gap-2 h-10 border border-border bg-surface-raised rounded-lg px-3"
                 >
-                  <Search className="h-3.5 w-3.5 flex-shrink-0 text-fg-4" />
+                  <Search className="h-3.5 w-3.5 shrink-0 text-fg-4" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Search…"
-                    className="flex-1 bg-transparent text-xs text-fg-1 placeholder:text-fg-4 outline-none"
+                    className="flex-1 bg-transparent text-xs text-fg-1 placeholder:text-fg-4 outline-hidden"
                   />
                 </form>
               </div>

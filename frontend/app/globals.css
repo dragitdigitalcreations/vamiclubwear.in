@@ -1,61 +1,617 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-/* Used by ProductCard share menu — replaced framer-motion AnimatePresence */
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-4px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-background: #ffffff;
+
+  --color-surface: #ffffff;
+  --color-surface-raised: #fafafa;
+  --color-surface-elevated: #f5f5f5;
+  --color-surface-overlay: #efefef;
+
+  --color-border: #e8e8e8;
+  --color-input: #e8e8e8;
+  --color-ring: #b0b0b0;
+
+  --color-fg-1: #1a1a1a;
+  --color-fg-2: #3d3d3d;
+  --color-fg-3: #666666;
+  --color-fg-4: #999999;
+  --color-fg-5: #c4c4c4;
+
+  --color-primary: #1a1a1a;
+  --color-primary-dark: #000000;
+  --color-primary-foreground: #ffffff;
+  --color-primary-light: #8b6b47;
+
+  --color-on-background: #1a1a1a;
+  --color-on-surface: #3d3d3d;
+
+  --color-muted: #999999;
+  --color-muted-foreground: #666666;
+
+  --color-brand: #8b6b47;
+  --color-brand-light: #c4956a;
+  --color-brand-lighter: #ddb896;
+  --color-brand-dark: #5c4033;
+
+  --color-accent: #8b6b47;
+  --color-accent-foreground: #ffffff;
+
+  --color-destructive: #d32f2f;
+  --color-destructive-foreground: #ffffff;
+
+  --color-success: #2e7d32;
+  --color-success-foreground: #ffffff;
+
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #ffffff;
+
+  --color-primary-light: #8b6b47;
+
+  --font-sans: Metropolis, Arial, Helvetica, sans-serif;
+  --font-display: NTFabulous, Metropolis, Arial, Helvetica, sans-serif;
+  --font-poppins: var(--font-poppins), Inter, system-ui, sans-serif;
+
+  --text-display: clamp(3rem, 8vw, 7rem);
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 700;
+  --text-h1: 26px;
+  --text-h1--line-height: 1.08;
+  --text-h1--letter-spacing: -0.025em;
+  --text-h1--font-weight: 700;
+  --text-h2: clamp(1.5rem, 3vw, 2.25rem);
+  --text-h2--line-height: 1.15;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2--font-weight: 600;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.3;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h3--font-weight: 600;
+  --text-h4: 1rem;
+  --text-h4--line-height: 1.4;
+  --text-h4--letter-spacing: 0;
+  --text-h4--font-weight: 600;
+  --text-body-lg: 1rem;
+  --text-body-lg--line-height: 1.7;
+  --text-body-lg--letter-spacing: 0;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.6;
+  --text-body--letter-spacing: 0;
+  --text-body-sm: 0.75rem;
+  --text-body-sm--line-height: 1.55;
+  --text-body-sm--letter-spacing: 0;
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1.2;
+  --text-label--letter-spacing: 0.1em;
+  --text-label--font-weight: 600;
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 1;
+  --text-micro--letter-spacing: 0.45em;
+  --text-micro--font-weight: 600;
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 1rem;
+
+  --radius: 10px;
+  --radius-xl: 16px;
+  --radius-lg: 10px;
+  --radius-md: 8px;
+  --radius-sm: 6px;
+  --radius-xs: 4px;
+  --radius-full: 9999px;
+
+  --shadow-z0: none;
+  --shadow-z1: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-z2: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-z3: 0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-z4: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
+  --shadow-z5: 0 24px 64px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover:
+    0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  --spacing-logo-xs: 1rem;
+  --spacing-logo-sm: 1.25rem;
+  --spacing-logo-md: 1.75rem;
+  --spacing-logo-lg: 2.5rem;
+  --spacing-logo-xl: 3.5rem;
+
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-shimmer: shimmer 1.5s infinite linear;
+
+  --grid-template-columns-masonry-sm: repeat(2, 1fr);
+  --grid-template-columns-masonry-md: repeat(3, 1fr);
+  --grid-template-columns-masonry-lg: repeat(4, 1fr);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
 }
 
-/* ── NTFabulous — place NTFabulous.woff2 in /public/fonts/ ── */
-@font-face {
-  font-family: 'NTFabulous';
-  src: url('/fonts/NTFabulous.woff') format('woff');
-  font-weight: 400 700;
-  font-style: normal;
-  font-display: swap;
-}
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
 
-/* ── Metropolis (self-hosted, latin-only woff2) ─────────────────────────────
-   Replaces @fontsource/metropolis CSS imports — same files, but loaded directly
-   from /fonts/ with proper font-display: swap and no JS-side CSS round-trip.
-   Only the four weights actually used by the design (400/500/600/700). */
-@font-face {
-  font-family: 'Metropolis';
-  src: url('/fonts/metropolis/metropolis-latin-400-normal.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Metropolis';
-  src: url('/fonts/metropolis/metropolis-latin-500-normal.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Metropolis';
-  src: url('/fonts/metropolis/metropolis-latin-600-normal.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Metropolis';
-  src: url('/fonts/metropolis/metropolis-latin-700-normal.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENT LAYER — semantic classes mapped to the hierarchy
+═══════════════════════════════════════════════════════════════════════════ */
+
+@utility t-display {
+  /* ─── Typography ──────────────────────────────────────────────────────── */
+  font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif;
+  font-size: clamp(3rem, 8vw, 7rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--fg-1);
+}
+
+@utility t-h1 {
+  font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  color: var(--fg-1);
+}
+
+@utility t-h2 {
+  font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--fg-1);
+}
+
+@utility t-h3 {
+  font-family: Metropolis, Arial, Helvetica, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--fg-2);
+}
+
+@utility t-h4 {
+  font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--fg-2);
+}
+
+@utility t-body-lg {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+@utility t-body {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--fg-2);
+}
+
+@utility t-body-sm {
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--fg-3);
+}
+
+@utility t-label {
+  /* Uppercase label — tabs, badges, toolbar labels */
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+}
+
+@utility t-micro {
+  /* Eyebrow micro-label — hero eyebrows, section kickers */
+  font-size: 0.5625rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+}
+
+@utility logo-xs {
+  /* ─── Logo sizes ──────────────────────────────────────────────────────── */
+  height: var(--logo-xs);
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+
+@utility logo-sm {
+  height: var(--logo-sm);
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+
+@utility logo-md {
+  height: var(--logo-md);
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+
+@utility logo-lg {
+  height: var(--logo-lg);
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+
+@utility logo-xl {
+  height: var(--logo-xl);
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+
+@utility btn-primary {
+  /* ─── Button hierarchy ────────────────────────────────────────────────── */
+
+  /* Tier 1 — Black, primary action */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2.5rem;
+  background-color: var(--fg-1);
+  color: #ffffff;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border-radius: var(--r-lg);
+  transition:
+    background-color 150ms,
+    gap 200ms;
+  &:hover {
+    background-color: #000000;
+  }
+}
+
+@utility btn-brand {
+  /* Tier 2 — Brand caramel */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2.5rem;
+  background-color: var(--brand);
+  color: #ffffff;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border-radius: var(--r-lg);
+  transition: background-color 150ms;
+  &:hover {
+    background-color: var(--brand-dark);
+  }
+}
+
+@utility btn-secondary {
+  /* Tier 3 — Outlined */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2.5rem;
+  border: 1px solid var(--border-strong);
+  color: var(--fg-1);
+  background: transparent;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border-radius: var(--r-lg);
+  transition:
+    background-color 150ms,
+    border-color 150ms;
+  &:hover {
+    background-color: var(--surface-elevated);
+    border-color: var(--fg-1);
+  }
+}
+
+@utility btn-ghost {
+  /* Tier 4 — Ghost / text */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: var(--fg-3);
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: color 150ms;
+  &:hover {
+    color: var(--fg-1);
+  }
+}
+
+@utility card {
+  /* ─── Card elevation ──────────────────────────────────────────────────── */
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+@utility card-z1 {
+  box-shadow: var(--shadow-z1);
+}
+
+@utility card-z2 {
+  box-shadow: var(--shadow-z2);
+}
+
+@utility card-z3 {
+  box-shadow: var(--shadow-z3);
+}
+
+@utility input-base {
+  /* ─── Input ───────────────────────────────────────────────────────────── */
+  width: 100%;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--fg-1);
+  outline: none;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+  &::placeholder {
+    color: var(--fg-5);
+  }
+  &:focus {
+    border-color: var(--ring);
+    background: var(--surface);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY LAYER
+═══════════════════════════════════════════════════════════════════════════ */
+
+@utility bg-background {
+  /* ─── Surface overrides (keep bg-* classes working) ── */
+  background-color: var(--bg) !important;
+}
+
+@utility bg-surface {
+  background-color: var(--surface) !important;
+}
+
+@utility bg-surface-raised {
+  background-color: var(--surface-raised) !important;
+}
+
+@utility bg-surface-elevated {
+  background-color: var(--surface-elevated) !important;
+}
+
+@utility bg-surface-overlay {
+  background-color: var(--surface-overlay) !important;
+}
+
+@utility text-fg-1 {
+  /* ─── Text tier shorthands ── */
+  color: var(--fg-1);
+}
+
+@utility text-fg-2 {
+  color: var(--fg-2);
+}
+
+@utility text-fg-3 {
+  color: var(--fg-3);
+}
+
+@utility text-fg-4 {
+  color: var(--fg-4);
+}
+
+@utility text-fg-5 {
+  color: var(--fg-5);
+}
+
+@utility text-brand {
+  color: var(--brand);
+}
+
+@utility text-brand-light {
+  color: var(--brand-light);
+}
+
+@utility skeleton {
+  /* ─── Skeleton shimmer ── */
+  background: linear-gradient(90deg, #ede8e1 25%, #e4ddd5 50%, #ede8e1 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+@utility scrollbar-hide {
+  /* ─── Scrollbar hide ── */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility shadow-card {
+  /* ─── Legacy shadow aliases ── */
+  box-shadow: var(--shadow-z2);
+}
+
+@utility shadow-card-hover {
+  box-shadow: var(--shadow-z3);
+}
+
+@utility shadow-soft {
+  box-shadow: var(--shadow-z1);
+}
+
+@utility shadow-z5 {
+  box-shadow: var(--shadow-z5);
+}
+
+@utility masonry-grid {
+  /* ─── Masonry ── */
+  columns: 2;
+  column-gap: 0.75rem;
+  @media (min-width: 768px) {
+    columns: 3;
+    column-gap: 1rem;
+  }
+  @media (min-width: 1280px) {
+    columns: 4;
+    column-gap: 1.25rem;
+  }
+}
+
+@utility masonry-item {
+  break-inside: avoid;
+  margin-bottom: 0.75rem;
+}
+
+@utility video-fade-in {
+  /* ─── Video fade-in ── */
+  animation: videoFadeIn 0.4s ease-out forwards;
+}
+
+@utility texture-overlay {
+  /* ─── Texture overlay ── */
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent 50%,
+      rgba(255, 255, 255, 0.85) 100%
+    );
+    pointer-events: none;
+  }
+}
+
+@layer utilities {
+  /* Used by ProductCard share menu — replaced framer-motion AnimatePresence */
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* ── NTFabulous — place NTFabulous.woff2 in /public/fonts/ ── */
+  @font-face {
+    font-family: 'NTFabulous';
+    src: url('/fonts/NTFabulous.woff') format('woff');
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  /* ── Metropolis (self-hosted, latin-only woff2) ─────────────────────────────
+   Replaces @fontsource/metropolis CSS imports — same files, but loaded directly
+   from /fonts/ with proper font-display: swap and no JS-side CSS round-trip.
+   Only the four weights actually used by the design (400/500/600/700). */
+  @font-face {
+    font-family: 'Metropolis';
+    src: url('/fonts/metropolis/metropolis-latin-400-normal.woff2')
+      format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Metropolis';
+    src: url('/fonts/metropolis/metropolis-latin-500-normal.woff2')
+      format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Metropolis';
+    src: url('/fonts/metropolis/metropolis-latin-600-normal.woff2')
+      format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Metropolis';
+    src: url('/fonts/metropolis/metropolis-latin-700-normal.woff2')
+      format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
    VAMI CLUBWEAR — DESIGN HIERARCHY SYSTEM
    ───────────────────────────────────────
    Every element on the site maps to a tier. Use the semantic classes below
    instead of raw Tailwind utilities so the hierarchy stays consistent.
 ═══════════════════════════════════════════════════════════════════════════ */
+}
 
 @layer base {
   :root {
@@ -168,263 +724,6 @@
   a[class~="bg-fg-1"][class~="text-white"],
   button[class~="bg-fg-1"][class~="text-white"] {
     border-radius: 9999px;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   COMPONENT LAYER — semantic classes mapped to the hierarchy
-═══════════════════════════════════════════════════════════════════════════ */
-
-@layer components {
-
-  /* ─── Typography ──────────────────────────────────────────────────────── */
-
-  .t-display {
-    font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif;
-    font-size: clamp(3rem, 8vw, 7rem);
-    font-weight: 700;
-    line-height: 1.0;
-    letter-spacing: -0.03em;
-    color: var(--fg-1);
-  }
-
-  .t-h1 {
-    font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif;
-    font-size: 26px;
-    font-weight: 800;
-    line-height: 1.08;
-    letter-spacing: -0.025em;
-    color: var(--fg-1);
-  }
-
-  .t-h2 {
-    font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif;
-    font-size: clamp(1.5rem, 3vw, 2.25rem);
-    font-weight: 700;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    color: var(--fg-1);
-  }
-
-  .t-h3 {
-    font-family: Metropolis, Arial, Helvetica, sans-serif;
-    font-size: 1.25rem;
-    font-weight: 600;
-    line-height: 1.3;
-    letter-spacing: -0.01em;
-    color: var(--fg-2);
-  }
-
-  .t-h4 {
-    font-family: 'NTFabulous', Metropolis, Arial, Helvetica, sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1.4;
-    color: var(--fg-2);
-  }
-
-  .t-body-lg {
-    font-size: 1rem;
-    line-height: 1.7;
-    color: var(--fg-2);
-  }
-
-  .t-body {
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--fg-2);
-  }
-
-  .t-body-sm {
-    font-size: 0.75rem;
-    line-height: 1.55;
-    color: var(--fg-3);
-  }
-
-  /* Uppercase label — tabs, badges, toolbar labels */
-  .t-label {
-    font-size: 0.6875rem;
-    font-weight: 600;
-    line-height: 1.2;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--fg-4);
-  }
-
-  /* Eyebrow micro-label — hero eyebrows, section kickers */
-  .t-micro {
-    font-size: 0.5625rem;
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--fg-4);
-  }
-
-  /* ─── Logo sizes ──────────────────────────────────────────────────────── */
-
-  .logo-xs  { height: var(--logo-xs);  width: auto; display: block; flex-shrink: 0; }
-  .logo-sm  { height: var(--logo-sm);  width: auto; display: block; flex-shrink: 0; }
-  .logo-md  { height: var(--logo-md);  width: auto; display: block; flex-shrink: 0; }
-  .logo-lg  { height: var(--logo-lg);  width: auto; display: block; flex-shrink: 0; }
-  .logo-xl  { height: var(--logo-xl);  width: auto; display: block; flex-shrink: 0; }
-
-  /* ─── Button hierarchy ────────────────────────────────────────────────── */
-
-  /* Tier 1 — Black, primary action */
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 2.5rem;
-    background-color: var(--fg-1);
-    color: #FFFFFF;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    border-radius: var(--r-lg);
-    transition: background-color 150ms, gap 200ms;
-  }
-  .btn-primary:hover { background-color: #000000; }
-
-  /* Tier 2 — Brand caramel */
-  .btn-brand {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 2.5rem;
-    background-color: var(--brand);
-    color: #FFFFFF;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    border-radius: var(--r-lg);
-    transition: background-color 150ms;
-  }
-  .btn-brand:hover { background-color: var(--brand-dark); }
-
-  /* Tier 3 — Outlined */
-  .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 2.5rem;
-    border: 1px solid var(--border-strong);
-    color: var(--fg-1);
-    background: transparent;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    border-radius: var(--r-lg);
-    transition: background-color 150ms, border-color 150ms;
-  }
-  .btn-secondary:hover { background-color: var(--surface-elevated); border-color: var(--fg-1); }
-
-  /* Tier 4 — Ghost / text */
-  .btn-ghost {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    color: var(--fg-3);
-    font-size: 0.75rem;
-    font-weight: 500;
-    transition: color 150ms;
-  }
-  .btn-ghost:hover { color: var(--fg-1); }
-
-  /* ─── Card elevation ──────────────────────────────────────────────────── */
-
-  .card { border-radius: var(--r-lg); background: var(--surface); }
-  .card-z1 { box-shadow: var(--shadow-z1); }
-  .card-z2 { box-shadow: var(--shadow-z2); }
-  .card-z3 { box-shadow: var(--shadow-z3); }
-
-  /* ─── Input ───────────────────────────────────────────────────────────── */
-
-  .input-base {
-    width: 100%;
-    border-radius: var(--r-md);
-    border: 1px solid var(--border);
-    background: var(--surface-elevated);
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    color: var(--fg-1);
-    outline: none;
-    transition: border-color 150ms, background-color 150ms;
-  }
-  .input-base::placeholder { color: var(--fg-5); }
-  .input-base:focus { border-color: var(--ring); background: var(--surface); }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   UTILITY LAYER
-═══════════════════════════════════════════════════════════════════════════ */
-
-@layer utilities {
-
-  /* ─── Surface overrides (keep bg-* classes working) ── */
-  .bg-background        { background-color: var(--bg) !important; }
-  .bg-surface           { background-color: var(--surface) !important; }
-  .bg-surface-raised    { background-color: var(--surface-raised) !important; }
-  .bg-surface-elevated  { background-color: var(--surface-elevated) !important; }
-  .bg-surface-overlay   { background-color: var(--surface-overlay) !important; }
-
-  /* ─── Text tier shorthands ── */
-  .text-fg-1 { color: var(--fg-1); }
-  .text-fg-2 { color: var(--fg-2); }
-  .text-fg-3 { color: var(--fg-3); }
-  .text-fg-4 { color: var(--fg-4); }
-  .text-fg-5 { color: var(--fg-5); }
-  .text-brand       { color: var(--brand); }
-  .text-brand-light { color: var(--brand-light); }
-
-  /* ─── Skeleton shimmer ── */
-  .skeleton {
-    background: linear-gradient(90deg, #EDE8E1 25%, #E4DDD5 50%, #EDE8E1 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite linear;
-  }
-
-  /* ─── Scrollbar hide ── */
-  .scrollbar-hide,
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar,
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-
-  /* ─── Legacy shadow aliases ── */
-  .shadow-card       { box-shadow: var(--shadow-z2); }
-  .shadow-card-hover { box-shadow: var(--shadow-z3); }
-  .shadow-soft       { box-shadow: var(--shadow-z1); }
-  .shadow-z5         { box-shadow: var(--shadow-z5); }
-
-  /* ─── Masonry ── */
-  .masonry-grid { columns: 2; column-gap: 0.75rem; }
-  @media (min-width: 768px)  { .masonry-grid { columns: 3; column-gap: 1rem; } }
-  @media (min-width: 1280px) { .masonry-grid { columns: 4; column-gap: 1.25rem; } }
-  .masonry-item { break-inside: avoid; margin-bottom: 0.75rem; }
-
-  /* ─── Video fade-in ── */
-  .video-fade-in { animation: videoFadeIn 0.4s ease-out forwards; }
-
-  /* ─── Texture overlay ── */
-  .texture-overlay { position: relative; }
-  .texture-overlay::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to bottom, transparent 50%, rgba(255,255,255,0.85) 100%);
-    pointer-events: none;
   }
 }
 

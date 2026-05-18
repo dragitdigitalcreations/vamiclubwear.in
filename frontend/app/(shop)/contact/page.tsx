@@ -65,7 +65,7 @@ export default function ContactPage() {
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               placeholder="Full name"
               required
-              className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors"
+              className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
             />
           </div>
           <div>
@@ -75,7 +75,7 @@ export default function ContactPage() {
               value={form.email}
               onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
               placeholder="your@email.com"
-              className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors"
+              className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
             />
           </div>
           <div>
@@ -85,7 +85,7 @@ export default function ContactPage() {
               value={form.phone}
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               placeholder="+91 98765 43210"
-              className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors"
+              className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
             />
           </div>
           <div>
@@ -98,7 +98,7 @@ export default function ContactPage() {
               onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
               placeholder="How can we help you?"
               required
-              className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors resize-none"
+              className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors resize-none"
             />
           </div>
           <button
@@ -122,7 +122,7 @@ export default function ContactPage() {
             ))
             return (
               <div key={title} className="flex gap-4">
-                <div className="flex-shrink-0 mt-0.5">
+                <div className="shrink-0 mt-0.5">
                   <div className="flex h-8 w-8 items-center justify-center bg-primary/10">
                     <Icon className="h-4 w-4 text-primary-light" />
                   </div>

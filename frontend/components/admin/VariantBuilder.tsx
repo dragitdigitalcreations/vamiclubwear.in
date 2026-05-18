@@ -190,7 +190,7 @@ function VariantRow({
             <div className="space-y-1.5">
               <Label>Size</Label>
               <select
-                className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-none focus:ring-1 focus:ring-ring"
+                className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-hidden focus:ring-1 focus:ring-ring"
                 {...register(`variants.${index}.size`)}
               >
                 <option value="">Select size…</option>
@@ -262,7 +262,7 @@ function VariantRow({
                           field.onChange(v)
                         }
                       }}
-                      className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-hidden focus:ring-1 focus:ring-ring"
                     >
                       <option value="">Select fabric…</option>
                       {FABRIC_OPTIONS.map((f) => (
@@ -288,7 +288,7 @@ function VariantRow({
             <div className="space-y-1.5">
               <Label>Style / Cut</Label>
               <select
-                className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-none focus:ring-1 focus:ring-ring"
+                className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-hidden focus:ring-1 focus:ring-ring"
                 {...register(`variants.${index}.style`)}
               >
                 <option value="">Select style…</option>

@@ -53,11 +53,11 @@ function ImageUploadCell({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="relative flex h-[90px] w-full items-center justify-center overflow-hidden rounded-[10px] border-2 border-dashed border-border bg-surface-elevated hover:border-primary-light hover:bg-background transition-colors disabled:opacity-50"
+        className="relative flex h-[90px] w-full items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border bg-surface-elevated hover:border-primary-light hover:bg-background transition-colors disabled:opacity-50"
       >
         {value ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={value} alt={label} className="h-full w-full object-cover rounded-[8px]" />
+          <img src={value} alt={label} className="h-full w-full object-cover rounded-md" />
         ) : (
           <div className="flex flex-col items-center gap-1 text-muted">
             <Upload className="h-4 w-4" />
@@ -65,7 +65,7 @@ function ImageUploadCell({
           </div>
         )}
         {uploading && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-[8px] bg-background/70">
+          <div className="absolute inset-0 flex items-center justify-center rounded-md bg-background/70">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         )}
@@ -110,10 +110,10 @@ function BannerRow({
     }
   }
 
-  const inputCls = 'w-full rounded-[8px] border border-border bg-surface-elevated px-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-ring focus:bg-surface transition-colors'
+  const inputCls = 'w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-ring focus:bg-surface transition-colors'
 
   return (
-    <div className={`rounded-[10px] border ${banner.isActive ? 'border-border' : 'border-border/50 opacity-60'} bg-surface overflow-hidden`}>
+    <div className={`rounded-lg border ${banner.isActive ? 'border-border' : 'border-border/50 opacity-60'} bg-surface overflow-hidden`}>
       {/* ── Header row ── */}
       <div className="flex items-center gap-3 px-4 py-3">
         <GripVertical className="h-4 w-4 shrink-0 text-muted cursor-grab" />
@@ -198,7 +198,7 @@ function BannerRow({
                 type="color"
                 value={draft.accentColor ?? '#8B6B47'}
                 onChange={(e) => setDraft((d) => ({ ...d, accentColor: e.target.value }))}
-                className="h-9 w-12 cursor-pointer rounded-[8px] border border-border bg-surface-elevated p-1"
+                className="h-9 w-12 cursor-pointer rounded-md border border-border bg-surface-elevated p-1"
               />
               <input className={`${inputCls} flex-1`} value={draft.accentColor ?? '#8B6B47'} onChange={field('accentColor')} placeholder="#8B6B47" />
             </div>
@@ -236,7 +236,7 @@ function BannerRow({
                 onClick={() => setDraft((d) => ({ ...d, darkTheme: !d.darkTheme }))}
                 className={`relative h-5 w-9 rounded-full transition-colors ${draft.darkTheme ? 'bg-on-background' : 'bg-border'}`}
               >
-                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${draft.darkTheme ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${draft.darkTheme ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </div>
               <span className="text-sm text-on-background">Dark slide theme</span>
             </label>
@@ -368,7 +368,7 @@ export default function BannersPage() {
         </div>
 
         {/* ── Info callout ── */}
-        <div className="rounded-[10px] border border-border bg-surface-elevated px-4 py-3 text-xs text-muted">
+        <div className="rounded-lg border border-border bg-surface-elevated px-4 py-3 text-xs text-muted">
           <strong className="text-on-background">Images:</strong> Upload separate versions for{' '}
           <strong>Desktop</strong> (≥1024px), <strong>Tablet</strong> (768–1023px), and{' '}
           <strong>Mobile</strong> (&lt;768px). If a size is blank, the next larger size is used as fallback.
@@ -379,11 +379,11 @@ export default function BannersPage() {
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="skeleton h-14 w-full rounded-[10px]" />
+              <div key={i} className="skeleton h-14 w-full rounded-lg" />
             ))}
           </div>
         ) : banners.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-border py-16 text-center">
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
             <p className="text-sm font-medium text-on-background">No slides yet</p>
             <p className="mt-1 text-xs text-muted">Click "Add Slide" to create your first hero banner</p>
           </div>

@@ -116,7 +116,7 @@ function WishlistCard({
   return (
     <div className="group relative block">
       {/* ── Image ── */}
-      <div className="relative overflow-hidden rounded-[4px] bg-surface-elevated aspect-[4/7]">
+      <div className="relative overflow-hidden rounded-xs bg-surface-elevated aspect-4/7">
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -134,7 +134,7 @@ function WishlistCard({
         {/* Remove button */}
         <button
           onClick={onRemove}
-          className="absolute right-2.5 top-2.5 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-muted shadow-sm transition-all duration-200 hover:bg-on-background hover:text-white hover:scale-110"
+          className="absolute right-2.5 top-2.5 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-muted shadow-xs transition-all duration-200 hover:bg-on-background hover:text-white hover:scale-110"
           aria-label="Remove from wishlist"
         >
           <X className="h-3 w-3" />

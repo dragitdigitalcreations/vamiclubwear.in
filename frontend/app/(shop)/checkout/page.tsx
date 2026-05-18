@@ -463,7 +463,7 @@ export default function CheckoutPage() {
   }
 
   const inp = (err?: string) =>
-    `w-full border ${err ? 'border-red-500' : 'border-border'} bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors`
+    `w-full border ${err ? 'border-red-500' : 'border-border'} bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors`
 
   // ── Order confirmed ────────────────────────────────────────────────────────
   if (confirmed) {
@@ -551,7 +551,7 @@ export default function CheckoutPage() {
                   {item.color ? ` · ${item.color}` : ''}
                   {' '}×{item.quantity}
                 </span>
-                <span className="text-on-background font-medium flex-shrink-0 ml-4">
+                <span className="text-on-background font-medium shrink-0 ml-4">
                   ₹{(item.price * item.quantity).toLocaleString('en-IN')}
                 </span>
               </div>
@@ -605,7 +605,7 @@ export default function CheckoutPage() {
                   onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
                   placeholder="Enter code (e.g. WELCOME10)"
-                  className="flex-1 rounded-full border border-border bg-transparent px-4 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background tracking-[0.12em] uppercase"
+                  className="flex-1 rounded-full border border-border bg-transparent px-4 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background tracking-[0.12em] uppercase"
                 />
                 <button
                   type="button"
@@ -636,7 +636,7 @@ export default function CheckoutPage() {
                     : 'border-border bg-transparent hover:border-on-background/40'
                 }`}
               >
-                <Truck className={`h-5 w-5 flex-shrink-0 mt-0.5 ${!isPickup ? 'text-primary-light' : 'text-muted'}`} />
+                <Truck className={`h-5 w-5 shrink-0 mt-0.5 ${!isPickup ? 'text-primary-light' : 'text-muted'}`} />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-on-background">Home Delivery</p>
                   <p className="mt-0.5 text-[11px] text-muted">
@@ -654,7 +654,7 @@ export default function CheckoutPage() {
                     : 'border-border bg-transparent hover:border-on-background/40'
                 }`}
               >
-                <Store className={`h-5 w-5 flex-shrink-0 mt-0.5 ${isPickup ? 'text-primary-light' : 'text-muted'}`} />
+                <Store className={`h-5 w-5 shrink-0 mt-0.5 ${isPickup ? 'text-primary-light' : 'text-muted'}`} />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-on-background">Collect from Shop</p>
                   <p className="mt-0.5 text-[11px] text-muted">
@@ -806,7 +806,7 @@ export default function CheckoutPage() {
                 {...f('notes')}
                 rows={2}
                 placeholder="Special instructions (optional)"
-                className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors resize-none"
+                className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors resize-none"
               />
               <label className="flex items-center gap-2.5 cursor-pointer select-none">
                 <div
@@ -830,7 +830,7 @@ export default function CheckoutPage() {
             <div className="space-y-4">
               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-on-background">Pickup Location</h2>
               <div className="border border-border bg-surface-elevated p-4 flex gap-3">
-                <MapPin className="h-5 w-5 text-primary-light flex-shrink-0 mt-0.5" />
+                <MapPin className="h-5 w-5 text-primary-light shrink-0 mt-0.5" />
                 <div className="text-sm">
                   <p className="font-semibold text-on-background">{STORE_PICKUP.name}</p>
                   <p className="text-muted text-xs mt-0.5">{STORE_PICKUP.line1}</p>
@@ -845,19 +845,19 @@ export default function CheckoutPage() {
                 {...f('notes')}
                 rows={2}
                 placeholder="Anything we should know? (optional)"
-                className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors resize-none"
+                className="w-full border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors resize-none"
               />
             </div>
           )}
 
           {/* Payment */}
           <div className="flex items-center gap-3 border border-border bg-surface-elevated p-4">
-            <CreditCard className="h-4 w-4 text-muted flex-shrink-0" />
+            <CreditCard className="h-4 w-4 text-muted shrink-0" />
             <div>
               <p className="text-sm font-medium text-on-background">Pay Online</p>
               <p className="text-xs text-muted">UPI, Cards, Net Banking, Wallets — secured by Razorpay</p>
             </div>
-            <ShieldCheck className="h-4 w-4 text-green-400 ml-auto flex-shrink-0" />
+            <ShieldCheck className="h-4 w-4 text-green-400 ml-auto shrink-0" />
           </div>
 
           {/* Place order */}

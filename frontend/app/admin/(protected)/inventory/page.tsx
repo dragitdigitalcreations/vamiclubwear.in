@@ -86,7 +86,7 @@ function QuickUpdatePanel({ defaultLocationId }: { defaultLocationId: string }) 
           value={query}
           onChange={(e) => handleQuery(e.target.value)}
           placeholder="Search by SKU or product name…"
-          className="w-full border border-border bg-transparent pl-9 pr-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors"
+          className="w-full border border-border bg-transparent pl-9 pr-3 py-2 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
         />
         {searching && <RefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted animate-spin" />}
       </div>
@@ -112,7 +112,7 @@ function QuickUpdatePanel({ defaultLocationId }: { defaultLocationId: string }) 
                   onChange={(e) => setEdits((prev) => ({ ...prev, [row.id]: e.target.value }))}
                   onKeyDown={(e) => e.key === 'Enter' && save(row)}
                   className={cn(
-                    'w-16 border bg-transparent px-2 py-1 text-sm text-center outline-none transition-colors',
+                    'w-16 border bg-transparent px-2 py-1 text-sm text-center outline-hidden transition-colors',
                     isDirty ? 'border-primary text-on-background' : 'border-border text-muted'
                   )}
                 />

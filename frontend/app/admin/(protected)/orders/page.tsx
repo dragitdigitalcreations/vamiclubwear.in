@@ -456,7 +456,7 @@ function OrderDrawer({
         <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
           <AlertTriangle className="h-8 w-8 text-red-400" />
           <p className="text-sm font-semibold text-on-background">Couldn’t load this order</p>
-          <p className="text-xs text-muted break-words max-w-[260px]">{loadError}</p>
+          <p className="text-xs text-muted wrap-break-word max-w-[260px]">{loadError}</p>
           <button
             onClick={fetchOrder}
             className="mt-1 inline-flex items-center gap-1.5 rounded border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-red-400 hover:bg-red-500/20 transition-colors"
@@ -1044,7 +1044,7 @@ function OrderDrawer({
                     value={invoiceNum}
                     onChange={(e) => setInvoiceNum(e.target.value)}
                     placeholder="e.g. INV-2026-0042"
-                    className="flex-1 border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors"
+                    className="flex-1 border border-border bg-transparent px-3 py-2.5 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
                   />
                   <button
                     onClick={() => handleSaveInvoice(false)}
@@ -1300,7 +1300,7 @@ export default function OrdersPage() {
                 <AlertTriangle className="h-5 w-5 shrink-0 text-red-400 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-red-400">Couldn’t load orders</p>
-                  <p className="mt-0.5 text-xs text-muted break-words">{loadError}</p>
+                  <p className="mt-0.5 text-xs text-muted wrap-break-word">{loadError}</p>
                 </div>
                 <button
                   onClick={load}

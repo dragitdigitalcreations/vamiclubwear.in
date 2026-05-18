@@ -237,7 +237,7 @@ function TrackContent() {
             onChange={(e) => setOrderNum(e.target.value)}
             placeholder="e.g. VCW-260407-0001"
             autoFocus
-            className="flex-1 border border-border bg-surface px-4 py-3 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors"
+            className="flex-1 border border-border bg-surface px-4 py-3 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
           />
           <button
             type="submit"

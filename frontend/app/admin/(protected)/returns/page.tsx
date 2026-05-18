@@ -152,7 +152,7 @@ function ReturnDetail({
             value={adminNote}
             onChange={e => setAdminNote(e.target.value)}
             placeholder="Internal note (optional)"
-            className="w-full border border-border bg-transparent px-3 py-2 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors resize-none"
+            className="w-full border border-border bg-transparent px-3 py-2 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors resize-none"
           />
         </div>
 

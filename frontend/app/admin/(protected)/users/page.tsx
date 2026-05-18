@@ -116,7 +116,7 @@ function CreateUserModal({
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as Role)}
-              className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-none focus:ring-1 focus:ring-ring"
+              className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-hidden focus:ring-1 focus:ring-ring"
             >
               <option value="MANAGER">{ROLE_LABELS.MANAGER}</option>
               <option value="ADMIN">{ROLE_LABELS.ADMIN}</option>

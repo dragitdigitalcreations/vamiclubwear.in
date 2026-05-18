@@ -66,7 +66,7 @@ export default function SettingsPage() {
                   type={showPwd ? 'text' : 'password'}
                   value={value}
                   onChange={(e) => set(e.target.value)}
-                  className="w-full border border-border bg-transparent px-3 py-2.5 pr-10 text-sm text-on-background placeholder:text-muted outline-none focus:border-on-background transition-colors"
+                  className="w-full border border-border bg-transparent px-3 py-2.5 pr-10 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
                   disabled={loading}
                   required
                 />

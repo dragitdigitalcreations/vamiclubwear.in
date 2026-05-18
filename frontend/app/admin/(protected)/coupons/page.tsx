@@ -232,7 +232,7 @@ export default function CouponsPage() {
 }
 
 const inp =
-  'w-full rounded-[10px] border border-border bg-background px-3 py-2 text-sm text-on-background outline-none focus:border-primary-light'
+  'w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-on-background outline-hidden focus:border-primary-light'
 
 function Field({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) {
   return (

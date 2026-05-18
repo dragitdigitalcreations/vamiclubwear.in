@@ -5,16 +5,16 @@ import { X, CheckCircle, AlertCircle, Info } from 'lucide-react'
 import { useToastStore } from '@/stores/toastStore'
 
 const ICONS = {
-  success: <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />,
-  error:   <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0" />,
-  info:    <Info        className="h-4 w-4 text-blue-400 flex-shrink-0" />,
+  success: <CheckCircle className="h-4 w-4 text-green-400 shrink-0" />,
+  error:   <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />,
+  info:    <Info        className="h-4 w-4 text-blue-400 shrink-0" />,
 }
 
 export function Toaster() {
   const { toasts, remove } = useToastStore()
 
   return (
-    <div className="fixed bottom-6 right-4 z-[100] flex flex-col gap-2 md:right-6">
+    <div className="fixed bottom-6 right-4 z-100 flex flex-col gap-2 md:right-6">
       <AnimatePresence initial={false}>
         {toasts.map((t) => (
           <motion.div
@@ -30,7 +30,7 @@ export function Toaster() {
             <p className="flex-1 text-sm text-on-background leading-snug">{t.message}</p>
             <button
               onClick={() => remove(t.id)}
-              className="text-muted hover:text-on-background transition-colors flex-shrink-0"
+              className="text-muted hover:text-on-background transition-colors shrink-0"
               aria-label="Dismiss"
             >
               <X className="h-3.5 w-3.5" />
