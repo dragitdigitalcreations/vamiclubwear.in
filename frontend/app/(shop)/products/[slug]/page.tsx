@@ -7,9 +7,10 @@ import { notFound } from 'next/navigation'
 import { serverProductsApi } from '@/lib/server-api'
 import { ProductDetailClient } from './ProductDetailClient'
 
-// ISR: revalidate every 30s so admin price edits + POS-driven stock changes
-// surface across all pages in roughly half a minute.
-export const revalidate = 30
+// ISR: revalidate every 30 min during pre-launch to keep Neon CU-hours under
+// the free-tier ceiling. Checkout still re-validates inventory server-side,
+// so stale ISR cannot cause overselling. Tighten to 30-60s post-launch.
+export const revalidate = 1800
 
 interface PageProps {
   params: Promise<{ slug: string }>

@@ -10,7 +10,9 @@ import { getPrimaryImage } from '@/types/product'
 import ProductsPageClient from './ProductsPageClient'
 import { CATEGORIES } from '@/lib/categories'
 
-export const revalidate = 60
+// Pre-launch: 10 min ISR to keep Neon CU-hours under the free-tier ceiling.
+// Tighten to 60s post-launch when on a paid Neon plan.
+export const revalidate = 600
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.in'
 
