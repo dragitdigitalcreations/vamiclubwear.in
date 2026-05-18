@@ -52,12 +52,19 @@ router.post('/backfill', requireAuth, async (_req: Request, res: Response, next:
     // All variants without an inventory row at this location
     const orphans = await prisma.productVariant.findMany({
       where: { inventory: { none: { locationId: location.id } } },
-      select: { id: true, sku: true },
+      select: { id: true },
     })
 
-    for (const variant of orphans) {
-      await prisma.inventory.create({
-        data: { variantId: variant.id, locationId: location.id, quantity: 0, reserved: 0, version: 0 },
+    if (orphans.length > 0) {
+      await prisma.inventory.createMany({
+        data: orphans.map((v) => ({
+          variantId:  v.id,
+          locationId: location.id,
+          quantity:   0,
+          reserved:   0,
+          version:    0,
+        })),
+        skipDuplicates: true,
       })
     }
 

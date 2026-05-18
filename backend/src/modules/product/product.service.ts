@@ -112,14 +112,20 @@ export const productService = {
   // ── Categories ─────────────────────────────────────────────────────────────
 
   async createCategory(data: CreateCategoryInput) {
-    return prisma.category.create({ data })
+    const row = await prisma.category.create({ data })
+    cache.del('categories:list').catch(() => {})
+    return row
   },
 
   async listCategories() {
-    return prisma.category.findMany({
-      orderBy: { name: 'asc' },
-      include: { _count: { select: { products: true } } },
-    })
+    return cache.wrap(
+      'categories:list',
+      () => prisma.category.findMany({
+        orderBy: { name: 'asc' },
+        include: { _count: { select: { products: true } } },
+      }),
+      300,
+    )
   },
 
   // ── Products ───────────────────────────────────────────────────────────────
@@ -198,18 +204,16 @@ export const productService = {
       // Build a SKU → stock map from input so order doesn't matter
       const stockBySku = new Map(resolvedVariants.map((v) => [v.sku, v.stock ?? 0]))
 
-      // Auto-create inventory entries for each variant
-      for (const variant of product.variants) {
-        await tx.inventory.create({
-          data: {
-            variantId:  variant.id,
-            locationId: location.id,
-            quantity:   stockBySku.get(variant.sku) ?? 0,
-            reserved:   0,
-            version:    0,
-          },
-        })
-      }
+      // Auto-create inventory entries for each variant — single round-trip
+      await tx.inventory.createMany({
+        data: product.variants.map((variant) => ({
+          variantId:  variant.id,
+          locationId: location.id,
+          quantity:   stockBySku.get(variant.sku) ?? 0,
+          reserved:   0,
+          version:    0,
+        })),
+      })
 
       // Re-fetch with inventory included
       const created = await tx.product.findUniqueOrThrow({
@@ -219,6 +223,7 @@ export const productService = {
 
       cache.delPattern('products:list:*').catch(() => {})
       cache.delPattern('products:facets:*').catch(() => {})
+      cache.del('products:showcase:12').catch(() => {})
 
       return created
     })
@@ -594,6 +599,7 @@ export const productService = {
       cache.del(`product:slug:${updated.slug}`).catch(() => {})
       cache.delPattern('products:list:*').catch(() => {})
       cache.delPattern('products:facets:*').catch(() => {})
+      cache.del('products:showcase:12').catch(() => {})
 
       return updated
     })
@@ -622,17 +628,27 @@ export const productService = {
       categoryId = cat.id
     }
 
-    const variants = await prisma.productVariant.findMany({
-      where: {
+    // groupBy returns only distinct combinations — for 150 products × 4 variants
+    // that's ~20 size rows + ~30 color rows instead of 600 variant rows.
+    const variantWhere = {
+      isActive: true,
+      product: {
         isActive: true,
-        product: {
-          isActive: true,
-          deletedAt: null,
-          ...(categoryId && { categoryId }),
-        },
+        deletedAt: null,
+        ...(categoryId && { categoryId }),
       },
-      select: { size: true, color: true, colorHex: true },
-    })
+    } as const
+
+    const [sizeRows, colorRows] = await Promise.all([
+      prisma.productVariant.groupBy({
+        by: ['size'],
+        where: { ...variantWhere, size: { not: null } },
+      }),
+      prisma.productVariant.groupBy({
+        by: ['color', 'colorHex'],
+        where: { ...variantWhere, color: { not: null } },
+      }),
+    ])
 
     // Canonical size order so XS → … → 10XL renders predictably regardless of
     // insertion order in the DB. Unknown sizes drop to the end alphabetically.
@@ -649,9 +665,11 @@ export const productService = {
 
     const sizeSet = new Set<string>()
     const colorMap = new Map<string, string | null>()
-    for (const v of variants) {
+    for (const v of sizeRows) {
       const sz = (v.size ?? '').trim()
       if (sz) sizeSet.add(sz)
+    }
+    for (const v of colorRows) {
       const col = (v.color ?? '').trim()
       if (col && !colorMap.has(col)) colorMap.set(col, v.colorHex ?? null)
     }
@@ -674,6 +692,14 @@ export const productService = {
   // Used by the homepage video-showcase strip.
 
   async getShowcaseVideos(limit = 12) {
+    return cache.wrap(
+      `products:showcase:${limit}`,
+      () => this._fetchShowcaseVideos(limit),
+      300,
+    )
+  },
+
+  async _fetchShowcaseVideos(limit: number) {
     const products = await prisma.product.findMany({
       where: {
         isActive: true,
@@ -849,6 +875,7 @@ export const productService = {
     cache.del(`product:slug:${toDelete.slug}`).catch(() => {})
     cache.delPattern('products:list:*').catch(() => {})
     cache.delPattern('products:facets:*').catch(() => {})
+    cache.del('products:showcase:12').catch(() => {})
     return { ok: true, soft: orderedCount > 0 }
   },
 

@@ -2,6 +2,10 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { prisma } from '../../lib/prisma'
 import { requireAuth } from '../../middleware/auth'
+import { cache } from '../../lib/cache'
+
+const REVIEWS_KEY = 'reviews:public'
+const bustReviews = () => cache.del(REVIEWS_KEY).catch(() => {})
 
 const router = Router()
 
@@ -19,12 +23,17 @@ const submitSchema = z.object({
 // ── GET /api/reviews — public, approved reviews for storefront carousel ──────
 router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const reviews = await prisma.customerReview.findMany({
-      where: { isApproved: true },
-      orderBy: { createdAt: 'desc' },
-      take: 30,
-      select: { id: true, customerName: true, body: true, createdAt: true },
-    })
+    const reviews = await cache.wrap(
+      REVIEWS_KEY,
+      () => prisma.customerReview.findMany({
+        where: { isApproved: true },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+        select: { id: true, customerName: true, body: true, createdAt: true },
+      }),
+      300,
+    )
+    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600')
     res.json({ data: reviews })
   } catch (err) { next(err) }
 })
@@ -54,6 +63,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       },
       select: { id: true, customerName: true, body: true, createdAt: true },
     })
+    bustReviews()
     res.status(201).json(review)
   } catch (err) { next(err) }
 })
@@ -76,6 +86,7 @@ router.patch('/:id', requireAuth, async (req: Request, res: Response, next: Next
       where: { id: req.params.id },
       data: { isApproved },
     })
+    bustReviews()
     res.json(updated)
   } catch (err) { next(err) }
 })
@@ -84,6 +95,7 @@ router.patch('/:id', requireAuth, async (req: Request, res: Response, next: Next
 router.delete('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await prisma.customerReview.delete({ where: { id: req.params.id } })
+    bustReviews()
     res.status(204).end()
   } catch (err) { next(err) }
 })

@@ -191,6 +191,8 @@ model Inventory {
   @@unique([variantId, locationId])
   @@index([locationId])
   @@index([syncStatus])
+  // Low-stock dashboard count: WHERE quantity <= 5
+  @@index([quantity])
 }
 
 // ─────────────────────────────────────────────
@@ -296,6 +298,10 @@ model Order {
   @@index([shipmentEmailSentAt])
   @@index([deliveryEmailSentAt])
   @@index([pickupReadyEmailSentAt])
+  // Stats /summary + /sales: WHERE paymentStatus = 'PAID' AND createdAt >= ...
+  @@index([paymentStatus, createdAt(sort: Desc)])
+  // Customer order history + public lookup by email
+  @@index([customerEmail])
 }
 
 model OrderItem {

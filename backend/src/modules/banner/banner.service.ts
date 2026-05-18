@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma'
+import { cache } from '../../lib/cache'
 
 export interface UpsertBannerInput {
   sortOrder?:   number
@@ -18,13 +19,23 @@ export interface UpsertBannerInput {
   imageMobile?:  string
 }
 
+const ACTIVE_KEY = 'banners:active'
+
+function bust() {
+  cache.del(ACTIVE_KEY).catch(() => {})
+}
+
 export const bannerService = {
   // Public: active banners ordered by sortOrder (used by storefront carousel)
   listActive() {
-    return prisma.heroBanner.findMany({
-      where:   { isActive: true },
-      orderBy: { sortOrder: 'asc' },
-    })
+    return cache.wrap(
+      ACTIVE_KEY,
+      () => prisma.heroBanner.findMany({
+        where:   { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+      }),
+      300,
+    )
   },
 
   // Admin: all banners
@@ -38,15 +49,21 @@ export const bannerService = {
     return prisma.heroBanner.findUniqueOrThrow({ where: { id } })
   },
 
-  create(data: UpsertBannerInput) {
-    return prisma.heroBanner.create({ data })
+  async create(data: UpsertBannerInput) {
+    const row = await prisma.heroBanner.create({ data })
+    bust()
+    return row
   },
 
-  update(id: string, data: UpsertBannerInput) {
-    return prisma.heroBanner.update({ where: { id }, data })
+  async update(id: string, data: UpsertBannerInput) {
+    const row = await prisma.heroBanner.update({ where: { id }, data })
+    bust()
+    return row
   },
 
-  delete(id: string) {
-    return prisma.heroBanner.delete({ where: { id } })
+  async delete(id: string) {
+    const row = await prisma.heroBanner.delete({ where: { id } })
+    bust()
+    return row
   },
 }

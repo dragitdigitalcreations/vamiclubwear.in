@@ -124,17 +124,17 @@ export const orderService = {
       })
 
       // ── 5. Deduct inventory with optimistic locking ────────────────────────
+      // First attempt uses the version/quantity we already prefetched in step 1;
+      // only retries pay for a fresh read. Saves one round-trip per item on the
+      // happy path (which is ≥99% of orders).
       for (const item of input.items) {
         const variant = variants.find((v) => v.id === item.variantId)!
         const inv = variant.inventory[0]
         if (!inv) continue  // no inventory row = no deduction (edge case)
 
+        let current: { id: string; version: number } = { id: inv.id, version: inv.version }
         let deducted = false
         for (let attempt = 1; attempt <= MAX_LOCK_RETRIES; attempt++) {
-          // Re-read current row inside the transaction for fresh version
-          const current = await tx.inventory.findUnique({ where: { id: inv.id } })
-          if (!current) break
-
           const updated = await tx.$executeRaw`
             UPDATE "Inventory"
             SET quantity    = quantity - ${item.quantity},
@@ -152,6 +152,14 @@ export const orderService = {
               `Stock conflict for SKU ${variant.sku}. Please retry the order.`
             )
           }
+
+          // Version mismatch — refetch and retry
+          const fresh = await tx.inventory.findUnique({
+            where:  { id: inv.id },
+            select: { id: true, version: true },
+          })
+          if (!fresh) break
+          current = fresh
         }
 
         if (!deducted) {
