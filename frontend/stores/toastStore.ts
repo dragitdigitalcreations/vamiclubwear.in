@@ -16,7 +16,7 @@ interface ToastState {
   remove: (id: string) => void
 }
 
-export const useToastStore = create<ToastState>((set) => ({
+export const useToastStore = create<ToastState>()((set) => ({
   toasts: [],
 
   push(type, message) {
