@@ -24,7 +24,7 @@ import {
 } from './email'
 
 const LOOKBACK_HOURS    = 24
-const SWEEP_INTERVAL_MS = 15 * 60 * 1000  // 15 minutes
+const DEFAULT_INTERVAL_MIN = 15
 const MAX_PER_TYPE      = 25              // cap per email type so a backlog can't burn the rate-limit
 const SEND_PACING_MS    = 250             // light pacing between sends (Resend per-second cap)
 
@@ -370,6 +370,17 @@ export function startOrderEmailRetrySweep(): void {
   if (_started) return
   _started = true
 
+  // Interval is env-tunable so we can throttle/disable during pre-launch when
+  // Neon CU-hour budget is the binding constraint. EMAIL_RETRY_MINUTES=0
+  // disables the sweep entirely; the primary send at each event still fires.
+  const minutes = Number(process.env.EMAIL_RETRY_MINUTES ?? DEFAULT_INTERVAL_MIN)
+  if (!Number.isFinite(minutes) || minutes <= 0) {
+    console.log('[email-retry] disabled (EMAIL_RETRY_MINUTES=0)')
+    return
+  }
+
+  const intervalMs = minutes * 60 * 1000
+
   // First pass shortly after boot — picks up any orders that came in while
   // the previous instance was down.
   setTimeout(() => {
@@ -382,5 +393,6 @@ export function startOrderEmailRetrySweep(): void {
     retryFailedOrderEmails().catch((err) =>
       console.error('[email-retry] Periodic sweep failed:', err)
     )
-  }, SWEEP_INTERVAL_MS)
+  }, intervalMs)
+  console.log(`[email-retry] started — sweeping every ${minutes} min`)
 }
