@@ -33,7 +33,7 @@ jobs:
             --region asia-southeast1 \
             --platform managed \
             --allow-unauthenticated \
-            --min-instances 1 \
+            --min-instances 0 \
             --max-instances 10 \
             --memory 512Mi \
             --cpu 1 \
