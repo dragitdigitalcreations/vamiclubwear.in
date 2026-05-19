@@ -113,8 +113,8 @@ function HeroSection() {
         }}
       />
 
-      {/* Desktop wash kept centered; mobile wash removed so the models read cleanly behind the headline. */}
-      <div className="pointer-events-none absolute inset-0 hidden sm:block bg-linear-to-r from-[#FAF8F5]/92 via-[#FAF8F5]/55 to-transparent" />
+      {/* Desktop wash — tight and soft so it only sits behind the headline, not over the models. */}
+      <div className="pointer-events-none absolute inset-0 hidden sm:block bg-linear-to-r from-[#FAF8F5]/70 from-0% via-[#FAF8F5]/15 via-25% to-transparent to-45%" />
 
       <div className="relative z-10 flex h-full items-start sm:items-center px-6 pt-10 pb-10 sm:px-16 sm:py-0 lg:px-24">
         <div className="max-w-[560px] w-full flex flex-col">
