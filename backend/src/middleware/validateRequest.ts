@@ -23,8 +23,12 @@ export function validate(schema: ZodSchema, target: Target = 'body') {
       return
     }
 
-    // Replace the raw input with the parsed + coerced value
-    req[target] = result.data
+    // Express 5 made req.query a getter-only property — use defineProperty to override it.
+    Object.defineProperty(req, target, {
+      value: result.data,
+      writable: true,
+      configurable: true,
+    })
     next()
   }
 }
