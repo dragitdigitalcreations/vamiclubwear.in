@@ -42,9 +42,15 @@ export default function PosScannerHistoryPage() {
     setLoading(true)
     try {
       const res = await inventoryApi.listPosSales(page, limit, 30)
-      setRows(res.data)
-      setTotal(res.total)
+      // Defensive: backend might be running stale code (the /pos-sales route
+      // not yet deployed) which falls through to /:variantId and returns a
+      // plain array. Guard against the unexpected shape so the page renders
+      // an empty state instead of crashing.
+      setRows(Array.isArray(res?.data) ? res.data : [])
+      setTotal(typeof res?.total === 'number' ? res.total : 0)
     } catch (err: any) {
+      setRows([])
+      setTotal(0)
       toast.error(err.message ?? 'Failed to load POS sales')
     } finally {
       setLoading(false)
