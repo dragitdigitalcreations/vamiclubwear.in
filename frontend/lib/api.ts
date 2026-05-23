@@ -278,8 +278,15 @@ export const inventoryApi = {
   },
 
   // ── POS scanner returns: list recent POS deductions and restore one ──
-  listPosSales: (page = 1, limit = 50, days = 30) => {
-    const qs = new URLSearchParams({ page: String(page), limit: String(limit), days: String(days) }).toString()
+  listPosSales: (params: { page?: number; limit?: number; days?: number; barcode?: string; unreversed?: boolean } = {}) => {
+    const { page = 1, limit = 50, days = 30, barcode, unreversed } = params
+    const qs = new URLSearchParams({
+      page:  String(page),
+      limit: String(limit),
+      days:  String(days),
+      ...(barcode    ? { barcode } : {}),
+      ...(unreversed ? { unreversed: 'true' } : {}),
+    }).toString()
     return request<{
       data: Array<{
         id:          string

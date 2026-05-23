@@ -1,9 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Loader2, RotateCcw, Undo2, CheckCircle2, Archive,
+  Barcode, X,
 } from 'lucide-react'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { RBACGuard }   from '@/components/admin/RBACGuard'
@@ -29,6 +30,21 @@ function variantLabel(s: PosSale) {
   return [s.size, s.color].filter(Boolean).join(' / ') || s.sku
 }
 
+// Small audio cue for scanner-style feedback. Matches the POS scanner page.
+function playBeep(type: 'success' | 'error' | 'scan') {
+  try {
+    const ctx  = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const osc  = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain); gain.connect(ctx.destination)
+    osc.type = 'sine'
+    osc.frequency.value = type === 'success' ? 880 : type === 'scan' ? 660 : 300
+    gain.gain.setValueAtTime(0.3, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15)
+  } catch { /* audio not available */ }
+}
+
 export default function PosScannerHistoryPage() {
   const [rows,       setRows]       = useState<PosSale[]>([])
   const [total,      setTotal]      = useState(0)
@@ -38,26 +54,50 @@ export default function PosScannerHistoryPage() {
   const [restoring,  setRestoring]  = useState<string | null>(null)
   const [filter,     setFilter]     = useState<Filter>('all')
 
-  const load = useCallback(async () => {
+  // Barcode scanner state
+  const [scanInput,    setScanInput]    = useState('')
+  const [scannedFor,   setScannedFor]   = useState<string | null>(null) // barcode currently filtering the list
+  const [scanError,    setScanError]    = useState<string | null>(null)
+  const inputRef    = useRef<HTMLInputElement>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastScanRef = useRef<{ barcode: string; time: number }>({ barcode: '', time: 0 })
+  const autoPromptedRef = useRef<string | null>(null) // history.id we've already auto-prompted to avoid loops
+
+  const load = useCallback(async (barcode: string | null) => {
     setLoading(true)
     try {
-      const res = await inventoryApi.listPosSales(page, limit, 30)
-      // Defensive: backend might be running stale code (the /pos-sales route
-      // not yet deployed) which falls through to /:variantId and returns a
-      // plain array. Guard against the unexpected shape so the page renders
-      // an empty state instead of crashing.
-      setRows(Array.isArray(res?.data) ? res.data : [])
+      const res = await inventoryApi.listPosSales({
+        page,
+        limit,
+        days: 30,
+        ...(barcode    ? { barcode, unreversed: true } : {}),
+      })
+      const data = Array.isArray(res?.data) ? res.data : []
+      setRows(data)
       setTotal(typeof res?.total === 'number' ? res.total : 0)
+      return data
     } catch (err: any) {
       setRows([])
       setTotal(0)
-      toast.error(err.message ?? 'Failed to load POS sales')
+      if (barcode) {
+        setScanError(err.message ?? 'Barcode not found')
+        playBeep('error')
+      } else {
+        toast.error(err.message ?? 'Failed to load POS sales')
+      }
+      return [] as PosSale[]
     } finally {
       setLoading(false)
     }
   }, [page, limit])
 
-  useEffect(() => { load() }, [load])
+  // Initial / page-change load — reloads whatever filter is active
+  useEffect(() => { load(scannedFor) }, [load, scannedFor])
+
+  // Keep the scanner input focused when no barcode is locked in
+  useEffect(() => {
+    if (!scannedFor) setTimeout(() => inputRef.current?.focus(), 50)
+  }, [scannedFor])
 
   async function handleRestore(row: PosSale) {
     const label = `${row.productName} (${variantLabel(row)})`
@@ -74,23 +114,81 @@ export default function PosScannerHistoryPage() {
           ? { ...r, reversedAt: new Date().toISOString(), reversedBy: 'you', archived: result.unarchived ? false : r.archived }
           : r
       ))
+      playBeep('success')
       toast.success(
         result.unarchived
           ? `Restored ${result.restored} unit · product un-archived`
           : `Restored ${result.restored} unit · ${result.newQuantity} in stock`
       )
     } catch (err: any) {
+      playBeep('error')
       toast.error(err.message ?? 'Restore failed')
     } finally {
       setRestoring(null)
     }
   }
 
-  const visible = rows.filter(r => {
-    if (filter === 'restorable') return !r.reversedAt
-    if (filter === 'restored')   return !!r.reversedAt
-    return true
-  })
+  const handleBarcode = useCallback(async (barcode: string) => {
+    const trimmed = barcode.trim()
+    if (!trimmed) return
+
+    const now = Date.now()
+    if (trimmed === lastScanRef.current.barcode && now - lastScanRef.current.time < 800) return
+    lastScanRef.current = { barcode: trimmed, time: now }
+
+    setScanInput('')
+    setScanError(null)
+    setScannedFor(trimmed)   // triggers useEffect → load(trimmed)
+    setPage(1)
+    playBeep('scan')
+  }, [])
+
+  function clearScan() {
+    setScannedFor(null)
+    setScanError(null)
+    setScanInput('')
+    autoPromptedRef.current = null
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      handleBarcode(scanInput)
+    }
+    if (e.key === 'Escape') clearScan()
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    setScanInput(val)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (val.length >= 4) {
+      debounceRef.current = setTimeout(() => handleBarcode(val), 400)
+    }
+  }
+
+  // After a barcode load returns exactly one un-reversed row, auto-prompt
+  // restore. Without this the cashier would have to scan AND click — the
+  // whole point of scan-to-return is one motion.
+  useEffect(() => {
+    if (!scannedFor || loading) return
+    const restorable = rows.filter(r => !r.reversedAt)
+    if (restorable.length === 1 && autoPromptedRef.current !== restorable[0].id) {
+      autoPromptedRef.current = restorable[0].id
+      handleRestore(restorable[0])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, loading, scannedFor])
+
+  const visible = scannedFor
+    ? rows  // when filtering by barcode we already requested unreversed=true; show all returned rows
+    : rows.filter(r => {
+        if (filter === 'restorable') return !r.reversedAt
+        if (filter === 'restored')   return !!r.reversedAt
+        return true
+      })
 
   const pages = Math.max(1, Math.ceil(total / limit))
 
@@ -98,6 +196,48 @@ export default function PosScannerHistoryPage() {
     <RBACGuard section="pos-scanner">
       <div className="flex h-full flex-col overflow-hidden">
         <AdminHeader title="POS Scanner History" subtitle="Restore stock for returned items scanned at the counter (last 30 days)" />
+
+        {/* Scanner input */}
+        <div className="border-b border-border px-6 py-3">
+          <div className={cn(
+            'relative flex items-center gap-3 rounded-lg border-2 px-4 py-3 transition-all',
+            scannedFor
+              ? 'border-primary/40 bg-primary/5'
+              : 'border-border bg-surface focus-within:border-primary/60'
+          )}>
+            <Barcode className={cn('h-5 w-5 shrink-0', scannedFor ? 'text-primary-light' : 'text-muted')} />
+            {scannedFor ? (
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-widest text-muted">Filtering by barcode</p>
+                <p className="font-mono text-sm text-on-background truncate">{scannedFor}</p>
+              </div>
+            ) : (
+              <input
+                ref={inputRef}
+                value={scanInput}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                onBlur={() => { if (!scannedFor) setTimeout(() => inputRef.current?.focus(), 100) }}
+                placeholder="Scan returned item's barcode to find & restore — or browse list below"
+                className="flex-1 bg-transparent text-sm text-on-background placeholder:text-muted outline-hidden"
+                autoComplete="off"
+                spellCheck={false}
+              />
+            )}
+            {scannedFor && (
+              <button
+                onClick={clearScan}
+                className="shrink-0 flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs text-muted hover:text-on-background hover:border-on-background transition-colors"
+              >
+                <X className="h-3 w-3" /> Clear
+              </button>
+            )}
+          </div>
+          {scanError && <p className="mt-2 text-xs text-red-400">{scanError}</p>}
+          {!scannedFor && !scanError && (
+            <p className="mt-1.5 text-[11px] text-muted">Point the scanner at the product the customer is returning — if exactly one restorable scan matches, a confirm dialog opens automatically.</p>
+          )}
+        </div>
 
         {/* Filter bar */}
         <div className="flex items-center gap-2 border-b border-border px-6 py-3">
@@ -113,17 +253,19 @@ export default function PosScannerHistoryPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
+              disabled={!!scannedFor}
               className={cn(
                 'px-3 py-1.5 text-xs font-medium border transition-colors capitalize',
-                filter === f
+                filter === f && !scannedFor
                   ? 'border-primary bg-primary/10 text-primary-light'
-                  : 'border-border text-muted hover:border-on-background hover:text-on-background'
+                  : 'border-border text-muted hover:border-on-background hover:text-on-background',
+                scannedFor && 'opacity-40 cursor-not-allowed'
               )}
             >
               {f}
             </button>
           ))}
-          <button onClick={load} className="ml-auto p-1.5 text-muted hover:text-on-background transition-colors" title="Refresh">
+          <button onClick={() => load(scannedFor)} className="ml-auto p-1.5 text-muted hover:text-on-background transition-colors" title="Refresh">
             <RotateCcw className="h-4 w-4" />
           </button>
         </div>
@@ -138,9 +280,10 @@ export default function PosScannerHistoryPage() {
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <Undo2 className="h-10 w-10 text-muted/40" />
               <p className="text-sm text-muted">
-                {filter === 'restored' ? 'No restored sales yet'
-                  : filter === 'restorable' ? 'Nothing to restore — every recent POS sale has either been restored or is older than 30 days'
-                  : 'No POS scanner deductions in the last 30 days'}
+                {scannedFor                ? 'No restorable scans match this barcode in the last 30 days'
+                 : filter === 'restored'   ? 'No restored sales yet'
+                 : filter === 'restorable' ? 'Nothing to restore — every recent POS sale has either been restored or is older than 30 days'
+                 :                           'No POS scanner deductions in the last 30 days'}
               </p>
             </div>
           ) : (
@@ -216,8 +359,8 @@ export default function PosScannerHistoryPage() {
           )}
         </div>
 
-        {/* Pagination */}
-        {pages > 1 && (
+        {/* Pagination — hidden during a barcode-filtered view */}
+        {!scannedFor && pages > 1 && (
           <div className="flex items-center justify-center gap-3 border-t border-border py-3">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}

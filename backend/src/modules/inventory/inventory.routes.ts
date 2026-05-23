@@ -296,15 +296,58 @@ router.patch('/reduce', requireAuth, async (req: Request, res: Response, next: N
 // RESTOCK reversal so the UI can disable the restore button.
 router.get('/pos-sales', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const days  = Math.min(365, Math.max(1, Number(req.query.days  ?? 30)))
-    const page  = Math.max(1, Number(req.query.page  ?? 1))
-    const limit = Math.min(100, Number(req.query.limit ?? 50))
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    const days       = Math.min(365, Math.max(1, Number(req.query.days  ?? 30)))
+    const page       = Math.max(1, Number(req.query.page  ?? 1))
+    const limit      = Math.min(100, Number(req.query.limit ?? 50))
+    const barcode    = req.query.barcode ? String(req.query.barcode).trim() : null
+    const unreversed = req.query.unreversed === 'true'
+    const since      = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+
+    // Optional barcode filter: resolve to a set of variant IDs. Matches both
+    // active barcodes and archived ones (suffixed with :soldout:<ts> by the
+    // POS reduce endpoint when stock hits zero), so a customer can return an
+    // item even after the product has gone sold-out.
+    let variantIdFilter: string[] | null = null
+    if (barcode) {
+      const soldoutPrefix = `${barcode}:soldout:`
+
+      // 1. Product-level barcode
+      let product = await prisma.product.findFirst({
+        where:  { OR: [{ barcode }, { barcode: { startsWith: soldoutPrefix } }] },
+        select: { id: true, variants: { select: { id: true } } },
+      })
+
+      // 2. Per-colour barcode — narrows to that colour's variants
+      if (!product) {
+        const colorRow = await prisma.productColorBarcode.findFirst({
+          where:  { OR: [{ barcode }, { barcode: { startsWith: soldoutPrefix } }] },
+          select: { productId: true, color: true },
+        })
+        if (colorRow) {
+          product = await prisma.product.findFirst({
+            where:  { id: colorRow.productId },
+            select: {
+              id: true,
+              variants: { where: { color: colorRow.color }, select: { id: true } },
+            },
+          })
+        }
+      }
+
+      if (!product) return res.status(404).json({ error: `No product found for barcode "${barcode}"` })
+      variantIdFilter = product.variants.map((v) => v.id)
+      if (variantIdFilter.length === 0) {
+        // Product exists but has no variants — return an empty page instead of 404
+        return res.json({ data: [], total: 0, page, limit, days })
+      }
+    }
 
     const where = {
       action:    'ADJUSTMENT' as const,
       note:      'POS sale deduction',
       createdAt: { gte: since },
+      ...(variantIdFilter ? { variantId: { in: variantIdFilter } } : {}),
+      ...(unreversed      ? { reversedBy: { none: {} } }            : {}),
     }
 
     const [rows, total] = await Promise.all([
