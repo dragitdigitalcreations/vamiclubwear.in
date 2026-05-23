@@ -484,9 +484,18 @@ model InventoryHistory {
   performedBy String?          // admin email or "system"
   createdAt   DateTime         @default(now())
 
+  // Self-reference: when a POS sale is reversed (customer returns the item at
+  // the counter), the new RESTOCK row points back to the original ADJUSTMENT
+  // row via reversalOfId. Used to (a) hide reversed sales from the restore
+  // list and (b) prevent double-restoration of the same scan.
+  reversalOfId String?
+  reversalOf   InventoryHistory?  @relation("PosReversal", fields: [reversalOfId], references: [id], onDelete: SetNull)
+  reversedBy   InventoryHistory[] @relation("PosReversal")
+
   @@index([variantId])
   @@index([action])
   @@index([createdAt])
+  @@index([reversalOfId])
 }
 
 // ─────────────────────────────────────────────

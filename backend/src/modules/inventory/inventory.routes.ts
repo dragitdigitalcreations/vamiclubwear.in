@@ -287,6 +287,208 @@ router.patch('/reduce', requireAuth, async (req: Request, res: Response, next: N
   } catch (err) { next(err) }
 })
 
+// ── POS Returns ────────────────────────────────────────────────────────────
+// GET /api/inventory/pos-sales?days=30&page=1&limit=50
+// Lists recent POS-scanner deductions (the same rows we write from PATCH
+// /api/inventory/reduce). Used by the "POS Returns" admin page to restore
+// stock when a customer returns an item that was already scanned out at the
+// counter. The `reversedAt` field carries the timestamp of the matching
+// RESTOCK reversal so the UI can disable the restore button.
+router.get('/pos-sales', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const days  = Math.min(365, Math.max(1, Number(req.query.days  ?? 30)))
+    const page  = Math.max(1, Number(req.query.page  ?? 1))
+    const limit = Math.min(100, Number(req.query.limit ?? 50))
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+
+    const where = {
+      action:    'ADJUSTMENT' as const,
+      note:      'POS sale deduction',
+      createdAt: { gte: since },
+    }
+
+    const [rows, total] = await Promise.all([
+      prisma.inventoryHistory.findMany({
+        where,
+        skip:  (page - 1) * limit,
+        take:  limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          variant: {
+            select: {
+              id:    true,
+              sku:   true,
+              size:  true,
+              color: true,
+              product: { select: { id: true, name: true, slug: true, deletedAt: true } },
+            },
+          },
+          reversedBy: {
+            select: { id: true, createdAt: true, performedBy: true },
+            take:   1,
+          },
+        },
+      }),
+      prisma.inventoryHistory.count({ where }),
+    ])
+
+    const data = rows.map((r) => {
+      const rev = r.reversedBy[0]
+      // Strip the auto-archive suffix so the UI shows the original product name
+      // and lets the admin search/identify the item normally.
+      const cleanName = r.variant.product.name.replace(/\s*:soldout:\d+$/, '')
+      return {
+        id:           r.id,
+        createdAt:    r.createdAt.toISOString(),
+        sku:          r.variant.sku,
+        size:         r.variant.size,
+        color:        r.variant.color,
+        quantity:     Math.abs(r.delta),
+        performedBy:  r.performedBy,
+        productId:    r.variant.product.id,
+        productName:  cleanName,
+        archived:     r.variant.product.deletedAt !== null,
+        reversedAt:   rev?.createdAt.toISOString() ?? null,
+        reversedBy:   rev?.performedBy ?? null,
+      }
+    })
+
+    res.json({ data, total, page, limit, days })
+  } catch (err) { next(err) }
+})
+
+// POST /api/inventory/pos-reverse/:historyId
+// Restore stock for a single POS sale: increments inventory by the original
+// |delta|, writes a RESTOCK row pointing back to the sale, and (when the
+// product was auto-archived by that sale) un-archives the product so it
+// reappears on the storefront.
+router.post('/pos-reverse/:historyId', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const historyId = req.params.historyId
+    const performedBy = (req as any).adminUser?.email ?? 'admin'
+
+    const sale = await prisma.inventoryHistory.findUnique({
+      where:  { id: historyId },
+      select: {
+        id: true, variantId: true, locationId: true,
+        delta: true, action: true, note: true, createdAt: true,
+        reversedBy: { select: { id: true }, take: 1 },
+      },
+    })
+    if (!sale)                                 return res.status(404).json({ error: 'POS sale not found' })
+    if (sale.action !== 'ADJUSTMENT' ||
+        sale.note   !== 'POS sale deduction')  return res.status(400).json({ error: 'Not a POS scanner deduction' })
+    if (sale.reversedBy.length > 0)            return res.status(409).json({ error: 'Already restored' })
+    if (!sale.locationId)                      return res.status(400).json({ error: 'Sale row is missing locationId' })
+
+    const ageDays = (Date.now() - sale.createdAt.getTime()) / (24 * 60 * 60 * 1000)
+    if (ageDays > 30) return res.status(400).json({ error: 'Sale is older than 30 days — cannot restore' })
+
+    const restoreQty = Math.abs(sale.delta)
+
+    // Optimistic-lock inventory bump. The variant might have been re-stocked
+    // since the sale, so we don't assume a particular pre-state.
+    const inv = await prisma.inventory.findUnique({
+      where: { variantId_locationId: { variantId: sale.variantId, locationId: sale.locationId } },
+      select: { id: true, quantity: true, version: true, locationId: true },
+    })
+    if (!inv) return res.status(404).json({ error: 'No inventory record for this variant at the sale location' })
+
+    const updated = await prisma.inventory.updateMany({
+      where: { id: inv.id, version: inv.version },
+      data:  { quantity: inv.quantity + restoreQty, version: { increment: 1 } },
+    })
+    if (updated.count === 0) return res.status(409).json({ error: 'Concurrent update conflict — please retry' })
+
+    // Audit trail — links back to the original sale via reversalOfId.
+    await prisma.inventoryHistory.create({
+      data: {
+        variantId:    sale.variantId,
+        locationId:   sale.locationId,
+        oldQuantity:  inv.quantity,
+        newQuantity:  inv.quantity + restoreQty,
+        delta:        restoreQty,
+        action:       'RESTOCK',
+        note:         `POS return reversal of ${sale.id}`,
+        performedBy,
+        reversalOfId: sale.id,
+      },
+    })
+
+    // Un-archive the product if the original sale took it to 0 stock and the
+    // reduce endpoint auto-archived it (slug + barcode suffixed with
+    // :soldout:<ts>). After the restore, available stock > 0, so the product
+    // should reappear on the storefront.
+    let unarchived = false
+    const variant = await prisma.productVariant.findUnique({
+      where:  { id: sale.variantId },
+      select: { productId: true },
+    })
+    if (variant) {
+      const product = await prisma.product.findUnique({
+        where:  { id: variant.productId },
+        select: { id: true, slug: true, barcode: true, deletedAt: true },
+      })
+      if (product?.deletedAt) {
+        const stripSuffix = (s: string) => s.replace(/:soldout:\d+$/, '')
+        const newSlug    = stripSuffix(product.slug)
+        const newBarcode = product.barcode ? stripSuffix(product.barcode) : null
+
+        // Guard against a name collision on slug/barcode: if the original
+        // identifier is already taken (very unlikely — would mean another
+        // product reused it after archive), keep the suffixed value so we
+        // never violate the unique constraint, and surface the warning.
+        const slugClash = newSlug !== product.slug
+          ? await prisma.product.findFirst({ where: { slug: newSlug, id: { not: product.id } }, select: { id: true } })
+          : null
+        const barcodeClash = newBarcode && newBarcode !== product.barcode
+          ? await prisma.product.findFirst({ where: { barcode: newBarcode, id: { not: product.id } }, select: { id: true } })
+          : null
+
+        await prisma.$transaction(async (tx) => {
+          await tx.product.update({
+            where: { id: product.id },
+            data: {
+              deletedAt: null,
+              isActive:  true,
+              slug:      slugClash    ? product.slug    : newSlug,
+              barcode:   barcodeClash ? product.barcode : newBarcode,
+            },
+          })
+          const colorRows = await tx.productColorBarcode.findMany({
+            where:  { productId: product.id },
+            select: { id: true, barcode: true },
+          })
+          for (const row of colorRows) {
+            const cleaned = stripSuffix(row.barcode)
+            if (cleaned === row.barcode) continue
+            const clash = await tx.product.findFirst({ where: { barcode: cleaned }, select: { id: true } })
+              || await tx.productColorBarcode.findFirst({ where: { barcode: cleaned, id: { not: row.id } }, select: { id: true } })
+            if (clash) continue
+            await tx.productColorBarcode.update({ where: { id: row.id }, data: { barcode: cleaned } })
+          }
+          await tx.productVariant.updateMany({
+            where: { productId: product.id },
+            data:  { isActive: true },
+          })
+        })
+        unarchived = true
+        cache.del(`product:slug:${product.slug}`).catch(() => {})
+        cache.del(`product:slug:${newSlug}`).catch(() => {})
+      }
+    }
+
+    cache.delPattern('products:list:*').catch(() => {})
+
+    res.json({
+      ok:           true,
+      restored:     restoreQty,
+      newQuantity:  inv.quantity + restoreQty,
+      unarchived,
+    })
+  } catch (err) { next(err) }
+})
+
 router.get('/:variantId', inventoryController.getByVariant)
 
 router.put(

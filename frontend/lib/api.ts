@@ -276,6 +276,36 @@ export const inventoryApi = {
       total: number
     }>(`/inventory/history?${qs}`)
   },
+
+  // ── POS scanner returns: list recent POS deductions and restore one ──
+  listPosSales: (page = 1, limit = 50, days = 30) => {
+    const qs = new URLSearchParams({ page: String(page), limit: String(limit), days: String(days) }).toString()
+    return request<{
+      data: Array<{
+        id:          string
+        createdAt:   string
+        sku:         string
+        size:        string | null
+        color:       string | null
+        quantity:    number
+        performedBy: string | null
+        productId:   string
+        productName: string
+        archived:    boolean
+        reversedAt:  string | null
+        reversedBy:  string | null
+      }>
+      total: number
+      page:  number
+      limit: number
+      days:  number
+    }>(`/inventory/pos-sales?${qs}`)
+  },
+
+  reversePosSale: (historyId: string) =>
+    request<{ ok: boolean; restored: number; newQuantity: number; unarchived: boolean }>(
+      `/inventory/pos-reverse/${historyId}`, { method: 'POST' }
+    ),
 }
 
 // ── Orders ────────────────────────────────────────────────────────────────────

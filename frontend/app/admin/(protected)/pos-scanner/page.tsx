@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { inventoryApi } from '@/lib/api'
-import { Barcode, Trash2, Undo2, CheckCircle2, AlertTriangle, XCircle, ChevronRight } from 'lucide-react'
+import { Barcode, Trash2, Undo2, CheckCircle2, AlertTriangle, XCircle, ChevronRight, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -280,9 +281,19 @@ export default function PosScannerPage() {
     <div className="flex h-full flex-col p-4 md:p-8 max-w-2xl mx-auto">
 
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-on-background">POS Scanner</h1>
-        <p className="mt-1 text-sm text-muted">Scan product barcode → select variant sold → stock deducts</p>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-on-background">POS Scanner</h1>
+          <p className="mt-1 text-sm text-muted">Scan product barcode → select variant sold → stock deducts</p>
+        </div>
+        <Link
+          href="/admin/pos-scanner/history"
+          className="shrink-0 flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted hover:text-on-background hover:border-on-background transition-colors"
+          title="View recent scans and restore returned items"
+        >
+          <History className="h-3.5 w-3.5" />
+          History / Returns
+        </Link>
       </div>
 
       {/* ── SCAN MODE ── */}

@@ -14,6 +14,7 @@ import {
   LogOut,
   Settings,
   ScanBarcode,
+  Undo2,
   Image,
   Ticket,
 } from 'lucide-react'
@@ -41,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Coupons',       href: '/admin/coupons',       icon: Ticket,     section: 'dashboard' },
   { label: 'POS Sync',    href: '/admin/pos-sync',    icon: RefreshCw,       section: 'pos-sync'    },
   { label: 'POS Scanner', href: '/admin/pos-scanner', icon: ScanBarcode,     section: 'pos-scanner' },
+  { label: 'POS Returns', href: '/admin/pos-scanner/history', icon: Undo2,   section: 'pos-scanner' },
   { label: 'Users',       href: '/admin/users',       icon: Users,           section: 'users'       },
   { label: 'Settings',    href: '/admin/settings',    icon: Settings,        section: 'dashboard'   },
 ]
@@ -51,6 +53,15 @@ export function AdminSidebar() {
   const { user, canAccess, logout } = useAuthStore()
 
   const visibleItems = NAV_ITEMS.filter((item) => canAccess(item.section))
+
+  // Active link = the longest href that matches. Without this tie-break, a
+  // nested route like /admin/pos-scanner/history would highlight both the
+  // "POS Scanner" item (prefix match) and the "POS Returns" item (exact match).
+  const activeHref = visibleItems
+    .filter((item) => pathname === item.href || pathname.startsWith(item.href + '/'))
+    .reduce<string | null>((best, item) =>
+      best === null || item.href.length > best.length ? item.href : best
+    , null)
 
   async function handleLogout() {
     try { await authApi.logout() } catch { /* ignore */ }
@@ -73,7 +84,7 @@ export function AdminSidebar() {
         <ul className="space-y-0.5 px-3">
           {visibleItems.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            const isActive = item.href === activeHref
             return (
               <li key={item.href}>
                 <Link
