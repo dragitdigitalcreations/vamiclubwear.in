@@ -592,8 +592,8 @@ export const uploadsApi = {
 // ── Stats (dashboard) — served from the same Express backend ─────────────────
 
 export const statsApi = {
-  getSummary: () =>
-    request<import('@/types/admin').DashboardStats>('/stats/summary'),
+  getSummary: (range: import('@/types/admin').StatsRange = '30d') =>
+    request<import('@/types/admin').DashboardStats>(`/stats/summary?range=${range}`),
   getSalesChart: (days = 30) =>
     request<import('@/types/admin').SalesDataPoint[]>(`/stats/sales?days=${days}`),
 }

@@ -9,30 +9,59 @@ const router = Router()
 // Without this, revenue, order volume, and stock signals leak publicly.
 router.use(requireAuth)
 
-// GET /api/stats/summary — cached 60s; dashboard polls but doesn't need realtime
-router.get('/summary', async (_req: Request, res: Response, next: NextFunction) => {
-  try {
-    const summary = await cache.wrap('stats:summary', async () => {
-      const now     = new Date()
-      const start30 = new Date(now); start30.setDate(now.getDate() - 30)
-      const start60 = new Date(now); start60.setDate(now.getDate() - 60)
+// Allowed time-window presets for the dashboard KPI cards.
+// 'all' has no previous-period comparison (no baseline before launch).
+const RANGE_DAYS: Record<string, number | null> = {
+  '7d':  7,
+  '30d': 30,
+  '90d': 90,
+  '1y':  365,
+  'all': null,
+}
 
-      // Single aggregate query covers both 0-30d and 30-60d windows. Cuts the
-      // four order count+sum round-trips down to one $queryRaw.
-      const rangeAgg = prisma.$queryRaw<Array<{
-        bucket: 'curr' | 'prev'
-        orders: bigint
-        revenue: string | null
-      }>>`
-        SELECT
-          CASE WHEN "createdAt" >= ${start30} THEN 'curr' ELSE 'prev' END AS bucket,
-          COUNT(*)::bigint                                                  AS orders,
-          SUM("total")::text                                                AS revenue
-        FROM "Order"
-        WHERE "paymentStatus" = 'PAID'
-          AND "createdAt" >= ${start60}
-        GROUP BY bucket
-      `
+// GET /api/stats/summary?range=30d — cached 60s; dashboard polls but doesn't need realtime
+router.get('/summary', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const rawRange = String(req.query.range ?? '30d')
+    const range    = rawRange in RANGE_DAYS ? rawRange : '30d'
+    const days     = RANGE_DAYS[range]
+
+    const summary = await cache.wrap(`stats:summary:${range}`, async () => {
+      const now = new Date()
+
+      // For finite ranges we compute curr (0..days) and prev (days..2*days).
+      // For 'all' there is no prev baseline, so we aggregate every PAID order.
+      const rangeAgg = days === null
+        ? prisma.$queryRaw<Array<{
+            bucket: 'curr' | 'prev'
+            orders: bigint
+            revenue: string | null
+          }>>`
+            SELECT
+              'curr'::text         AS bucket,
+              COUNT(*)::bigint     AS orders,
+              SUM("total")::text   AS revenue
+            FROM "Order"
+            WHERE "paymentStatus" = 'PAID'
+          `
+        : (() => {
+            const start = new Date(now); start.setDate(now.getDate() - days)
+            const prev  = new Date(now); prev.setDate(now.getDate() - days * 2)
+            return prisma.$queryRaw<Array<{
+              bucket: 'curr' | 'prev'
+              orders: bigint
+              revenue: string | null
+            }>>`
+              SELECT
+                CASE WHEN "createdAt" >= ${start} THEN 'curr' ELSE 'prev' END AS bucket,
+                COUNT(*)::bigint                                              AS orders,
+                SUM("total")::text                                            AS revenue
+              FROM "Order"
+              WHERE "paymentStatus" = 'PAID'
+                AND "createdAt" >= ${prev}
+              GROUP BY bucket
+            `
+          })()
 
       const [
         activeProducts,
@@ -60,10 +89,11 @@ router.get('/summary', async (_req: Request, res: Response, next: NextFunction) 
         activeProducts,
         totalOrders,
         totalRevenue,
-        revenueChange: pct(totalRevenue, prevRevenue),
-        ordersChange:  pct(totalOrders, prevOrderCount),
+        revenueChange: days === null ? null : pct(totalRevenue, prevRevenue),
+        ordersChange:  days === null ? null : pct(totalOrders, prevOrderCount),
         lowStockItems: lowStockCount,
         pendingSyncs,
+        range,
       }
     }, 60)
 

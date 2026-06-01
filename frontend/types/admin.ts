@@ -122,14 +122,17 @@ export interface ProductFormData {
 
 // ─── Dashboard stats ─────────────────────────────────────────────────────────
 
+export type StatsRange = '7d' | '30d' | '90d' | '1y' | 'all'
+
 export interface DashboardStats {
   totalRevenue: number
-  revenueChange: number   // % change vs previous period
+  revenueChange: number | null   // % change vs previous period; null for 'all' range
   totalOrders: number
-  ordersChange: number
+  ordersChange: number | null
   activeProducts: number
   lowStockItems: number   // inventory quantity < 5
   pendingSyncs: number    // POS syncs with status PENDING or FAILED
+  range?: StatsRange
 }
 
 export interface SalesDataPoint {
