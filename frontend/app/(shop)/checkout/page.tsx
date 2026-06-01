@@ -429,12 +429,18 @@ export default function CheckoutPage() {
             // address values on a pickup order would mislead them next time.
             if (!isPickup) maybePersistAddress()
             clearCart()
-            setConfirmedFulfil(fulfillment)
             // 202 `pending: true` means the Razorpay webhook is mid-flight creating
             // the order — vanishingly rare since verify retries internally for ~3s.
-            // Fall back to a generic processing label so the customer doesn't see
-            // a blank order number; the confirmation email lands within seconds.
-            setConfirmed(vData.orderNumber ?? 'Processing — check your email')
+            // When we have a real order number, redirect to the dedicated thank-you
+            // page so Google Ads / GA4 get a clean conversion URL. Pending orders
+            // fall back to the inline "processing" view since we have nothing to
+            // route them to yet.
+            if (vData.orderNumber) {
+              router.push(`/order-confirmed?order=${encodeURIComponent(vData.orderNumber)}`)
+              return
+            }
+            setConfirmedFulfil(fulfillment)
+            setConfirmed('Processing — check your email')
           } catch (err: any) {
             toast.error(err.message ?? 'Payment verification failed. Contact support.')
           }
