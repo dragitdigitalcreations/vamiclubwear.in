@@ -5,6 +5,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { serverProductsApi } from '@/lib/server-api'
+import { getPrimaryDetailImage, mediaDetail, type Product } from '@/types/product'
 import { ProductDetailClient } from './ProductDetailClient'
 
 // ISR: revalidate every 30 min during pre-launch to keep Neon CU-hours under
@@ -22,8 +23,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params
   try {
     const product = await serverProductsApi.getBySlug(slug)
-    const imageUrl = product.media?.find((m: any) => m.isPrimary && m.type === 'IMAGE')?.url
-                  ?? product.media?.find((m: any) => m.type === 'IMAGE')?.url
+    // Stage 50.2 — prefer Retaqo's pre-built `delivery.detail` (~1200px,
+    // q_auto + f_auto) for OpenGraph + Twitter card images; falls back to
+    // the raw url for legacy Vami-sourced products. OG images get scraped
+    // and re-cached aggressively, so serving an already-optimized URL
+    // cuts bandwidth without changing the link preview.
+    const imageUrl = getPrimaryDetailImage(product as Pick<Product, 'media'>) ?? undefined
     const description =
       product.description ??
       `Shop ${product.name} at Vami Clubwear — premium Indo-Western fashion handcrafted in Manjeri, Kerala.`
@@ -52,9 +57,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 function buildProductJsonLd(product: any) {
+  // Stage 50.2 — JSON-LD image array also prefers Retaqo's detail-size
+  // delivery URL when available (Google's product-rich-result harvester
+  // re-fetches these, so optimized URLs save bandwidth on the shared
+  // db6tinunf Cloudinary cloud).
   const imageUrls = (product.media ?? [])
     .filter((m: any) => m.type === 'IMAGE')
-    .map((m: any) => m.url)
+    .map((m: any) => mediaDetail(m))
 
   const activeVariants = (product.variants ?? []).filter((v: any) => v.isActive)
   const prices = activeVariants.map((v: any) => Number(v.price)).filter((n: number) => Number.isFinite(n))

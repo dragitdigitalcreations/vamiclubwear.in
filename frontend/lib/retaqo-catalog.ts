@@ -245,6 +245,16 @@ export async function retaqoList(params: RetaqoListParams = {}): Promise<RetaqoL
   // estimate based on whether more rows exist.
   const total = body.nextCursor ? page * limit + 1 : (page - 1) * limit + data.length
   const totalPages = body.nextCursor ? page + 1 : page
+
+  // Stage 50.2 — server-side log marker so a `vercel logs vamiclubwear-in-frontend`
+  // tail can confirm which requests are landing on Retaqo (vs falling
+  // through to the legacy Vami backend). Single line per fetched route,
+  // no PII, no key bytes — safe to leave on. Strip the line if log
+  // noise becomes a concern.
+  console.log(
+    `[retaqo-catalog] source=retaqo page=${page} limit=${limit} category=${params.displayCategorySlug ?? '-'} returned=${data.length} more=${body.nextCursor !== null}`,
+  )
+
   return { data, total, page, limit, totalPages, nextCursor: body.nextCursor }
 }
 

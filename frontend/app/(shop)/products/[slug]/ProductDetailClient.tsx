@@ -14,6 +14,8 @@ import {
   getVariantsByColor,
   getAvailableStock,
   sortMediaByColor,
+  getPrimaryImage,
+  getPrimaryThumb,
 } from '@/types/product'
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
@@ -602,9 +604,11 @@ export function ProductDetailClient({ product }: { product: Product }) {
       openPrompt('Sign in to save items to your cart and checkout seamlessly.')
       return
     }
-    const imageUrl = product.media.find((m) => m.isPrimary && m.type === 'IMAGE')?.url
-                  ?? product.media.find((m) => m.type === 'IMAGE')?.url
-                  ?? null
+    // Stage 50.2 — cart thumbnails are small; prefer Retaqo's
+    // delivery.thumb (~200px) when available. Falls back to delivery.list
+    // then to the raw url for legacy Vami-sourced products. Behaviour for
+    // current Vami-backed PDP is byte-identical.
+    const imageUrl = getPrimaryThumb(product)
     addItem({
       variantId:    variant.id,
       productId:    product.id,
@@ -675,7 +679,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
                       name:      product.name,
                       slug:      product.slug,
                       basePrice: Number(product.basePrice),
-                      imageUrl:  product.media.find((m) => m.type === 'IMAGE')?.url ?? null,
+                      // Stage 50.2 — wishlist thumbnails: same delivery preference
+                      // as cart (thumb-size when Retaqo-sourced, raw URL otherwise).
+                      imageUrl:  getPrimaryImage(product),
                       category:  product.category.name,
                     })}
                     className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 hover:scale-110 ${
