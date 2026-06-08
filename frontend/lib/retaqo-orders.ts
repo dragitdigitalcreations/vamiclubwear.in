@@ -25,14 +25,22 @@
 
 import { createHash } from 'node:crypto'
 
-const RETAQO_API_URL = process.env.RETAQO_API_URL ?? ''
-const RETAQO_ECOMMERCE_API_KEY = process.env.RETAQO_ECOMMERCE_API_KEY ?? ''
+// Stage 51A.1 — env vars read at call-time (not module-load) so test
+// overrides via process.env mutation behave intuitively. The cost is a
+// few extra process.env lookups per request, which is negligible
+// compared to the network calls involved.
+function retaqoApiUrl(): string {
+  return process.env.RETAQO_API_URL ?? ''
+}
+function retaqoApiKey(): string {
+  return process.env.RETAQO_ECOMMERCE_API_KEY ?? ''
+}
 
 export function isRetaqoOrdersEnabled(): boolean {
   return (
     process.env.RETAQO_ORDERS_ENABLED === '1' &&
-    RETAQO_API_URL.length > 0 &&
-    RETAQO_ECOMMERCE_API_KEY.length > 0
+    retaqoApiUrl().length > 0 &&
+    retaqoApiKey().length > 0
   )
 }
 
@@ -208,13 +216,217 @@ function rupeesToPaise(rupees: number): bigint {
 }
 
 // ---------------------------------------------------------------------
+// Stage 51A.1 — server-side verification against Vami's authoritative
+// order endpoint. The mirror route accepts client-supplied payload but
+// trusts NOTHING on its face — every field worth caring about (order
+// exists, total, item-count, item lines) is re-checked against Vami's
+// own backend by orderNumber before the mirror fires.
+//
+// Defence model:
+//   - An attacker who guesses or steals a real orderNumber CAN trigger
+//     a mirror of that real order, but the mirror would use the same
+//     real data Vami already has — no new false rows in Retaqo.
+//   - An attacker who fabricates an orderNumber gets a 200 with
+//     {skipped: true, reason: 'vami-not-found'} — no Retaqo call.
+//   - An attacker who spoofs total / item-count / line breakdown for a
+//     real orderNumber gets {skipped, reason: '<which-check>-mismatch'}
+//     — no Retaqo call. They would need to know the exact qty/price
+//     breakdown of the real order to pass; even then the mirror would
+//     reproduce the real order.
+//   - The browser-visible "shared secret" anti-pattern is deliberately
+//     not used — Stage 51A.1's note `do-not-put-secrets-in-the-browser`.
+// ---------------------------------------------------------------------
+
+interface VamiOrderItemAuthoritative {
+  readonly quantity: number
+  readonly unitPrice: number
+  // SKU + variant identifiers — Vami's public endpoint does not expose
+  // variantId on items, so the mirror trusts the client's variantId by
+  // necessity and uses the (qty, unitPrice) pair to confirm the line
+  // belongs to this order.
+  readonly variant: {
+    readonly sku: string
+    readonly size: string | null
+    readonly color: string | null
+  }
+}
+
+interface VamiOrderAuthoritative {
+  readonly orderNumber: string
+  readonly total: number
+  readonly customerName: string | null
+  readonly customerEmail: string | null
+  readonly customerPhone: string | null
+  readonly items: ReadonlyArray<VamiOrderItemAuthoritative>
+}
+
+/**
+ * Fetch the authoritative order record straight from Vami's backend.
+ * Returns null when the order is missing, the backend is unreachable,
+ * or the response shape is unrecognisable. Never throws — the caller
+ * (`POST /api/internal/retaqo-mirror-order`) decides what to do with
+ * a null result.
+ */
+export async function fetchVamiOrder(orderNumber: string): Promise<VamiOrderAuthoritative | null> {
+  const base = process.env.NEXT_PUBLIC_API_URL
+  if (!base || base.length === 0) {
+    console.error('[retaqo-orders] NEXT_PUBLIC_API_URL not set; cannot verify orderNumber against Vami backend')
+    return null
+  }
+  const url = `${base.replace(/\/$/, '')}/api/public/orders/${encodeURIComponent(orderNumber)}`
+  // Hard timeout — Vami backend slowness must not pin the fire-and-
+  // forget mirror route. 5s is generous for an indexed primary-key
+  // lookup on the orders table.
+  const controller = new AbortController()
+  const t = setTimeout(() => controller.abort(), 5_000)
+  try {
+    const res = await fetch(url, {
+      headers: { 'content-type': 'application/json' },
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+    if (res.status === 404) return null
+    if (!res.ok) {
+      console.error(`[retaqo-orders] vami order lookup failed status=${res.status} orderNumber=${orderNumber}`)
+      return null
+    }
+    const body = (await res.json().catch(() => null)) as VamiOrderAuthoritative | null
+    if (!body || typeof body !== 'object') return null
+    if (body.orderNumber !== orderNumber) return null
+    if (!Array.isArray(body.items)) return null
+    return body
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error(`[retaqo-orders] vami order lookup err orderNumber=${orderNumber} ${msg}`)
+    return null
+  } finally {
+    clearTimeout(t)
+  }
+}
+
+// ---------------------------------------------------------------------
+// Verification — compare the client-supplied mirror payload against the
+// authoritative Vami order. Pure function so it's easy to test.
+// ---------------------------------------------------------------------
+
+export type VerifyResult =
+  | { ok: true }
+  | { ok: false; reason: VerifyFailReason }
+
+export type VerifyFailReason =
+  | 'total-mismatch'
+  | 'item-count-mismatch'
+  | 'line-mismatch'
+
+export function verifyMirrorAgainstVami(
+  input: VamiMirrorOrderInput,
+  vami: VamiOrderAuthoritative,
+): VerifyResult {
+  // Compare totals in paise to sidestep float-equality. Allow ±1 paise
+  // for rounding (Vami's `total` is stored as rupees-as-number which
+  // can introduce a single-paise drift on certain orders).
+  const inputPaise = rupeesToPaise(input.totalRupees)
+  const vamiPaise = rupeesToPaise(vami.total)
+  const diff = inputPaise > vamiPaise ? inputPaise - vamiPaise : vamiPaise - inputPaise
+  if (diff > BigInt(1)) {
+    return { ok: false, reason: 'total-mismatch' }
+  }
+
+  if (input.items.length !== vami.items.length) {
+    return { ok: false, reason: 'item-count-mismatch' }
+  }
+
+  // Match each client item to a Vami item by (qty, unitPricePaise) pair.
+  // Mark Vami items as consumed so duplicates can't be over-claimed.
+  const consumed = new Array<boolean>(vami.items.length).fill(false)
+  for (const item of input.items) {
+    const itemPaise = rupeesToPaise(item.priceRupees)
+    const idx = vami.items.findIndex((v, i) => {
+      if (consumed[i]) return false
+      if (v.quantity !== item.quantity) return false
+      const vp = rupeesToPaise(v.unitPrice)
+      return vp === itemPaise
+    })
+    if (idx < 0) return { ok: false, reason: 'line-mismatch' }
+    consumed[idx] = true
+  }
+
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------
 // Server-only fetch caller
 // ---------------------------------------------------------------------
 
 export type RetaqoMirrorResult =
   | { ok: true; status: 'created' | 'replayed'; retaqoSaleId?: string }
   | { ok: false; status: number | 'network'; error: string }
-  | { skipped: true; reason: 'flag-off' | 'env-incomplete' }
+  | {
+      skipped: true
+      reason:
+        | 'flag-off'
+        | 'env-incomplete'
+        | 'vami-not-found'
+        | 'total-mismatch'
+        | 'item-count-mismatch'
+        | 'line-mismatch'
+    }
+
+/**
+ * Stage 51A.1 — full orchestration entry-point used by the route
+ * handler. Checks the flag, verifies the order against Vami's backend,
+ * then mirrors to Retaqo. Returns a verdict the handler can log /
+ * return verbatim. Never throws.
+ *
+ * The route handler is intentionally thin — all decision logic lives
+ * here so it's unit-testable with a mocked `fetch`.
+ */
+export async function processMirrorRequest(
+  input: VamiMirrorOrderInput,
+): Promise<RetaqoMirrorResult> {
+  if (process.env.RETAQO_ORDERS_ENABLED !== '1') {
+    return { skipped: true, reason: 'flag-off' }
+  }
+  if (retaqoApiUrl().length === 0 || retaqoApiKey().length === 0) {
+    return { skipped: true, reason: 'env-incomplete' }
+  }
+
+  // Trust anchor: the orderNumber MUST resolve to a real Vami order.
+  const vami = await fetchVamiOrder(input.orderNumber)
+  if (!vami) {
+    console.warn(
+      `[retaqo-orders] mirror skipped — orderNumber not found in Vami orderNumber=${input.orderNumber}`,
+    )
+    return { skipped: true, reason: 'vami-not-found' }
+  }
+
+  // Defence in depth: the client-supplied totals + line breakdown must
+  // match the authoritative Vami order. Mismatch = potential spoof,
+  // reject without calling Retaqo.
+  const verify = verifyMirrorAgainstVami(input, vami)
+  if (!verify.ok) {
+    console.warn(
+      `[retaqo-orders] mirror skipped — ${verify.reason} orderNumber=${input.orderNumber}`,
+    )
+    return { skipped: true, reason: verify.reason }
+  }
+
+  // Reconstruct the input from Vami's authoritative customer fields so
+  // a spoofed name/email/phone never reaches Retaqo. variantId and
+  // priceRupees stay from the client (the verify step proved they
+  // describe the real order's lines).
+  const safeInput: VamiMirrorOrderInput = {
+    ...input,
+    totalRupees: vami.total,
+    customer: {
+      name: vami.customerName ?? input.customer?.name,
+      email: vami.customerEmail ?? input.customer?.email,
+      phone: vami.customerPhone ?? input.customer?.phone,
+    },
+  }
+
+  return submitRetaqoMirrorOrder(safeInput)
+}
 
 export async function submitRetaqoMirrorOrder(
   input: VamiMirrorOrderInput,
@@ -222,19 +434,19 @@ export async function submitRetaqoMirrorOrder(
   if (process.env.RETAQO_ORDERS_ENABLED !== '1') {
     return { skipped: true, reason: 'flag-off' }
   }
-  if (RETAQO_API_URL.length === 0 || RETAQO_ECOMMERCE_API_KEY.length === 0) {
+  if (retaqoApiUrl().length === 0 || retaqoApiKey().length === 0) {
     return { skipped: true, reason: 'env-incomplete' }
   }
 
   const payload = mapVamiOrderToRetaqo(input)
-  const url = `${RETAQO_API_URL.replace(/\/$/, '')}/api/public/ecommerce/orders`
+  const url = `${retaqoApiUrl().replace(/\/$/, '')}/api/public/ecommerce/orders`
 
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': RETAQO_ECOMMERCE_API_KEY,
+        'x-api-key': retaqoApiKey(),
         // Retaqo Stage 21 requires X-Idempotency-Key in addition to
         // body.idempotencyKey. Send the same UUID for both so a replay
         // hits the cached interceptor response and never touches the DB.
