@@ -425,6 +425,43 @@ export default function CheckoutPage() {
             })
             const vData = await vRes.json()
             if (!vRes.ok) throw new ApiError(vRes.status, vData.error ?? 'Payment verification failed')
+
+            // Stage 51A — fire-and-forget mirror of the just-created order
+            // to Retaqo. The Vami order is already persisted and the
+            // customer's payment is already captured by this point, so the
+            // mirror's success or failure has zero impact on the shopper.
+            // The route is OFF by default (RETAQO_ORDERS_ENABLED=0); when
+            // enabled it returns 200 with {ok|skipped|error} for log
+            // inspection. We deliberately don't `await` it — the redirect
+            // below must not wait on Retaqo round-trip.
+            if (vData.orderNumber) {
+              const mirrorBody = {
+                orderNumber: vData.orderNumber as string,
+                razorpayPaymentId: response.razorpay_payment_id as string,
+                totalRupees: items.reduce((s, i) => s + i.price * i.quantity, 0),
+                items: items.map((i) => ({
+                  variantId: i.variantId,
+                  quantity: i.quantity,
+                  priceRupees: i.price,
+                })),
+                customer: {
+                  name: form.customerName,
+                  email: form.customerEmail,
+                  phone: form.customerPhone,
+                },
+                occurredAtMs: Date.now(),
+              }
+              void fetch('/api/internal/retaqo-mirror-order', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify(mirrorBody),
+                keepalive: true,
+              }).catch(() => {
+                // Swallowed deliberately — mirror failure must never
+                // surface to the customer.
+              })
+            }
+
             // Only save the address if the customer used delivery — saving stale
             // address values on a pickup order would mislead them next time.
             if (!isPickup) maybePersistAddress()
