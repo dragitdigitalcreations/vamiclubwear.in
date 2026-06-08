@@ -30,15 +30,18 @@ const KNOWN_CATEGORY_SLUGS = new Set<string>([
 ])
 
 const CATEGORY_BLURBS: Record<string, string> = {
-  'anarkali':       'Floor-grazing Anarkalis with intricate zari work, sheer dupattas and statement embroidery — handcrafted for festive evenings, mehndis and receptions, available up to XXXL.',
-  'salwar':         'Festive salwar suits and salwar sets in maroon, navy, dark green velvet and Banarasi mul chanderi — sized L through XXXL.',
-  'sharara-set':    'Three-piece sharara sets in georgette, chinon and mul cotton — modest, dramatic, designed to move.',
-  'churidar-bit':   'Unstitched churidar fabric bits — premium Kerala-sourced cottons and silks, perfect for tailor-made fits.',
-  'cotton-salwar':  'Everyday cotton salwars in modest cuts and breathable weaves — built for Kerala weather and full-day comfort.',
-  'modest-wear':    'Floor-length gowns, short tops and abayas — modest silhouettes in lavender, off-white and timeless neutrals.',
-  'pants':          'Indo-Western fusion pants — palazzos, shararas and tapered cuts in fabrics that drape beautifully.',
-  'duppatta':       'Statement dupattas — sheer organza, hand-embroidered net, banarasi tissue — to elevate any salwar or anarkali.',
-  'big-size':       'Plus-size Indo-Western fusion wear up to XXXL — Anarkalis, salwars, gowns and modest pieces designed to fit and flatter every body.',
+  'anarkali':          'Floor-grazing Anarkalis with intricate zari work, sheer dupattas and statement embroidery — handcrafted for festive evenings, mehndis and receptions, available up to XXXL.',
+  'salwar':            'Festive salwar suits and salwar sets in maroon, navy, dark green velvet and Banarasi mul chanderi — sized L through XXXL.',
+  'sharara-set':       'Three-piece sharara sets in georgette, chinon and mul cotton — modest, dramatic, designed to move.',
+  'churidar-bit':      'Unstitched churidar fabric bits — premium Kerala-sourced cottons and silks, perfect for tailor-made fits.',
+  'cotton-salwar':     'Everyday cotton salwars in modest cuts and breathable weaves — built for Kerala weather and full-day comfort.',
+  'modest-wear':       'Floor-length gowns, short tops and abayas — modest silhouettes in lavender, off-white and timeless neutrals.',
+  'pants':             'Indo-Western fusion pants — palazzos, shararas and tapered cuts in fabrics that drape beautifully.',
+  'duppatta':          'Statement dupattas — sheer organza, hand-embroidered net, banarasi tissue — to elevate any salwar or anarkali.',
+  'big-size':          'Plus-size Indo-Western fusion wear up to XXXL — Anarkalis, salwars, gowns and modest pieces designed to fit and flatter every body.',
+  // Stage 50.1 — blurbs for the two Retaqo-only display categories.
+  'bridal-collection': 'Statement bridal pieces — heavy zari Anarkalis, embellished gowns and embroidered sharara sets crafted for sangeets, receptions and reception-after parties, sized inclusively up to XXXL.',
+  'casual-wear':       'Easy-day Indo-Western pieces — comfortable cuts, breathable cottons and soft palettes designed for everyday wear without sacrificing the Vami silhouette.',
 }
 
 const DEFAULT_BLURB =
