@@ -1,5 +1,18 @@
 // Storefront-facing product types (matches backend API response shape)
 
+// Stage 50 — when the catalog source is Retaqo's public ecommerce API,
+// each media row carries an optional `delivery` object with pre-built
+// Cloudinary transformation URLs (thumb ~200px, list ~600px, detail
+// ~1200px, original full-size with q_auto+f_auto). Vami's legacy
+// backend responses do not populate this — getPrimaryImage falls back
+// to the raw `url` automatically.
+export interface ProductMediaDelivery {
+  thumb: string
+  list: string
+  detail: string
+  original: string
+}
+
 export interface ProductMedia {
   id: string
   url: string
@@ -7,6 +20,7 @@ export interface ProductMedia {
   altText: string | null
   isPrimary: boolean
   sortOrder: number
+  delivery?: ProductMediaDelivery | null
 }
 
 export interface ProductVariant {
@@ -48,10 +62,51 @@ export interface Product {
 
 // Computed helpers
 
-export function getPrimaryImage(product: Pick<Product, 'media'>): string | null {
+// Pick the row that should drive the product card / hero image — primary
+// first, then the first IMAGE row as a graceful fallback. Returns the row
+// itself (not just a URL) so callers can read alt text and delivery URLs.
+function pickPrimaryMedia(product: Pick<Product, 'media'>): ProductMedia | null {
   const primary = product.media.find((m) => m.isPrimary && m.type === 'IMAGE')
   const first   = product.media.find((m) => m.type === 'IMAGE')
-  return (primary ?? first)?.url ?? null
+  return primary ?? first ?? null
+}
+
+// Default — listing-card size (Stage 50: Retaqo's delivery.list is ~600px
+// q_auto+f_auto; for legacy Vami responses delivery is missing and we
+// fall back to the raw url unchanged, so existing call sites keep
+// working identically when the Retaqo flag is OFF).
+export function getPrimaryImage(product: Pick<Product, 'media'>): string | null {
+  const m = pickPrimaryMedia(product)
+  if (!m) return null
+  return m.delivery?.list ?? m.url ?? null
+}
+
+// Smaller thumbnail — for tiny strips, navigation tiles, related-product
+// rails. Falls through list → url so the same primary row is reused even
+// without Retaqo's delivery field.
+export function getPrimaryThumb(product: Pick<Product, 'media'>): string | null {
+  const m = pickPrimaryMedia(product)
+  if (!m) return null
+  return m.delivery?.thumb ?? m.delivery?.list ?? m.url ?? null
+}
+
+// Product detail page — bigger transformation so PDP hero looks sharp.
+export function getPrimaryDetailImage(product: Pick<Product, 'media'>): string | null {
+  const m = pickPrimaryMedia(product)
+  if (!m) return null
+  return m.delivery?.detail ?? m.delivery?.list ?? m.url ?? null
+}
+
+// Per-media helpers — for galleries that iterate over every image and
+// need the right size per slot (e.g. PDP gallery thumb strip + hero).
+export function mediaThumb(m: Pick<ProductMedia, 'url' | 'delivery'>): string {
+  return m.delivery?.thumb ?? m.delivery?.list ?? m.url
+}
+export function mediaList(m: Pick<ProductMedia, 'url' | 'delivery'>): string {
+  return m.delivery?.list ?? m.url
+}
+export function mediaDetail(m: Pick<ProductMedia, 'url' | 'delivery'>): string {
+  return m.delivery?.detail ?? m.delivery?.list ?? m.url
 }
 
 export function getAvailableStock(variant: ProductVariant): number {
