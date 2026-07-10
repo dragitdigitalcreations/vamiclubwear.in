@@ -12,7 +12,7 @@ export interface Customer {
 
 interface CustomerAuthState {
   user:   Customer | null
-  token:  string | null
+  token:  string | null   // volatile; not persisted — see partialize
 
   // login prompt (modal) — shown when a gated action is attempted unauthenticated
   promptOpen:    boolean
@@ -24,25 +24,6 @@ interface CustomerAuthState {
   logout:        () => void
 
   isAuthenticated: () => boolean
-}
-
-// Non-sensitive "the browser thinks it's signed in" marker. The real JWT stays
-// in localStorage; this cookie exists purely so middleware.ts can decide
-// server-side whether to redirect gated routes to the login prompt instead
-// of rendering an empty auth wall. Forging it grants zero access — all data
-// APIs still verify the bearer token independently.
-const SESSION_COOKIE = 'vami-cust-session'
-
-function setSessionCookie() {
-  if (typeof document === 'undefined') return
-  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
-  // 30 days matches typical session lifetime; refreshed on every setSession.
-  document.cookie = `${SESSION_COOKIE}=1; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax${secure}`
-}
-
-function clearSessionCookie() {
-  if (typeof document === 'undefined') return
-  document.cookie = `${SESSION_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`
 }
 
 export const useCustomerAuthStore = create<CustomerAuthState>()(
@@ -57,25 +38,25 @@ export const useCustomerAuthStore = create<CustomerAuthState>()(
       closePrompt:  ()       => set({ promptOpen: false, promptReason: null }),
 
       setSession: (user, token) => {
-        setSessionCookie()
+        // token is retained in-memory for the current tab only. On refresh
+        // it's gone from JS but the httpOnly cookie the backend set carries
+        // the session forward — the store rehydrates `user` from
+        // localStorage and calls that "signed in".
         set({ user, token, promptOpen: false, promptReason: null })
       },
-      logout:     ()            => {
-        clearSessionCookie()
-        set({ user: null, token: null })
-      },
+      logout:     ()            => set({ user: null, token: null }),
 
-      isAuthenticated: () => !!get().token && !!get().user,
+      // The httpOnly session cookie is the source of truth for "is signed
+      // in"; the UI trusts the persisted `user` as a hint until a request
+      // 401s and clears it.
+      isAuthenticated: () => !!get().user,
     }),
     {
       name: 'vami-customer-auth',
-      partialize: (s) => ({ user: s.user, token: s.token }),
-      // Rehydrate the presence cookie on page load so a returning visitor
-      // whose localStorage token survived (but cookie expired / was cleared)
-      // still gets past middleware without re-authing.
-      onRehydrateStorage: () => (state) => {
-        if (state?.token && state?.user) setSessionCookie()
-      },
+      // F4b: only `user` (non-sensitive profile fields) persists to
+      // localStorage. The JWT lives in an httpOnly cookie the backend set,
+      // out of reach of any XSS on the storefront.
+      partialize: (s) => ({ user: s.user }),
     },
   ),
 )

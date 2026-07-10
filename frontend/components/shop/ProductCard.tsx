@@ -49,7 +49,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const shareWrapRef = useRef<HTMLDivElement | null>(null)
   const { addItem }                    = useCartStore()
   const { toggleItem, isWishlisted }   = useWishlistStore()
-  const customerAuthed                 = useCustomerAuthStore((s) => !!s.token && !!s.user)
+  const customerAuthed                 = useCustomerAuthStore((s) => !!s.user)
   const openPrompt                     = useCustomerAuthStore((s) => s.openPrompt)
 
   // Close share popover on outside-click or Escape so the card behaves like a

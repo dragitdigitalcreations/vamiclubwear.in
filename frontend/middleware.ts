@@ -1,18 +1,18 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// F7 defense-in-depth: redirect unauthenticated visitors away from customer-
-// gated routes at the edge, before Next.js renders the page. The real auth
-// gate is still the API layer (Bearer JWT verified server-side on every
-// data call), so a forged presence cookie grants zero data access — this
-// just stops empty auth walls from being served.
+// F7 + F4b: redirect signed-out visitors away from customer-gated routes at
+// the edge, before Next.js renders the page. Post-F4b the session token is
+// an httpOnly cookie set by the backend (readable by this Node/Edge
+// middleware but NOT by browser JS), so a forged cookie can't grant access
+// — the backend re-verifies the JWT signature on every data call.
 //
-// The cookie is set client-side by customerAuthStore.setSession() and cleared
-// by logout(). We deliberately don't check the JWT itself here because it
-// lives in localStorage (out of middleware's reach); moving auth to httpOnly
-// cookies is the follow-up (F4-b).
+// Middleware only checks for cookie presence, not signature. If the cookie
+// is present but expired/tampered, the first API call returns 401 and the
+// storefront's api.request() handler drops the client-side user cache.
 
 const CUSTOMER_GATED = ['/profile', '/my-orders', '/wishlist', '/checkout']
-const SESSION_COOKIE = 'vami-cust-session'
+// Must match backend/src/middleware/customerAuth.ts CUSTOMER_COOKIE
+const SESSION_COOKIE = 'vami_customer'
 
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl
@@ -22,7 +22,7 @@ export function middleware(req: NextRequest) {
   )
   if (!isGated) return NextResponse.next()
 
-  const hasSession = req.cookies.get(SESSION_COOKIE)?.value === '1'
+  const hasSession = !!req.cookies.get(SESSION_COOKIE)?.value
   if (hasSession) return NextResponse.next()
 
   const url = req.nextUrl.clone()

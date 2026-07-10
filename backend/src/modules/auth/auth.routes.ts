@@ -6,7 +6,26 @@ import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../../lib/prisma'
 import { AppError, ForbiddenError } from '../../utils/errors'
-import { requireAuth } from '../../middleware/auth'
+import { requireAuth, ADMIN_COOKIE } from '../../middleware/auth'
+
+// F4b: 7-day admin session cookie. httpOnly blocks XSS from reading the
+// token; Secure keeps it off plain HTTP; SameSite=Lax lets top-level
+// navigations (post-login redirect) carry it while blocking CSRF from
+// arbitrary third parties. Domain is intentionally omitted so the browser
+// scopes the cookie to the response host — with the Vercel /api rewrite
+// that's the storefront origin (www.vamiclubwear.in), which is exactly
+// where the browser will send it back.
+const ADMIN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000
+
+function cookieOpts(maxAge: number) {
+  return {
+    httpOnly: true,
+    secure:   process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path:     '/',
+    maxAge,
+  }
+}
 
 // Neon auto-pauses on idle and Cloud Run cold-starts spin up fresh Prisma
 // clients — the very first DB call in either case can fail with a transient
@@ -86,6 +105,13 @@ router.post('/login', loginLimiter, async (req: Request, res: Response, next: Ne
       })
     )
 
+    // F4b: set the httpOnly cookie *and* keep the token in the response body
+    // during rollout — any old client still reading token from JSON keeps
+    // working, and any new client just relies on the cookie the browser
+    // now stores. Once every deployed frontend is on the cookie path the
+    // token field can be dropped.
+    res.cookie(ADMIN_COOKIE, token, cookieOpts(ADMIN_COOKIE_MAX_AGE))
+
     res.json({
       token,
       user: {
@@ -140,9 +166,11 @@ router.patch('/change-password', requireAuth, async (req: Request, res: Response
   }
 })
 
-// POST /api/auth/logout — client drops token; this is a no-op on the server
-// (stateless JWT — add a deny-list here if needed)
+// POST /api/auth/logout — clear the httpOnly cookie. Also a no-op for
+// stateless JWTs, but the cookie clear is what actually ends the session
+// for cookie-based clients.
 router.post('/logout', (_req: Request, res: Response) => {
+  res.clearCookie(ADMIN_COOKIE, { path: '/' })
   res.json({ ok: true })
 })
 

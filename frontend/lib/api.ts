@@ -16,46 +16,26 @@ export class ApiError extends Error {
   }
 }
 
-// Read JWT token from Zustand persisted storage (localStorage)
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const stored = localStorage.getItem('vami-auth')
-    if (!stored) return null
-    const parsed = JSON.parse(stored)
-    return parsed?.state?.token ?? null
-  } catch {
-    return null
-  }
-}
-
-// Customer (storefront) token — Google-authenticated buyers
-function getCustomerToken(): string | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const stored = localStorage.getItem('vami-customer-auth')
-    if (!stored) return null
-    const parsed = JSON.parse(stored)
-    return parsed?.state?.token ?? null
-  } catch {
-    return null
-  }
-}
-
+// F4b: session tokens live in httpOnly cookies now, not localStorage.
+// - Browser calls go to relative `/api/...`, proxied by the Next.js rewrite
+//   to the backend. That's same-origin, so cookies flow automatically with
+//   the fetch default `credentials: 'same-origin'` — no explicit include.
+// - Server-side calls hit the backend directly. Those are internal (RSC /
+//   sitemap fetches for public data) and never need a session cookie.
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getToken()
-
   const res = await fetch(`${BASE_URL}/api${path}`, {
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
     ...init,
   })
 
   if (res.status === 401 || res.status === 403) {
-    // Token expired — clear auth and redirect
+    // Session expired or missing — clear the persisted user cache and, for
+    // admin pages, bounce to login. The real cookie has already been either
+    // cleared by the backend or invalidated by expiry, so no client-side
+    // cookie surgery is needed.
     if (typeof window !== 'undefined') {
       localStorage.removeItem('vami-auth')
       if (window.location.pathname.startsWith('/admin') &&
@@ -548,11 +528,12 @@ export const uploadsApi = {
     const form = new FormData()
     files.forEach((f) => form.append('files', f))
 
-    const token = getToken()
+    // F4b: admin cookie carries the session on same-origin uploads. No
+    // Content-Type header — the browser sets multipart/form-data with the
+    // right boundary automatically.
     const res = await fetch(`${BASE_URL}/api/uploads`, {
-      method:  'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body:    form,
+      method: 'POST',
+      body:   form,
     })
 
     if (!res.ok) {
@@ -669,12 +650,13 @@ export interface CustomerProfile {
   picture: string | null
 }
 
+// F4b: customer session cookie replaces the localStorage bearer token.
+// Same-origin rewrite means the cookie flows automatically — no Authorization
+// header, no credentials tweak.
 async function customerRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getCustomerToken()
   const res = await fetch(`${BASE_URL}/api${path}`, {
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
     ...init,

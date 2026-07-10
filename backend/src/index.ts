@@ -76,6 +76,12 @@ app.use(
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Api-Key'],
+    // F4b: session cookies must be allowed on cross-origin fetches from the
+    // storefront (frontend at www.vamiclubwear.in → backend at
+    // api.vamiclubwear.in for any direct call). The exact-origin allowlist
+    // above satisfies the spec's requirement that credentialed requests
+    // reject `Access-Control-Allow-Origin: *`.
+    credentials: true,
   })
 )
 

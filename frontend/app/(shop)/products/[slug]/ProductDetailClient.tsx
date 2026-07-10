@@ -526,7 +526,7 @@ function RelatedProducts({ categorySlug, excludeId }: { categorySlug: string; ex
 export function ProductDetailClient({ product }: { product: Product }) {
   const { addItem }                    = useCartStore()
   const { toggleItem, isWishlisted }   = useWishlistStore()
-  const customerAuthed                 = useCustomerAuthStore((s) => !!s.token && !!s.user)
+  const customerAuthed                 = useCustomerAuthStore((s) => !!s.user)
   const openPrompt                     = useCustomerAuthStore((s) => s.openPrompt)
   const router                         = useRouter()
   const addToCartRef                   = useRef<HTMLButtonElement>(null)

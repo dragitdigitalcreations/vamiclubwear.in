@@ -9,13 +9,18 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar'
 const STAFF_HOME = '/admin/pos-scanner-mobile'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { token, user, isAuthenticated, logout } = useAuthStore()
+  const { user, isAuthenticated, logout } = useAuthStore()
   const router   = useRouter()
   const pathname = usePathname()
   const [checking, setChecking] = useState(true)
 
+  // F4b: the session token is now an httpOnly cookie the browser can't
+  // read, so we can't gate on "do we have a token in JS?" anymore. Instead
+  // we always ask the backend: `authApi.me()` will 200 if the cookie is
+  // valid and 401 otherwise. The persisted `user` avoids the sign-out
+  // flicker between rehydration and the /me response landing.
   useEffect(() => {
-    if (!token) {
+    if (!user) {
       router.replace('/admin/login')
       setChecking(false)
       return

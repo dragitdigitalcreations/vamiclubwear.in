@@ -291,10 +291,11 @@ function TrackSection() {
 
 export default function ProfilePage() {
   const user        = useCustomerAuthStore((s) => s.user)
-  const token       = useCustomerAuthStore((s) => s.token)
   const openPrompt  = useCustomerAuthStore((s) => s.openPrompt)
   const logout      = useCustomerAuthStore((s) => s.logout)
-  const authed      = !!user && !!token
+  // F4b: token lives in httpOnly cookie now — cached user is the "signed
+  // in" hint; the backend rejects with 401 if the cookie is missing/stale.
+  const authed      = !!user
 
   const [orders,   setOrders]   = useState<CustomerOrder[] | null>(null)
   const [loading,  setLoading]  = useState(false)

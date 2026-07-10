@@ -16,18 +16,6 @@ function getApiBase() {
     : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001')
 }
 
-// Read JWT from Zustand persisted auth store
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const stored = localStorage.getItem('vami-auth')
-    if (!stored) return null
-    return JSON.parse(stored)?.state?.token ?? null
-  } catch {
-    return null
-  }
-}
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface MediaItem {
@@ -61,11 +49,12 @@ async function uploadFile(file: File): Promise<{ url: string; type: 'IMAGE' | 'V
   const form = new FormData()
   form.append('files', file)
 
-  const token = getToken()
+  // F4b: admin session cookie handles auth on same-origin uploads. No
+  // Content-Type header — the browser sets multipart/form-data with the
+  // right boundary automatically.
   const res = await fetch(`${getApiBase()}/api/uploads`, {
-    method:  'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body:    form,
+    method: 'POST',
+    body:   form,
   })
 
   if (!res.ok) {

@@ -3,7 +3,19 @@ import jwt from 'jsonwebtoken'
 import { z } from 'zod'
 import { prisma } from '../../lib/prisma'
 import { AppError, ForbiddenError } from '../../utils/errors'
-import { requireCustomer } from '../../middleware/customerAuth'
+import { requireCustomer, CUSTOMER_COOKIE } from '../../middleware/customerAuth'
+
+const CUSTOMER_COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000  // matches JWT 30d expiry
+
+function cookieOpts() {
+  return {
+    httpOnly: true,
+    secure:   process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path:     '/',
+    maxAge:   CUSTOMER_COOKIE_MAX_AGE,
+  }
+}
 
 const router = Router()
 
@@ -79,6 +91,10 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
       { expiresIn: JWT_EXPIRES },
     )
 
+    // F4b: httpOnly session cookie. Token also returned in the JSON body
+    // during rollout so any not-yet-updated frontend build still functions.
+    res.cookie(CUSTOMER_COOKIE, token, cookieOpts())
+
     res.json({
       token,
       user: {
@@ -89,6 +105,12 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
       },
     })
   } catch (err) { next(err) }
+})
+
+// POST /api/customer/logout — clears the F4b session cookie.
+router.post('/logout', (_req: Request, res: Response) => {
+  res.clearCookie(CUSTOMER_COOKIE, { path: '/' })
+  res.json({ ok: true })
 })
 
 // GET /api/customer/me
