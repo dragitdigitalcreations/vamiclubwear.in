@@ -64,7 +64,27 @@ const nextConfig = {
           { key: 'Permissions-Policy',     value: 'camera=(), microphone=(), geolocation=()' },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' https://checkout.razorpay.com; frame-src https://checkout.razorpay.com https://api.razorpay.com; img-src 'self' data: https://res.cloudinary.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.razorpay.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
+            // Next 15 App Router streams RSC payloads via inline
+            // <script>self.__next_f.push(...)</script> blocks, so 'unsafe-inline'
+            // is required for hydration to succeed. Migrating this to a nonce-
+            // based CSP with a middleware-generated nonce is the correct next
+            // step (F4a follow-up) — until then, the CSP still meaningfully
+            // reduces the blast radius of an XSS by locking down connect/frame/
+            // object/base and by pinning script hosts to the platform allowlist.
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://accounts.google.com https://*.googletagmanager.com",
+              "frame-src https://checkout.razorpay.com https://api.razorpay.com https://accounts.google.com",
+              "img-src 'self' data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://*.googleusercontent.com",
+              "media-src 'self' https://res.cloudinary.com",
+              "style-src 'self' 'unsafe-inline' https://accounts.google.com",
+              "font-src 'self' data:",
+              "connect-src 'self' https://*.razorpay.com https://accounts.google.com https://api.vamiclubwear.in",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "frame-ancestors 'self'",
+              "upgrade-insecure-requests",
+            ].join('; '),
           }
         ],
       },
