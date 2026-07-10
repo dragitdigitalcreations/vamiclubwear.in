@@ -467,6 +467,13 @@ router.post('/sync-statuses', requireAuth, async (_req: Request, res: Response, 
 
 router.get('/order-track/:orderNumber', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const { email, phoneLast4 } = req.query as { email?: string; phoneLast4?: string }
+
+    if (!email && !phoneLast4) {
+      res.status(400).json({ error: 'Verification required: provide email or phoneLast4' })
+      return
+    }
+
     const order = await prisma.order.findUnique({
       where: { orderNumber: req.params.orderNumber },
       select: {
@@ -479,6 +486,8 @@ router.get('/order-track/:orderNumber', async (req: Request, res: Response, next
         awbNumber:       true,
         trackingUrl:     true,
         customerName:    true,
+        customerEmail:   true,
+        customerPhone:   true,
         total:           true,
         createdAt:       true,
         items: {
@@ -489,6 +498,15 @@ router.get('/order-track/:orderNumber', async (req: Request, res: Response, next
       },
     })
     if (!order) { res.status(404).json({ error: 'Order not found' }); return }
+
+    const isValidEmail = email && order.customerEmail?.toLowerCase() === email.toLowerCase()
+    const isValidPhone = phoneLast4 && order.customerPhone?.slice(-4) === phoneLast4
+    
+    if (!isValidEmail && !isValidPhone) {
+      // Return 404 to avoid distinguishing between "wrong order" and "wrong verifier"
+      res.status(404).json({ error: 'Order not found' })
+      return
+    }
 
     res.json(order)
   } catch (err) { next(err) }

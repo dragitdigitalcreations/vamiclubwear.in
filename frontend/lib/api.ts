@@ -434,8 +434,10 @@ export const ordersApi = {
     }),
 
   // Public order tracking — no auth required
-  track: (orderNumber: string) =>
-    request<{
+  track: (orderNumber: string, emailOrPhone: string) => {
+    const isEmail = emailOrPhone.includes('@')
+    const qs = isEmail ? `email=${encodeURIComponent(emailOrPhone)}` : `phoneLast4=${encodeURIComponent(emailOrPhone.replace(/\D/g, '').slice(-4))}`
+    return request<{
       orderNumber:     string
       status:          string
       shippingStatus:  string
@@ -448,44 +450,18 @@ export const ordersApi = {
       total:           number
       createdAt:       string
       items: Array<{ quantity: number; variant: { sku: string; product: { name: string } } }>
-    }>(`/shipping/order-track/${encodeURIComponent(orderNumber)}`),
-
-  // Customer My Orders — lookup by phone or email (no auth)
-  lookup: async (by: { phone?: string; email?: string }): Promise<{
-    orders: Array<{
-      orderNumber:    string
-      status:         string
-      shippingStatus: string
-      awbNumber:      string | null
-      trackingUrl:    string | null
-      total:          number
-      createdAt:      string
-      customerName:   string | null
-      items: Array<{
-        quantity:  number
-        unitPrice: number
-        variant: { sku: string; size: string | null; color: string | null; product: { name: string; slug: string } }
-      }>
-    }>
-    count: number
-  }> => {
-    const qs = new URLSearchParams()
-    if (by.phone) qs.set('phone', by.phone)
-    if (by.email) qs.set('email', by.email)
-    const url = typeof window !== 'undefined'
-      ? `/api/public/orders/lookup?${qs}`
-      : `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/public/orders/lookup?${qs}`
-    const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } })
-    const data = await res.json()
-    if (!res.ok) throw new ApiError(res.status, data.error ?? 'Lookup failed')
-    return data
+    }>(`/shipping/order-track/${encodeURIComponent(orderNumber)}?${qs}`)
   },
 
+
+
   // Full order detail by order number — no auth
-  getPublic: async (orderNumber: string) => {
+  getPublic: async (orderNumber: string, emailOrPhone: string) => {
+    const isEmail = emailOrPhone.includes('@')
+    const qs = isEmail ? `email=${encodeURIComponent(emailOrPhone)}` : `phoneLast4=${encodeURIComponent(emailOrPhone.replace(/\D/g, '').slice(-4))}`
     const url = typeof window !== 'undefined'
-      ? `/api/public/orders/${encodeURIComponent(orderNumber)}`
-      : `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/public/orders/${encodeURIComponent(orderNumber)}`
+      ? `/api/public/orders/${encodeURIComponent(orderNumber)}?${qs}`
+      : `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/public/orders/${encodeURIComponent(orderNumber)}?${qs}`
     const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } })
     const data = await res.json()
     if (!res.ok) throw new ApiError(res.status, data.error ?? 'Order not found')

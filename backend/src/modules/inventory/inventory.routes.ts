@@ -32,8 +32,8 @@ router.post(
 // PUT  /api/inventory/:variantId/set    [mgr]  — set absolute quantity
 // POST /api/inventory/:variantId/adjust [mgr]  — +/- delta with optimistic lock
 
-router.get('/',           inventoryController.listAll)
-router.get('/search',     inventoryController.search)
+router.get('/',           requireAuth, inventoryController.listAll)
+router.get('/search',     requireAuth, inventoryController.search)
 router.get('/history',    requireAuth, inventoryController.listHistory)
 router.post('/sync-all',  requireAuth, inventoryController.syncAll)
 

@@ -55,6 +55,7 @@ function fireConversion(order: PublicOrder) {
 function OrderConfirmedContent() {
   const params      = useSearchParams()
   const orderNumber = params.get('order')?.trim() || ''
+  const verify      = params.get('verify')?.trim() || ''
 
   const [order,   setOrder]   = useState<PublicOrder | null>(null)
   const [loading, setLoading] = useState(Boolean(orderNumber))
@@ -65,10 +66,15 @@ function OrderConfirmedContent() {
   // whether the customer is signed in or not — and so refreshes don't blank.
   useEffect(() => {
     if (!orderNumber) return
+    if (!verify) {
+      setError('Verification required. Please use the tracking page instead.')
+      setLoading(false)
+      return
+    }
     let cancelled = false
     ;(async () => {
       try {
-        const data = await ordersApi.getPublic(orderNumber)
+        const data = await ordersApi.getPublic(orderNumber, verify)
         if (cancelled) return
         setOrder(data)
         fireConversion(data)

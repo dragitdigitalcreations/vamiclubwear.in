@@ -473,7 +473,8 @@ export default function CheckoutPage() {
             // fall back to the inline "processing" view since we have nothing to
             // route them to yet.
             if (vData.orderNumber) {
-              router.push(`/order-confirmed?order=${encodeURIComponent(vData.orderNumber)}`)
+              const verify = form.customerEmail ? form.customerEmail : form.customerPhone
+              router.push(`/order-confirmed?order=${encodeURIComponent(vData.orderNumber)}&verify=${encodeURIComponent(verify)}`)
               return
             }
             setConfirmedFulfil(fulfillment)

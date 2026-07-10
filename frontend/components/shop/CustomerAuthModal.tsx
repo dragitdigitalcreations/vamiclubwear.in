@@ -3,20 +3,38 @@
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCustomerAuthStore } from '@/stores/customerAuthStore'
 import { customerAuthApi } from '@/lib/api'
 
+const REASON_LABEL: Record<string, string> = {
+  checkout: 'to complete your order',
+  required: 'to continue',
+}
+
 /**
- * Google Sign-In modal. Opened via useCustomerAuthStore().openPrompt().
- * Loads the Google Identity Services script once, renders the official
- * button, and on credential callback exchanges the ID token with our
- * backend for a JWT session.
+ * Google Sign-In modal. Opened via useCustomerAuthStore().openPrompt(),
+ * or automatically when middleware.ts appends ?signin=<reason> after
+ * bouncing a signed-out visitor from a gated route (F7).
  */
 export function CustomerAuthModal() {
   const promptOpen   = useCustomerAuthStore((s) => s.promptOpen)
   const promptReason = useCustomerAuthStore((s) => s.promptReason)
   const closePrompt  = useCustomerAuthStore((s) => s.closePrompt)
+  const openPrompt   = useCustomerAuthStore((s) => s.openPrompt)
   const setSession   = useCustomerAuthStore((s) => s.setSession)
+  const searchParams = useSearchParams()
+  const router       = useRouter()
+
+  // Auto-open the modal when middleware redirects back with ?signin=<reason>.
+  // We deliberately don't strip the query param — the caller (middleware)
+  // owns the URL, and the modal ignores repeats via promptOpen === true.
+  useEffect(() => {
+    const reason = searchParams?.get('signin')
+    if (reason && !promptOpen) {
+      openPrompt(REASON_LABEL[reason] ?? 'to continue')
+    }
+  }, [searchParams, promptOpen, openPrompt])
 
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
@@ -55,6 +73,12 @@ export function CustomerAuthModal() {
             setError(null)
             const { token, user } = await customerAuthApi.google(response.credential)
             setSession(user, token)
+            // Bounce back to the gated page they were trying to reach.
+            // Only accept same-origin paths to avoid open-redirect abuse.
+            const next = searchParams?.get('next')
+            if (next && next.startsWith('/') && !next.startsWith('//')) {
+              router.replace(next)
+            }
           } catch (err: any) {
             setError(err?.message ?? 'Sign-in failed. Please try again.')
           } finally {

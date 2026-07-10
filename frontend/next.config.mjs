@@ -62,6 +62,10 @@ const nextConfig = {
           { key: 'X-Frame-Options',        value: 'SAMEORIGIN' },
           { key: 'Referrer-Policy',        value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy',     value: 'camera=(), microphone=(), geolocation=()' },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' https://checkout.razorpay.com; frame-src https://checkout.razorpay.com https://api.razorpay.com; img-src 'self' data: https://res.cloudinary.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.razorpay.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
+          }
         ],
       },
     ]

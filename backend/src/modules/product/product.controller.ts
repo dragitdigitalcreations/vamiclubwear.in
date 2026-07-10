@@ -7,6 +7,49 @@ import {
   ListProductsQuery,
   UpdateProductInput,
 } from './product.schema'
+import jwt from 'jsonwebtoken'
+
+const JWT_SECRET = process.env.JWT_SECRET ?? 'vami-dev-secret-change-in-production'
+
+function isAdminRequest(req: Request): boolean {
+  const authHeader = req.headers.authorization
+  if (authHeader?.startsWith('Bearer ')) {
+    try {
+      jwt.verify(authHeader.slice(7), JWT_SECRET)
+      return true
+    } catch {}
+  }
+  const apiKey = req.headers['x-api-key']
+  if (apiKey && (apiKey === process.env.ADMIN_API_KEY || apiKey === process.env.MANAGER_API_KEY)) {
+    return true
+  }
+  return false
+}
+
+function stripInternalFields(product: any, isAdmin: boolean) {
+  if (isAdmin || !product) return product
+  
+  const copy = { ...product }
+  delete copy.deletedAt
+  delete copy.barcode
+  delete copy.perColorBarcode
+
+  if (copy.variants && Array.isArray(copy.variants)) {
+    copy.variants = copy.variants.map((v: any) => {
+      const vCopy = { ...v }
+      delete vCopy.barcode
+      
+      if (vCopy.inventory && Array.isArray(vCopy.inventory)) {
+        const qty = vCopy.inventory.reduce((sum: number, i: any) => sum + (i.quantity || 0), 0)
+        const res = vCopy.inventory.reduce((sum: number, i: any) => sum + (i.reserved || 0), 0)
+        vCopy.inStock = (qty - res) > 0
+        delete vCopy.inventory
+      }
+      return vCopy
+    })
+  }
+  return copy
+}
 
 export const productController = {
 
@@ -56,6 +99,9 @@ export const productController = {
   ) => {
     try {
       const result = await productService.listProducts(req.query)
+      const isAdmin = isAdminRequest(req)
+      result.data = result.data.map(p => stripInternalFields(p, isAdmin))
+
       // Edge cache for 30s + serve stale for up to 5min while revalidating —
       // safe because admin product/inventory mutations bust the in-memory cache.
       res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=300')
@@ -72,7 +118,7 @@ export const productController = {
   ) => {
     try {
       const product = await productService.getProductById(req.params.id)
-      res.json(product)
+      res.json(stripInternalFields(product, isAdminRequest(req)))
     } catch (err) {
       next(err)
     }
@@ -86,7 +132,7 @@ export const productController = {
     try {
       const product = await productService.getProductBySlug(req.params.slug)
       res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=300')
-      res.json(product)
+      res.json(stripInternalFields(product, isAdminRequest(req)))
     } catch (err) {
       next(err)
     }

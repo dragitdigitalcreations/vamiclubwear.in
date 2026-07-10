@@ -27,69 +27,19 @@ router.post(
   }
 )
 
-// GET /api/public/orders/lookup?phone=xxx  — customer order history by phone
-// GET /api/public/orders/lookup?email=xxx  — customer order history by email
-router.get('/orders/lookup', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { phone, email } = req.query as { phone?: string; email?: string }
 
-    if (!phone && !email) {
-      res.status(400).json({ error: 'Provide phone or email to look up orders' })
-      return
-    }
-
-    // Minimum length to prevent fishing for orders by single digits
-    const lookup = phone ?? email ?? ''
-    if (lookup.replace(/\D/g, '').length < 6 && !lookup.includes('@')) {
-      res.status(400).json({ error: 'Provide a valid phone or email' })
-      return
-    }
-
-    const orders = await prisma.order.findMany({
-      where: {
-        OR: [
-          phone ? { customerPhone: { contains: phone.replace(/\D/g, ''), } } : {},
-          email ? { customerEmail: { equals: email.toLowerCase(), mode: 'insensitive' as const } } : {},
-        ].filter(o => Object.keys(o).length > 0),
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-      select: {
-        orderNumber:     true,
-        status:          true,
-        shippingStatus:  true,
-        fulfillmentType: true,
-        pickupReadyAt:   true,
-        pickedUpAt:      true,
-        awbNumber:       true,
-        trackingUrl:     true,
-        total:           true,
-        createdAt:       true,
-        customerName:    true,
-        items: {
-          select: {
-            quantity: true,
-            unitPrice: true,
-            variant: {
-              select: {
-                sku: true,
-                size: true,
-                color: true,
-                product: { select: { name: true, slug: true } },
-              },
-            },
-          },
-        },
-      },
-    })
-
-    res.json({ orders, count: orders.length })
-  } catch (err) { next(err) }
-})
 
 // GET /api/public/orders/:orderNumber — single order detail by order number
+// Requires email or phoneLast4 as a second factor for security
 router.get('/orders/:orderNumber', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const { email, phoneLast4 } = req.query as { email?: string; phoneLast4?: string }
+
+    if (!email && !phoneLast4) {
+      res.status(400).json({ error: 'Verification required: provide email or phoneLast4' })
+      return
+    }
+
     const order = await prisma.order.findUnique({
       where: { orderNumber: req.params.orderNumber },
       select: {
@@ -129,7 +79,20 @@ router.get('/orders/:orderNumber', async (req: Request, res: Response, next: Nex
       },
     })
 
-    if (!order) { res.status(404).json({ error: 'Order not found' }); return }
+    if (!order) {
+      res.status(404).json({ error: 'Order not found' })
+      return
+    }
+
+    const isValidEmail = email && order.customerEmail?.toLowerCase() === email.toLowerCase()
+    const isValidPhone = phoneLast4 && order.customerPhone?.slice(-4) === phoneLast4
+    
+    if (!isValidEmail && !isValidPhone) {
+      // Return 404 to avoid distinguishing between "wrong order" and "wrong verifier"
+      res.status(404).json({ error: 'Order not found' })
+      return
+    }
+
     res.json(order)
   } catch (err) { next(err) }
 })

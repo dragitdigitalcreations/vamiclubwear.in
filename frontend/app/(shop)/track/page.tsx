@@ -203,6 +203,7 @@ function TrackingResult({ data }: { data: TrackResult }) {
 function TrackContent() {
   const searchParams = useSearchParams()
   const [orderNum,  setOrderNum]  = useState(searchParams.get('order') ?? '')
+  const [emailOrPhone, setEmailOrPhone] = useState('')
   const [result,    setResult]    = useState<TrackResult | null>(null)
   const [loading,   setLoading]   = useState(false)
   const [error,     setError]     = useState<string | null>(null)
@@ -210,12 +211,13 @@ function TrackContent() {
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     const q = orderNum.trim()
-    if (!q) return
+    const verify = emailOrPhone.trim()
+    if (!q || !verify) return
     setLoading(true)
     setError(null)
     setResult(null)
     try {
-      const data = await ordersApi.track(q)
+      const data = await ordersApi.track(q, verify)
       setResult(data)
     } catch {
       setError('Order not found. Please check the order number and try again.')
@@ -230,24 +232,33 @@ function TrackContent() {
         <p className="mb-2 text-xs uppercase tracking-[0.3em] text-primary-light">Order Tracking</p>
         <h1 className="mb-8 font-display text-4xl font-bold text-on-background">Track Your Order</h1>
 
-        <form onSubmit={handleSearch} className="flex gap-2">
+        <form onSubmit={handleSearch} className="flex flex-col gap-3">
           <input
             type="text"
             value={orderNum}
             onChange={(e) => setOrderNum(e.target.value)}
-            placeholder="e.g. VCW-260407-0001"
+            placeholder="Order Number (e.g. VCW-260407-0001)"
             autoFocus
-            className="flex-1 border border-border bg-surface px-4 py-3 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
+            required
+            className="w-full border border-border bg-surface px-4 py-3 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
+          />
+          <input
+            type="text"
+            value={emailOrPhone}
+            onChange={(e) => setEmailOrPhone(e.target.value)}
+            placeholder="Email or Last 4 digits of Phone"
+            required
+            className="w-full border border-border bg-surface px-4 py-3 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
           />
           <button
             type="submit"
-            disabled={loading || !orderNum.trim()}
-            className="flex items-center gap-2 bg-primary px-5 py-3 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            disabled={loading || !orderNum.trim() || !emailOrPhone.trim()}
+            className="flex items-center justify-center gap-2 bg-primary px-5 py-3 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {loading ? (
               <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
             ) : (
-              <Search className="h-4 w-4" />
+              <>Track Order <ArrowRight className="h-4 w-4" /></>
             )}
           </button>
         </form>
