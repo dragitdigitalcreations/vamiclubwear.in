@@ -8,14 +8,13 @@ import {
   ExternalLink, Truck, Clock, CheckCircle, XCircle,
   MessageCircle, ArrowRight, MapPin, Pencil, Trash2, Save,
 } from 'lucide-react'
-import { ordersApi, customerAuthApi } from '@/lib/api'
+import { customerAuthApi } from '@/lib/api'
 import { useSavedAddress, type SavedAddress } from '@/hooks/useSavedAddress'
 import { useCustomerAuthStore } from '@/stores/customerAuthStore'
 import { LogIn, LogOut } from 'lucide-react'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-type Order = Awaited<ReturnType<typeof ordersApi.lookup>>['orders'][number]
 type CustomerOrder = Awaited<ReturnType<typeof customerAuthApi.orders>>['orders'][number]
 
 const STATUS_COLOR: Record<string, string> = {
@@ -49,7 +48,7 @@ const WHATSAPP_MSG    = 'Hi Vami Clubwear! I need help with my order.'
 
 // ─── Order row (expandable) ────────────────────────────────────────────────────
 
-function OrderRow({ order }: { order: Order | CustomerOrder }) {
+function OrderRow({ order }: { order: CustomerOrder }) {
   const [open, setOpen] = useState(false)
   const items = order.items.reduce((s, i) => s + i.quantity, 0)
 
@@ -408,7 +407,7 @@ export default function ProfilePage() {
                 ) : (
                   <>
                     <p className="text-[11px] text-muted">{orders.length} order{orders.length !== 1 ? 's' : ''}</p>
-                    {orders.map(o => <OrderRow key={o.orderNumber} order={o as CustomerOrder} />)}
+                    {orders.map(o => <OrderRow key={o.orderNumber} order={o} />)}
                   </>
                 )}
               </div>

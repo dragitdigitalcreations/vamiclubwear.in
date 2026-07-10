@@ -1,19 +1,18 @@
 'use client'
 
-import { useState, useEffect, useRef, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Package, Phone, Mail, ChevronRight, ExternalLink,
-  Truck, Clock, CheckCircle, XCircle, Search, ArrowLeft,
+  Package, ChevronRight, ExternalLink,
+  Truck, Clock, CheckCircle, XCircle, ArrowLeft,
 } from 'lucide-react'
-import { ordersApi } from '@/lib/api'
+import { customerAuthApi } from '@/lib/api'
 import { useCustomerAuthStore } from '@/stores/customerAuthStore'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type OrderSummary = Awaited<ReturnType<typeof ordersApi.lookup>>['orders'][number]
+type OrderSummary = Awaited<ReturnType<typeof customerAuthApi.orders>>['orders'][number]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -163,76 +162,39 @@ function OrderCard({ order }: { order: OrderSummary }) {
   )
 }
 
-// ─── Lookup form ──────────────────────────────────────────────────────────────
-
-type LookupMode = 'phone' | 'email'
+// ─── Signed-in customer order history ─────────────────────────────────────────
+// F2 removed the anonymous phone/email lookup endpoint. Middleware.ts gates
+// this route to signed-in customers only, so we always fetch via the
+// authenticated /customer/orders endpoint and never accept an untrusted
+// contact-detail query. If a visitor lands here without a session the
+// middleware has already redirected them to /?signin=required.
 
 function MyOrdersContent() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
   const customer = useCustomerAuthStore((s) => s.user)
 
-  // Default to email mode for signed-in customers (we have their email),
-  // phone mode otherwise (matches existing behaviour).
-  const phoneFromUrl = searchParams.get('phone') ?? ''
-  const emailFromUrl = searchParams.get('email') ?? ''
-  const initialEmail = emailFromUrl || customer?.email || ''
-
-  const [mode,    setMode]    = useState<LookupMode>(
-    phoneFromUrl ? 'phone' : (initialEmail ? 'email' : 'phone')
-  )
-  const [value,   setValue]   = useState(phoneFromUrl || initialEmail)
   const [orders,  setOrders]  = useState<OrderSummary[] | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState<string | null>(null)
-  const [searched, setSearched] = useState(false)
-  const autoLoadedRef = useRef(false)
 
-  async function runLookup(currentMode: LookupMode, q: string, opts?: { silentOnEmpty?: boolean }) {
+  useEffect(() => {
+    let cancelled = false
+    if (!customer) {
+      // Middleware normally prevents us from getting here; render an empty
+      // state instead of blocking.
+      setLoading(false)
+      return
+    }
     setLoading(true)
     setError(null)
-    setOrders(null)
-    setSearched(false)
-    try {
-      const res = await ordersApi.lookup(
-        currentMode === 'phone' ? { phone: q } : { email: q }
-      )
-      setOrders(res.orders)
-      setSearched(true)
-      // Update URL without reload
-      const params = new URLSearchParams()
-      params.set(currentMode, q)
-      router.replace(`/my-orders?${params}`, { scroll: false })
-    } catch {
-      if (!opts?.silentOnEmpty) {
-        setError('Could not look up orders. Please check and try again.')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Auto-load the signed-in customer's orders by email — saves them re-typing
-  // it on every visit (the audit flagged this as friction with no benefit).
-  // Skip if the URL already carries explicit lookup params, so deep links and
-  // shared "find my order" links keep working.
-  useEffect(() => {
-    if (autoLoadedRef.current) return
-    if (phoneFromUrl || emailFromUrl) return
-    if (!customer?.email) return
-    autoLoadedRef.current = true
-    setMode('email')
-    setValue(customer.email)
-    runLookup('email', customer.email, { silentOnEmpty: true })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customer?.email, phoneFromUrl, emailFromUrl])
-
-  async function handleLookup(e: React.FormEvent) {
-    e.preventDefault()
-    const q = value.trim()
-    if (!q) return
-    runLookup(mode, q)
-  }
+    customerAuthApi
+      .orders()
+      .then((res) => { if (!cancelled) setOrders(res.orders) })
+      .catch((err: any) => {
+        if (!cancelled) setError(err?.message ?? 'Could not load your orders.')
+      })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [customer?.id])
 
   return (
     <div className="mx-auto max-w-2xl px-4 pt-32 pb-10 md:px-8">
@@ -254,59 +216,14 @@ function MyOrdersContent() {
         <h1 className="mb-2 font-display text-4xl font-bold text-on-background">My Orders</h1>
         <p className="mb-10 text-sm text-muted">
           {customer?.email
-            ? <>Showing orders for <strong className="text-on-background">{customer.email}</strong>. Search by phone or a different email if needed.</>
-            : 'Enter the phone number or email you used at checkout to see all your orders.'}
+            ? <>Showing orders for <strong className="text-on-background">{customer.email}</strong>.</>
+            : 'Sign in to see your complete order history.'}
         </p>
-
-        {/* Mode toggle */}
-        <div className="mb-4 flex gap-1 border border-border p-1 w-fit">
-          {(['phone', 'email'] as LookupMode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => { setMode(m); setValue(''); setOrders(null); setSearched(false) }}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-widest transition-colors ${
-                mode === m ? 'bg-primary text-white' : 'text-muted hover:text-on-background'
-              }`}
-            >
-              {m === 'phone' ? <Phone className="h-3.5 w-3.5" /> : <Mail className="h-3.5 w-3.5" />}
-              {m === 'phone' ? 'Phone Number' : 'Email Address'}
-            </button>
-          ))}
-        </div>
-
-        {/* Lookup form */}
-        <form onSubmit={handleLookup} className="flex gap-2">
-          <div className="relative flex-1">
-            {mode === 'phone'
-              ? <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
-              : <Mail  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
-            }
-            <input
-              type={mode === 'email' ? 'email' : 'tel'}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder={mode === 'phone' ? 'e.g. 9876543210' : 'e.g. you@email.com'}
-              autoFocus
-              className="w-full border border-border bg-surface pl-10 pr-4 py-3 text-sm text-on-background placeholder:text-muted outline-hidden focus:border-on-background transition-colors"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !value.trim()}
-            className="flex items-center gap-2 bg-primary px-5 py-3 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {loading
-              ? <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-              : <Search className="h-4 w-4" />
-            }
-            <span className="hidden sm:inline">Find Orders</span>
-          </button>
-        </form>
 
         {error && (
           <motion.p
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="mt-3 text-sm text-red-400"
+            className="mb-6 text-sm text-red-400"
           >
             {error}
           </motion.p>
@@ -315,7 +232,39 @@ function MyOrdersContent() {
 
       {/* Results */}
       <AnimatePresence mode="wait">
-        {searched && orders !== null && (
+        {loading && (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="mt-10 flex justify-center py-16"
+          >
+            <span className="h-6 w-6 rounded-full border-2 border-muted/30 border-t-on-background animate-spin" />
+          </motion.div>
+        )}
+
+        {!loading && orders !== null && orders.length === 0 && (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mt-10 flex flex-col items-center gap-4 py-16 text-center"
+          >
+            <Package className="h-14 w-14 text-muted opacity-20" />
+            <p className="font-display text-xl font-bold text-on-background">No orders yet</p>
+            <p className="text-sm text-muted max-w-xs">
+              You haven't placed any orders yet. Start browsing our collection.
+            </p>
+            <Link
+              href="/products"
+              className="mt-4 inline-flex items-center gap-2 bg-primary px-7 py-3 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
+            >
+              Start Shopping
+            </Link>
+          </motion.div>
+        )}
+
+        {!loading && orders !== null && orders.length > 0 && (
           <motion.div
             key="results"
             initial={{ opacity: 0, y: 16 }}
@@ -323,45 +272,14 @@ function MyOrdersContent() {
             exit={{ opacity: 0 }}
             className="mt-10"
           >
-            {orders.length === 0 ? (
-              <div className="flex flex-col items-center gap-4 py-16 text-center">
-                <Package className="h-14 w-14 text-muted opacity-20" />
-                <p className="font-display text-xl font-bold text-on-background">No orders found</p>
-                <p className="text-sm text-muted max-w-xs">
-                  We couldn't find any orders for that {mode === 'phone' ? 'phone number' : 'email address'}.
-                  Make sure it matches what you entered at checkout.
-                </p>
-                <Link
-                  href="/products"
-                  className="mt-4 inline-flex items-center gap-2 bg-primary px-7 py-3 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-90"
-                >
-                  Start Shopping
-                </Link>
-              </div>
-            ) : (
-              <>
-                <p className="mb-4 text-xs text-muted">
-                  Found <strong className="text-on-background">{orders.length}</strong> order{orders.length !== 1 ? 's' : ''}
-                </p>
-                <div className="space-y-3">
-                  {orders.map((order) => (
-                    <OrderCard key={order.orderNumber} order={order} />
-                  ))}
-                </div>
-              </>
-            )}
-          </motion.div>
-        )}
-
-        {!searched && !loading && (
-          <motion.div
-            key="empty"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="mt-16 flex flex-col items-center gap-3 text-center"
-          >
-            <Package className="h-12 w-12 text-muted opacity-15" />
-            <p className="text-sm text-muted">Your complete order history will appear here.</p>
-            <p className="text-xs text-muted">Each order shows status, tracking, and item details.</p>
+            <p className="mb-4 text-xs text-muted">
+              Found <strong className="text-on-background">{orders.length}</strong> order{orders.length !== 1 ? 's' : ''}
+            </p>
+            <div className="space-y-3">
+              {orders.map((order) => (
+                <OrderCard key={order.orderNumber} order={order} />
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

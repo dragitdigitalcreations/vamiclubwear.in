@@ -8,12 +8,16 @@ import {
   ExternalLink, Truck, Clock, CheckCircle, XCircle,
   MessageCircle, ArrowRight, MapPin, Pencil, Trash2, Save,
 } from 'lucide-react'
-import { ordersApi } from '@/lib/api'
+import { customerAuthApi } from '@/lib/api'
 import { useSavedAddress, type SavedAddress } from '@/hooks/useSavedAddress'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+// NOTE: ProfileDrawer is currently not imported anywhere in the app — the
+// live profile UI is app/(shop)/profile/page.tsx. This file is kept because
+// its layout may be reused. Post-F2 (unauth phone/email lookup removed) the
+// drawer sources orders from the authenticated /customer/orders endpoint.
 
-type Order = Awaited<ReturnType<typeof ordersApi.lookup>>['orders'][number]
+type Order = Awaited<ReturnType<typeof customerAuthApi.orders>>['orders'][number]
 type LookupMode = 'phone' | 'email'
 
 const STATUS_COLOR: Record<string, string> = {
@@ -314,14 +318,18 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
     setError(null)
     setSearched(false)
     try {
-      const res = await ordersApi.lookup(mode === 'phone' ? { phone: q } : { email: q })
-      setOrders(res.orders)
+      // Post-F2: no more unauth phone/email lookup. This drawer would fetch
+      // the signed-in customer's own orders and then client-side filter by
+      // the entered phone/email. Kept as a no-op stub until the drawer is
+      // wired back into a real host component.
+      const res = await customerAuthApi.orders()
+      const filtered = res.orders.filter(() => true)
+      setOrders(filtered)
       setSearched(true)
-      // Persist lookup for next visit
       localStorage.setItem('vami-lookup-value', q)
       localStorage.setItem('vami-lookup-mode',  mode)
     } catch {
-      setError('Could not find orders. Please check and try again.')
+      setError('Could not find orders. Please sign in and try again.')
     } finally {
       setLoading(false)
     }
