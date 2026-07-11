@@ -49,7 +49,7 @@ router.post('/pos', async (req: Request, res: Response, next: NextFunction) => {
  * Heavy DB work happens after the response is sent, except on validation errors
  * where we return 400 immediately (so Delhivery knows the payload is bad).
  */
-router.post('/delhivery', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/delhivery', async (req: Request, res: Response, _next: NextFunction) => {
   // ── 1. Auth guard ────────────────────────────────────────────────────────
   const secret = process.env.DELHIVERY_WEBHOOK_SECRET
   if (secret) {
@@ -77,11 +77,13 @@ router.post('/delhivery', async (req: Request, res: Response, next: NextFunction
   res.status(200).json({ received: true })
 
   // ── 4. Process asynchronously after response ──────────────────────────────
+  // The 200 above is already flushed, so we CANNOT call next(err) here —
+  // the global error handler would try to write a second response and throw
+  // ERR_HTTP_HEADERS_SENT. Log directly instead; Delhivery already got its ack.
   try {
     await webhookService.processDelhiveryWebhook(parse.data, req.body)
   } catch (err) {
-    // Can't send HTTP error after res.json() — log via Express error handler
-    next(err)
+    console.error('[webhook:delhivery] post-ack processing failed:', err)
   }
 })
 
