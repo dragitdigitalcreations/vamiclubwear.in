@@ -10,8 +10,17 @@ export function errorHandler(
   err: Error,
   _req: Request,
   res: Response,
-  _next: NextFunction
+  next: NextFunction
 ): void {
+  // Bail early if the response has already started — a route handler
+  // downstream already wrote the status/headers (mid-stream throw,
+  // duplicate next(err), etc). Writing a second body triggers
+  // ERR_HTTP_HEADERS_SENT and clutters Cloud Run logs. Delegating to
+  // Express's default handler closes the socket cleanly instead.
+  if (res.headersSent) {
+    return next(err)
+  }
+
   // Known application error
   if (err instanceof AppError) {
     res.status(err.statusCode).json({ error: err.message })
