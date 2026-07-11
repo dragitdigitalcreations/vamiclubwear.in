@@ -54,11 +54,13 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'vami-auth',
-      // F4b: token no longer persists to localStorage — the browser stores
-      // it as an httpOnly cookie set by the backend, out of reach of any XSS.
-      // We keep `user` cached so the UI doesn't flash "signed out" on every
-      // reload while the cookie-backed session is still valid.
-      partialize: (s) => ({ user: s.user, isAuthenticated: s.isAuthenticated }),
+      // F4b transitional: we prefer the httpOnly cookie set by the backend,
+      // but also persist the raw token so the frontend can attach
+      // Authorization: Bearer <token> as a fallback. This is what unbreaks
+      // production while the backend F4b rollout is still stabilising —
+      // once every backend replica reliably sets the vami_admin cookie we
+      // can drop `token` from persistence again.
+      partialize: (s) => ({ user: s.user, token: s.token, isAuthenticated: s.isAuthenticated }),
     }
   )
 )

@@ -16,16 +16,29 @@ export class ApiError extends Error {
   }
 }
 
-// F4b: session tokens live in httpOnly cookies now, not localStorage.
-// - Browser calls go to relative `/api/...`, proxied by the Next.js rewrite
-//   to the backend. That's same-origin, so cookies flow automatically with
-//   the fetch default `credentials: 'same-origin'` — no explicit include.
-// - Server-side calls hit the backend directly. Those are internal (RSC /
-//   sitemap fetches for public data) and never need a session cookie.
+// F4b transitional: the backend has been switched to httpOnly session
+// cookies, but during rollout we ALSO send Authorization: Bearer if we
+// still have the raw token in memory (Zustand). The backend accepts
+// either — this belt-and-suspenders keeps auth working even if a request
+// misses the cookie (browser cleared cookies, cookie not yet set, or the
+// backend replica isn't on the F4b build yet).
+function getAdminToken(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const stored = localStorage.getItem('vami-auth')
+    if (!stored) return null
+    return JSON.parse(stored)?.state?.token ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getAdminToken()
   const res = await fetch(`${BASE_URL}/api${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
     ...init,
@@ -650,13 +663,25 @@ export interface CustomerProfile {
   picture: string | null
 }
 
-// F4b: customer session cookie replaces the localStorage bearer token.
-// Same-origin rewrite means the cookie flows automatically — no Authorization
-// header, no credentials tweak.
+// F4b transitional — same dual-auth story as request() above but for the
+// customer session (vami-customer-auth store, vami_customer cookie).
+function getCustomerToken(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const stored = localStorage.getItem('vami-customer-auth')
+    if (!stored) return null
+    return JSON.parse(stored)?.state?.token ?? null
+  } catch {
+    return null
+  }
+}
+
 async function customerRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getCustomerToken()
   const res = await fetch(`${BASE_URL}/api${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
     ...init,

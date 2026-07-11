@@ -53,10 +53,12 @@ export const useCustomerAuthStore = create<CustomerAuthState>()(
     }),
     {
       name: 'vami-customer-auth',
-      // F4b: only `user` (non-sensitive profile fields) persists to
-      // localStorage. The JWT lives in an httpOnly cookie the backend set,
-      // out of reach of any XSS on the storefront.
-      partialize: (s) => ({ user: s.user }),
+      // F4b transitional: prefer the httpOnly cookie the backend sets, but
+      // also persist the raw JWT so lib/api.ts customerRequest() can attach
+      // Authorization: Bearer as a fallback. Once every backend replica is
+      // reliably setting the vami_customer cookie we can drop `token` from
+      // persistence again.
+      partialize: (s) => ({ user: s.user, token: s.token }),
     },
   ),
 )
