@@ -12,6 +12,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Needed by the failure-notification step to open/update a tracking issue.
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,3 +51,58 @@ jobs:
           SERVICE_URL=$(gcloud run services describe vami-backend --region asia-southeast1 --format='value(status.url)')
           echo "Deployed to: $SERVICE_URL"
           curl --fail --show-error --silent "$SERVICE_URL/health"
+
+      # ── Failure notification ────────────────────────────────────────────────
+      # If ANY step above fails (build, deploy, or smoke test), open a GitHub
+      # issue — or comment on the existing open one — so a red deploy can never
+      # sit unnoticed again. GitHub emails repo watchers when an issue is
+      # opened/commented, which is the zero-external-dependency alert channel.
+      # Deduplicates on the `deploy-failure` label so repeated failures pile
+      # onto a single issue instead of spawning dozens.
+      - name: Notify on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          TITLE="🚨 Backend deploy to Cloud Run is failing"
+          BODY="The **Deploy Backend to Cloud Run** workflow failed.
+
+          - **Commit:** \`${COMMIT_SHA}\`
+          - **Message:** ${COMMIT_MSG%%$'\n'*}
+          - **Failed run:** ${RUN_URL}
+
+          Production is still serving the **last successfully deployed** revision,
+          so the site is up — but any changes in this and later commits are NOT
+          live until a deploy goes green. Check the run log for the failing step
+          (a \`tsc\` error will show under 'Building Container' in the Cloud Build
+          output)."
+
+          # Find an existing open tracking issue to avoid spamming duplicates.
+          EXISTING=$(gh issue list --state open --label deploy-failure --json number --jq '.[0].number' 2>/dev/null || echo "")
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+            echo "Commented on existing issue #$EXISTING"
+          else
+            # Create the label if it doesn't exist yet (ignore error if it does).
+            gh label create deploy-failure --color B60205 --description "Automated: a deploy workflow failed" 2>/dev/null || true
+            gh issue create --title "$TITLE" --body "$BODY" --label deploy-failure
+            echo "Opened new deploy-failure issue"
+          fi
+
+      # On a green deploy, close any open failure-tracking issue so the issue
+      # list reflects current state (open deploy-failure issue == still broken).
+      - name: Resolve failure issue on success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          for N in $(gh issue list --state open --label deploy-failure --json number --jq '.[].number'); do
+            gh issue comment "$N" --body "✅ Deploy is green again — ${RUN_URL}. Auto-closing."
+            gh issue close "$N"
+            echo "Closed issue #$N"
+          done
