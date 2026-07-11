@@ -9,59 +9,15 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-
-// ─── Hex → nearest colour name ────────────────────────────────────────────────
-
-const COLOR_MAP: Array<[number, number, number, string]> = [
-  [255,255,255,'White'],[0,0,0,'Black'],[128,128,128,'Grey'],
-  [192,192,192,'Silver'],[255,255,0,'Yellow'],[255,215,0,'Gold'],
-  [255,165,0,'Orange'],[255,140,0,'Dark Orange'],[255,69,0,'Red Orange'],
-  [255,0,0,'Red'],[220,20,60,'Crimson'],[139,0,0,'Dark Red'],
-  [255,20,147,'Deep Pink'],[255,105,180,'Hot Pink'],[255,182,193,'Light Pink'],
-  [255,192,203,'Pink'],[128,0,32,'Burgundy'],[128,0,0,'Maroon'],
-  [153,0,76,'Wine'],[0,128,0,'Green'],[0,255,0,'Lime Green'],
-  [34,139,34,'Forest Green'],[0,100,0,'Dark Green'],[50,205,50,'Medium Green'],
-  [144,238,144,'Light Green'],[0,255,127,'Spring Green'],[64,224,208,'Turquoise'],
-  [0,128,128,'Teal'],[0,139,139,'Dark Cyan'],[0,255,255,'Cyan'],
-  [135,206,235,'Sky Blue'],[0,0,255,'Blue'],[0,0,139,'Dark Blue'],
-  [70,130,180,'Steel Blue'],[100,149,237,'Cornflower Blue'],[173,216,230,'Light Blue'],
-  [25,25,112,'Midnight Blue'],[0,0,128,'Navy Blue'],[75,0,130,'Indigo'],
-  [148,0,211,'Violet'],[128,0,128,'Purple'],[139,0,139,'Dark Magenta'],
-  [238,130,238,'Orchid'],[218,112,214,'Plum'],[216,191,216,'Thistle'],
-  [255,0,255,'Magenta'],[210,180,140,'Tan'],[244,164,96,'Sandy Brown'],
-  [222,184,135,'Burlywood'],[205,133,63,'Peru'],[139,69,19,'Saddle Brown'],
-  [160,82,45,'Sienna'],[101,67,33,'Dark Brown'],[92,64,51,'Mocha Brown'],
-  [245,245,220,'Beige'],[255,228,196,'Bisque'],[255,248,220,'Cream'],
-  [253,245,230,'Old Lace'],[240,230,140,'Khaki'],[189,183,107,'Dark Khaki'],
-  [128,128,0,'Olive'],[107,142,35,'Olive Green'],[154,205,50,'Yellow Green'],
-  [80,200,120,'Emerald Green'],[0,201,87,'Emerald'],[127,255,0,'Chartreuse'],
-  [255,127,80,'Coral'],[240,128,128,'Light Coral'],[250,128,114,'Salmon'],
-  [233,150,122,'Dark Salmon'],[255,160,122,'Light Salmon'],
-  [176,196,222,'Light Steel Blue'],[230,230,250,'Lavender'],
-  [147,112,219,'Medium Purple'],[123,104,238,'Medium Slate Blue'],
-  [72,61,139,'Dark Slate Blue'],[106,90,205,'Slate Blue'],
-  [255,250,250,'Snow White'],[245,245,245,'Off White'],
-  [112,128,144,'Slate Grey'],[47,79,79,'Dark Slate Grey'],
-  [105,105,105,'Dim Grey'],[169,169,169,'Dark Grey'],
-]
-
-function hexToColorName(hex: string): string {
-  const h = hex.replace('#', '')
-  if (h.length !== 6) return ''
-  const r = parseInt(h.slice(0,2), 16)
-  const g = parseInt(h.slice(2,4), 16)
-  const b = parseInt(h.slice(4,6), 16)
-  let best = '', bestDist = Infinity
-  for (const [cr,cg,cb,name] of COLOR_MAP) {
-    const d = (r-cr)**2 + (g-cg)**2 + (b-cb)**2
-    if (d < bestDist) { bestDist = d; best = name }
-  }
-  return best
-}
+import { ColorWheelPicker, hexToColorName } from './ColorWheelPicker'
 
 // ─── Option lists ─────────────────────────────────────────────────────────────
 
-const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', '5XL', '6XL', '7XL', 'Free Size', 'Custom']
+// Ordered sizes participate in range selection (click S then XXXL → everything
+// between gets selected). Free Size / Custom only ever toggle individually.
+const RANGE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', '5XL', '6XL', '7XL']
+const SIZE_OPTIONS = [...RANGE_SIZES, 'Free Size', 'Custom']
+
 const FABRIC_OPTIONS = [
   'Pure Silk', 'Georgette', 'Chiffon', 'Velvet', 'Cotton', 'Linen',
   'Crepe', 'Net', 'Organza', 'Brocade', 'Satin', 'Rayon',
@@ -96,18 +52,29 @@ function generateSku(
   return `VCW-${slugCode}-${colorCode}-${sizeCode}-${fabricCode}-${styleCode}-${idx}`
 }
 
+// ─── Variant grouping ──────────────────────────────────────────────────────────
+// groupId links the sibling rows spawned from one size-chip grid (one colour
+// block = one group). Client-only: stripped from the API payload on submit.
+
+export function newGroupId(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `g-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
 // ─── Form shape (matches ProductUploadForm's productSchema) ────────────────────
 
 interface VariantFormRow {
-  id?:      string
-  sku:      string
-  size?:    string
-  color?:   string
+  id?:       string
+  sku:       string
+  size?:     string
+  color?:    string
   colorHex?: string
-  fabric?:  string
-  style?:   string
-  price:    number
-  stock?:   number
+  fabric?:   string
+  style?:    string
+  price:     number
+  stock?:    number
+  groupId?:  string
 }
 
 interface FormValues {
@@ -116,25 +83,75 @@ interface FormValues {
   variants: VariantFormRow[]
 }
 
+// ─── Size chip grid ───────────────────────────────────────────────────────────
+
+function SizeChipGrid({
+  ownSize,
+  groupSizes,
+  onToggle,
+}: {
+  ownSize:    string
+  groupSizes: string[]
+  onToggle:   (size: string) => void
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-1.5">
+        {SIZE_OPTIONS.map((s) => {
+          const isOwn      = s === ownSize
+          const isSelected = groupSizes.includes(s)
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onToggle(s)}
+              aria-pressed={isSelected}
+              className={cn(
+                'min-w-10 rounded border px-2.5 py-1.5 text-xs font-medium transition-colors',
+                isOwn
+                  ? 'border-accent bg-accent text-accent-foreground'
+                  : isSelected
+                    ? 'border-accent/60 bg-accent/15 text-on-background'
+                    : 'border-border bg-input text-muted hover:border-ring hover:text-on-background',
+              )}
+            >
+              {s}
+            </button>
+          )
+        })}
+      </div>
+      <p className="text-xs text-muted">
+        Tap one size, then another, to auto-select every size between them.
+        Tap a selected size to remove just that one — each size stays its own row with its own price &amp; stock.
+      </p>
+    </div>
+  )
+}
+
 // ─── Single row ───────────────────────────────────────────────────────────────
 
 function VariantRow({
   index,
   productSlug,
+  groupSizes,
+  onToggleSize,
   onRemove,
 }: {
-  index:       number
-  productSlug: string
-  onRemove:    () => void
+  index:        number
+  productSlug:  string
+  groupSizes:   string[]
+  onToggleSize: (size: string, anchor: string | null) => string | null
+  onRemove:     () => void
 }) {
   const [expanded, setExpanded] = useState(true)
+  // Last clicked (still-selected) size — the start point of a range selection
+  const [anchor, setAnchor] = useState<string | null>(null)
   const { register, setValue, control, formState: { errors } } = useFormContext<FormValues>()
 
   const size     = useWatch({ control, name: `variants.${index}.size` })
   const color    = useWatch({ control, name: `variants.${index}.color` })
   const fabric   = useWatch({ control, name: `variants.${index}.fabric` })
   const style    = useWatch({ control, name: `variants.${index}.style` })
-  const colorHex = useWatch({ control, name: `variants.${index}.colorHex` }) ?? '#888888'
 
   // Auto-generate SKU from slug + dimensions. Runs unconditionally so every
   // variant always has a valid, unique SKU — even with partial dimensions.
@@ -184,55 +201,43 @@ function VariantRow({
       {expanded && (
         <div className="border-t border-border px-4 pb-4 pt-4 space-y-5">
 
-          {/* Row 1: Size + Color */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {/* SIZE */}
-            <div className="space-y-1.5">
-              <Label>Size</Label>
-              <select
-                className="flex h-9 w-full border border-border bg-input px-3 py-1 text-sm text-on-background focus:outline-hidden focus:ring-1 focus:ring-ring"
-                {...register(`variants.${index}.size`)}
-              >
-                <option value="">Select size…</option>
-                {SIZE_OPTIONS.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
+          {/* SIZE — multi-select chips with range fill */}
+          <div className="space-y-1.5">
+            <Label>Sizes</Label>
+            <SizeChipGrid
+              ownSize={size ?? ''}
+              groupSizes={groupSizes}
+              onToggle={(s) => setAnchor(onToggleSize(s, anchor))}
+            />
+          </div>
 
-            {/* COLOR */}
-            <div className="space-y-1.5">
-              <Label>Colour Name</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="e.g. Emerald Green"
-                  {...register(`variants.${index}.color`)}
-                />
-                <Controller
-                  control={control}
-                  name={`variants.${index}.colorHex`}
-                  render={({ field }) => (
-                    <input
-                      type="color"
-                      value={field.value ?? '#888888'}
-                      onChange={(e) => {
-                        field.onChange(e.target.value)
-                        const name = hexToColorName(e.target.value)
-                        if (name) setValue(`variants.${index}.color`, name, { shouldValidate: true })
-                      }}
-                      className="h-9 w-10 cursor-pointer rounded border border-border bg-input p-0.5"
-                      title="Pick swatch colour"
-                    />
-                  )}
-                />
-              </div>
-              {colorHex && colorHex !== '#888888' && (
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: colorHex }} />
-                  <span className="text-xs text-muted font-mono">{colorHex}</span>
-                </div>
-              )}
+          {/* COLOR — free-text name + colour wheel (wheel suggests, name wins) */}
+          <div className="space-y-1.5">
+            <Label>Colour Name</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g. Emerald Green"
+                className="max-w-xs"
+                {...register(`variants.${index}.color`)}
+              />
+              <Controller
+                control={control}
+                name={`variants.${index}.colorHex`}
+                render={({ field }) => (
+                  <ColorWheelPicker
+                    value={field.value}
+                    onChange={(hex) => {
+                      field.onChange(hex)
+                      const name = hexToColorName(hex)
+                      if (name) setValue(`variants.${index}.color`, name, { shouldValidate: true })
+                    }}
+                  />
+                )}
+              />
             </div>
+            <p className="text-xs text-muted">
+              Pick an estimated shade on the wheel — the name auto-fills, but you can overwrite it with your own.
+            </p>
           </div>
 
           {/* Row 2: Fabric + Style */}
@@ -355,20 +360,84 @@ function VariantRow({
 
 // ─── VariantBuilder ────────────────────────────────────────────────────────────
 
-const BLANK_VARIANT: VariantFormRow = {
-  sku: '', size: '', color: '', colorHex: '#000000', fabric: '', style: '', price: 0, stock: 0,
+function newBlankVariant(): VariantFormRow {
+  return {
+    sku: '', size: '', color: '', colorHex: '', fabric: '', style: '',
+    price: 0, stock: 0, groupId: newGroupId(),
+  }
 }
 
 export function VariantBuilder({ productSlug, basePrice: _basePrice }: { productSlug: string; basePrice: number }) {
-  const { control, getValues, formState: { errors } } = useFormContext<FormValues>()
+  const { control, getValues, setValue, formState: { errors } } = useFormContext<FormValues>()
   const { fields, append, remove } = useFieldArray({ control, name: 'variants' })
+  const watchedRows = useWatch({ control, name: 'variants' }) ?? []
+
+  // Sizes currently selected in a row's group (drives the chip grid highlight)
+  const groupSizesFor = (index: number): string[] => {
+    const gid = watchedRows[index]?.groupId
+    if (!gid) return watchedRows[index]?.size ? [watchedRows[index].size!] : []
+    return watchedRows
+      .filter((r) => r?.groupId === gid && r?.size)
+      .map((r) => r.size!)
+  }
+
+  // Chip click handler. Returns the next range anchor for the clicking row.
+  // - unselected chip + no usable anchor → select just that size
+  // - unselected chip + anchor          → select every ordered size in [anchor..clicked]
+  // - selected chip                     → unselect only that size (remove its row;
+  //   if it's the clicking row's own size, clear it but keep the row)
+  const toggleSize = (rowIndex: number, clicked: string, anchor: string | null): string | null => {
+    const rows = getValues('variants')
+    const row = rows[rowIndex]
+    if (!row) return null
+    const gid = row.groupId
+
+    const selectedIdx = new Map<string, number>()
+    rows.forEach((r, i) => {
+      if (gid ? r.groupId === gid : i === rowIndex) {
+        if (r.size) selectedIdx.set(r.size, i)
+      }
+    })
+
+    if (selectedIdx.has(clicked)) {
+      const idx = selectedIdx.get(clicked)!
+      if (idx === rowIndex) {
+        setValue(`variants.${rowIndex}.size`, '', { shouldDirty: true, shouldValidate: true })
+      } else {
+        remove(idx)
+      }
+      return null
+    }
+
+    let range = [clicked]
+    const a = anchor ? RANGE_SIZES.indexOf(anchor) : -1
+    const b = RANGE_SIZES.indexOf(clicked)
+    if (a !== -1 && b !== -1 && anchor && selectedIdx.has(anchor)) {
+      range = RANGE_SIZES.slice(Math.min(a, b), Math.max(a, b) + 1)
+    }
+    const missing = range.filter((s) => !selectedIdx.has(s))
+
+    // Fill this row first if it has no size yet, then clone siblings for the
+    // rest (same colour/fabric/style/price/stock; fresh SKU, no backend id).
+    let toAppend = missing
+    if (!row.size && missing.length > 0) {
+      const own = missing.includes(clicked) ? clicked : missing[0]
+      setValue(`variants.${rowIndex}.size`, own, { shouldDirty: true, shouldValidate: true })
+      toAppend = missing.filter((s) => s !== own)
+    }
+    if (toAppend.length > 0) {
+      append(toAppend.map((s) => ({ ...row, id: undefined, sku: '', size: s })))
+    }
+    return clicked
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs text-muted">
-            Each variant = one purchasable SKU (Size × Colour × Fabric × Style)
+            Each variant = one purchasable SKU (Size × Colour × Fabric × Style).
+            Selecting multiple sizes creates one row per size automatically.
           </p>
         </div>
         <Badge variant="secondary">{fields.length} variant{fields.length !== 1 ? 's' : ''}</Badge>
@@ -390,6 +459,8 @@ export function VariantBuilder({ productSlug, basePrice: _basePrice }: { product
               key={field.id}
               index={index}
               productSlug={productSlug}
+              groupSizes={groupSizesFor(index)}
+              onToggleSize={(size, anchor) => toggleSize(index, size, anchor)}
               onRemove={() => remove(index)}
             />
           ))}
@@ -403,9 +474,9 @@ export function VariantBuilder({ productSlug, basePrice: _basePrice }: { product
         onClick={() => {
           const all = getValues('variants')
           const last = all.length > 0 ? all[all.length - 1] : null
-          // Clone dimensions but drop id + sku so the new row is clearly a fresh
-          // variant (backend creates it; no accidental match against the sibling).
-          append(last ? { ...last, id: undefined, sku: '' } : { ...BLANK_VARIANT })
+          // Clone dimensions but drop id + sku and start a fresh size group so
+          // the new block's chip grid begins with only its own size selected.
+          append(last ? { ...last, id: undefined, sku: '', groupId: newGroupId() } : newBlankVariant())
         }}
       >
         <Plus className="h-4 w-4" />

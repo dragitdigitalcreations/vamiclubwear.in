@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react'
 import { Loader2, Save } from 'lucide-react'
 
 import { productsApi, ApiError } from '@/lib/api'
-import { VariantBuilder } from './VariantBuilder'
+import { VariantBuilder, newGroupId } from './VariantBuilder'
 import { MediaUploader, MediaItem } from './MediaUploader'
 import { toast } from '@/stores/toastStore'
 import { Input } from '@/components/ui/input'
@@ -32,6 +32,9 @@ const variantSchema = z.object({
   style:    z.string().optional(),
   price:    z.number({ invalid_type_error: 'Price must be a number' }).positive('Price must be > 0'),
   stock:    z.number().int().min(0).default(0),
+  // Client-only: links sibling rows spawned from one size-chip grid.
+  // Stripped from the API payload in onSubmit.
+  groupId:  z.string().optional(),
 })
 
 const productSchema = z.object({
@@ -53,6 +56,21 @@ const productSchema = z.object({
 type ProductFormValues = z.infer<typeof productSchema>
 
 // ─── Slug generation from product name ────────────────────────────────────
+
+// Existing variants arrive without groupId (backend doesn't store it). Group
+// them by colour/fabric/style so each combination's size-chip grid lights up
+// with all of its sizes on the edit form.
+function assignGroupIds(
+  variants: ProductFormValues['variants'],
+): ProductFormValues['variants'] {
+  const byKey = new Map<string, string>()
+  return variants.map((v) => {
+    if (v.groupId) return v
+    const key = `${v.color ?? ''}|${v.fabric ?? ''}|${v.style ?? ''}`
+    if (!byKey.has(key)) byKey.set(key, newGroupId())
+    return { ...v, groupId: byKey.get(key)! }
+  })
+}
 
 function toSlug(name: string): string {
   return name
@@ -137,7 +155,7 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
       categoryId:      initialData?.categoryId  ?? '',
       isFeatured:      initialData?.isFeatured  ?? false,
       isActive:        initialData?.isActive    ?? true,
-      variants:        initialData?.variants    ?? [],
+      variants:        assignGroupIds(initialData?.variants ?? []),
     },
     mode: 'onBlur',
   })
@@ -212,6 +230,8 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
 
     const payload = {
       ...data,
+      // groupId is client-side UI state (size-chip grouping) — never send it
+      variants: data.variants.map(({ groupId: _groupId, ...v }) => v),
       barcode: data.perColorBarcode ? '' : (data.barcode ?? ''),
       colorBarcodes: colorBarcodesPayload,
       media: mediaPayload,
