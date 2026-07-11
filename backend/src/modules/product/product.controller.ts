@@ -11,7 +11,12 @@ import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'vami-dev-secret-change-in-production'
 
-function isAdminRequest(req: Request): boolean {
+// Only reads request headers, so accept any Request variant. Typing the
+// param as the full `Request` broke `listProducts`, whose req is narrowed to
+// Request<{},{},{},ListProductsQuery> (query has numeric fields, not ParsedQs)
+// and is therefore not assignable to the default Request — that mismatch was
+// failing `tsc` and blocking every Cloud Run deploy since the F6 change.
+function isAdminRequest(req: Pick<Request, 'headers'>): boolean {
   const authHeader = req.headers.authorization
   if (authHeader?.startsWith('Bearer ')) {
     try {
