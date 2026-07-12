@@ -1,7 +1,7 @@
 'use client'
 
 import { useFieldArray, useFormContext, useWatch, Controller } from 'react-hook-form'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
@@ -75,6 +75,11 @@ interface VariantFormRow {
   price:     number
   stock?:    number
   groupId?:  string
+  // Stable React key. react-hook-form regenerates field.id on every setValue
+  // (the SKU auto-fill effect fires one per keystroke), which would remount
+  // rows and wipe UI state — collapsed/expanded, the colour-wheel popover,
+  // the range anchor. Client-only: stripped from the payload like groupId.
+  rowKey?:   string
 }
 
 interface FormValues {
@@ -135,17 +140,17 @@ function VariantRow({
   productSlug,
   groupSizes,
   onToggleSize,
+  onColorChange,
   onRemove,
 }: {
-  index:        number
-  productSlug:  string
-  groupSizes:   string[]
-  onToggleSize: (size: string, anchor: string | null) => string | null
-  onRemove:     () => void
+  index:         number
+  productSlug:   string
+  groupSizes:    string[]
+  onToggleSize:  (size: string) => void
+  onColorChange: (patch: { color?: string; colorHex?: string }) => void
+  onRemove:      () => void
 }) {
   const [expanded, setExpanded] = useState(true)
-  // Last clicked (still-selected) size — the start point of a range selection
-  const [anchor, setAnchor] = useState<string | null>(null)
   const { register, setValue, control, formState: { errors } } = useFormContext<FormValues>()
 
   const size     = useWatch({ control, name: `variants.${index}.size` })
@@ -207,7 +212,7 @@ function VariantRow({
             <SizeChipGrid
               ownSize={size ?? ''}
               groupSizes={groupSizes}
-              onToggle={(s) => setAnchor(onToggleSize(s, anchor))}
+              onToggle={onToggleSize}
             />
           </div>
 
@@ -218,7 +223,11 @@ function VariantRow({
               <Input
                 placeholder="e.g. Emerald Green"
                 className="max-w-xs"
-                {...register(`variants.${index}.color`)}
+                {...register(`variants.${index}.color`, {
+                  // One size group = one colour block — keep every sibling row
+                  // (and its SKU / per-colour barcode key) on the same name.
+                  onChange: (e) => onColorChange({ color: e.target.value }),
+                })}
               />
               <Controller
                 control={control}
@@ -230,6 +239,7 @@ function VariantRow({
                       field.onChange(hex)
                       const name = hexToColorName(hex)
                       if (name) setValue(`variants.${index}.color`, name, { shouldValidate: true })
+                      onColorChange({ colorHex: hex, ...(name ? { color: name } : {}) })
                     }}
                   />
                 )}
@@ -237,6 +247,7 @@ function VariantRow({
             </div>
             <p className="text-xs text-muted">
               Pick an estimated shade on the wheel — the name auto-fills, but you can overwrite it with your own.
+              The colour applies to every size in this group.
             </p>
           </div>
 
@@ -363,7 +374,7 @@ function VariantRow({
 function newBlankVariant(): VariantFormRow {
   return {
     sku: '', size: '', color: '', colorHex: '', fabric: '', style: '',
-    price: 0, stock: 0, groupId: newGroupId(),
+    price: 0, stock: 0, groupId: newGroupId(), rowKey: newGroupId(),
   }
 }
 
@@ -371,6 +382,11 @@ export function VariantBuilder({ productSlug, basePrice: _basePrice }: { product
   const { control, getValues, setValue, formState: { errors } } = useFormContext<FormValues>()
   const { fields, append, remove } = useFieldArray({ control, name: 'variants' })
   const watchedRows = useWatch({ control, name: 'variants' }) ?? []
+
+  // Range-selection anchor per group: the last clicked size that is still
+  // selected. A ref (not state) so it survives the row remounts that
+  // react-hook-form triggers on every setValue.
+  const anchorsRef = useRef<Record<string, string | null>>({})
 
   // Sizes currently selected in a row's group (drives the chip grid highlight)
   const groupSizesFor = (index: number): string[] => {
@@ -381,20 +397,21 @@ export function VariantBuilder({ productSlug, basePrice: _basePrice }: { product
       .map((r) => r.size!)
   }
 
-  // Chip click handler. Returns the next range anchor for the clicking row.
+  // Chip click handler.
   // - unselected chip + no usable anchor → select just that size
   // - unselected chip + anchor          → select every ordered size in [anchor..clicked]
   // - selected chip                     → unselect only that size (remove its row;
   //   if it's the clicking row's own size, clear it but keep the row)
-  const toggleSize = (rowIndex: number, clicked: string, anchor: string | null): string | null => {
+  const toggleSize = (rowIndex: number, clicked: string): void => {
     const rows = getValues('variants')
     const row = rows[rowIndex]
-    if (!row) return null
-    const gid = row.groupId
+    if (!row) return
+    const gid = row.groupId ?? `__row${rowIndex}`
+    const anchor = anchorsRef.current[gid] ?? null
 
     const selectedIdx = new Map<string, number>()
     rows.forEach((r, i) => {
-      if (gid ? r.groupId === gid : i === rowIndex) {
+      if (row.groupId ? r.groupId === row.groupId : i === rowIndex) {
         if (r.size) selectedIdx.set(r.size, i)
       }
     })
@@ -406,7 +423,8 @@ export function VariantBuilder({ productSlug, basePrice: _basePrice }: { product
       } else {
         remove(idx)
       }
-      return null
+      anchorsRef.current[gid] = null
+      return
     }
 
     let range = [clicked]
@@ -426,9 +444,25 @@ export function VariantBuilder({ productSlug, basePrice: _basePrice }: { product
       toAppend = missing.filter((s) => s !== own)
     }
     if (toAppend.length > 0) {
-      append(toAppend.map((s) => ({ ...row, id: undefined, sku: '', size: s })))
+      append(toAppend.map((s) => ({ ...row, id: undefined, sku: '', size: s, rowKey: newGroupId() })))
     }
-    return clicked
+    anchorsRef.current[gid] = clicked
+  }
+
+  // Mirror a colour edit on one row onto every sibling row of the same group.
+  const propagateColor = (rowIndex: number, patch: { color?: string; colorHex?: string }) => {
+    const rows = getValues('variants')
+    const gid = rows[rowIndex]?.groupId
+    if (!gid) return
+    rows.forEach((r, i) => {
+      if (i === rowIndex || r.groupId !== gid) return
+      if (patch.color !== undefined) {
+        setValue(`variants.${i}.color`, patch.color, { shouldDirty: true })
+      }
+      if (patch.colorHex !== undefined) {
+        setValue(`variants.${i}.colorHex`, patch.colorHex, { shouldDirty: true })
+      }
+    })
   }
 
   return (
@@ -456,11 +490,12 @@ export function VariantBuilder({ productSlug, basePrice: _basePrice }: { product
         <div className="space-y-3">
           {fields.map((field, index) => (
             <VariantRow
-              key={field.id}
+              key={field.rowKey ?? field.id}
               index={index}
               productSlug={productSlug}
               groupSizes={groupSizesFor(index)}
-              onToggleSize={(size, anchor) => toggleSize(index, size, anchor)}
+              onToggleSize={(size) => toggleSize(index, size)}
+              onColorChange={(patch) => propagateColor(index, patch)}
               onRemove={() => remove(index)}
             />
           ))}
@@ -476,7 +511,9 @@ export function VariantBuilder({ productSlug, basePrice: _basePrice }: { product
           const last = all.length > 0 ? all[all.length - 1] : null
           // Clone dimensions but drop id + sku and start a fresh size group so
           // the new block's chip grid begins with only its own size selected.
-          append(last ? { ...last, id: undefined, sku: '', groupId: newGroupId() } : newBlankVariant())
+          append(last
+            ? { ...last, id: undefined, sku: '', groupId: newGroupId(), rowKey: newGroupId() }
+            : newBlankVariant())
         }}
       >
         <Plus className="h-4 w-4" />

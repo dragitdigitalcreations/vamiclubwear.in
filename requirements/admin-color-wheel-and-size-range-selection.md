@@ -44,6 +44,9 @@
       cleared (the row is kept so pricing/stock aren't lost).
 - [ ] Each generated row remains an independent SKU with individually
       editable price and stock (big-size pricing can differ per size).
+- [ ] Colour edits (name or wheel) propagate to every sibling row in the same
+      size group — one group = one colour block, whichever order the operator
+      works in (sizes-then-colour or colour-then-sizes).
 - [ ] SKU auto-generation, per-color barcodes, media color binding, and the
       edit-product flow keep working unchanged.
 
@@ -53,6 +56,13 @@
   chip grid (one "color block" = one group). It is stripped from the API
   payload on submit; the backend contract is unchanged (one variant = one
   size, as before).
+- Rows also carry a client-only `rowKey` used as the React key. react-hook-form
+  regenerates `field.id` on every `setValue` (the SKU auto-fill effect fires
+  one per change), which remounts rows and wipes row-local UI state — the
+  range anchor and the wheel popover both broke without a stable key. The
+  range anchor additionally lives in a parent-level ref keyed by `groupId`.
+  Verified end-to-end 2026-07-12 (34 checks, Playwright against the real
+  admin flow: login → add product → chips → wheel → submit payload).
 - On edit, existing variants are grouped by `color|fabric|style` so the chip
   grid shows all sizes of that combination as selected.
 - Range order: `XS S M L XL XXL XXXL 4XL 5XL 6XL 7XL`.

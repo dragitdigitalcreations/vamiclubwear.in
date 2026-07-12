@@ -32,9 +32,12 @@ const variantSchema = z.object({
   style:    z.string().optional(),
   price:    z.number({ invalid_type_error: 'Price must be a number' }).positive('Price must be > 0'),
   stock:    z.number().int().min(0).default(0),
-  // Client-only: links sibling rows spawned from one size-chip grid.
-  // Stripped from the API payload in onSubmit.
+  // Client-only fields, stripped from the API payload in onSubmit:
+  // groupId links sibling rows spawned from one size-chip grid; rowKey is a
+  // stable React key (react-hook-form regenerates field.id on every setValue,
+  // which would remount rows and wipe their UI state).
   groupId:  z.string().optional(),
+  rowKey:   z.string().optional(),
 })
 
 const productSchema = z.object({
@@ -65,10 +68,13 @@ function assignGroupIds(
 ): ProductFormValues['variants'] {
   const byKey = new Map<string, string>()
   return variants.map((v) => {
-    if (v.groupId) return v
     const key = `${v.color ?? ''}|${v.fabric ?? ''}|${v.style ?? ''}`
     if (!byKey.has(key)) byKey.set(key, newGroupId())
-    return { ...v, groupId: byKey.get(key)! }
+    return {
+      ...v,
+      groupId: v.groupId ?? byKey.get(key)!,
+      rowKey:  v.rowKey  ?? newGroupId(),
+    }
   })
 }
 
@@ -230,8 +236,8 @@ export function ProductUploadForm({ initialData, productId, initialMedia }: Prod
 
     const payload = {
       ...data,
-      // groupId is client-side UI state (size-chip grouping) — never send it
-      variants: data.variants.map(({ groupId: _groupId, ...v }) => v),
+      // groupId/rowKey are client-side UI state — never send them
+      variants: data.variants.map(({ groupId: _groupId, rowKey: _rowKey, ...v }) => v),
       barcode: data.perColorBarcode ? '' : (data.barcode ?? ''),
       colorBarcodes: colorBarcodesPayload,
       media: mediaPayload,

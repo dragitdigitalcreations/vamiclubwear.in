@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Pipette } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 
@@ -180,7 +179,15 @@ export function ColorWheelPicker({
         {value ? (
           <span className="h-full w-full rounded-sm" style={{ backgroundColor: value }} />
         ) : (
-          <Pipette className="h-4 w-4 text-muted" />
+          // No colour picked yet — a mini hue wheel signals "open the picker"
+          <span
+            className="h-5 w-5 rounded-full opacity-80"
+            style={{
+              background:
+                'radial-gradient(circle closest-side, #ffffff 0%, rgba(255,255,255,0) 90%), ' +
+                'conic-gradient(from 0deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)',
+            }}
+          />
         )}
       </button>
 
