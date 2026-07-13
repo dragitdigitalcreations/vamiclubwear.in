@@ -6,7 +6,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getAllPosts } from '@/lib/blog/posts'
 
-export const revalidate = 3600
+// 10 min so a freshly published post shows up on the listing quickly
+// (page-level revalidate caps the fetch-level one in lib/blog/posts.ts)
+export const revalidate = 600
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.in'
 
@@ -24,8 +26,8 @@ export const metadata: Metadata = {
   },
 }
 
-export default function BlogIndexPage() {
-  const posts = getAllPosts()
+export default async function BlogIndexPage() {
+  const posts = await getAllPosts()
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',

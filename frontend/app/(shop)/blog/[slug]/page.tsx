@@ -15,13 +15,14 @@ interface PageProps {
   params: Promise<{ slug: string }>
 }
 
-export function generateStaticParams() {
-  return getAllPosts().map((p) => ({ slug: p.slug }))
+export async function generateStaticParams() {
+  const posts = await getAllPosts()
+  return posts.map((p) => ({ slug: p.slug }))
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const post = getPostBySlug(slug)
+  const post = await getPostBySlug(slug)
   if (!post) return { title: 'Post not found' }
 
   return {
@@ -48,7 +49,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params
-  const post = getPostBySlug(slug)
+  const post = await getPostBySlug(slug)
   if (!post) notFound()
 
   const articleJsonLd = {
@@ -106,10 +107,11 @@ export default async function BlogPostPage({ params }: PageProps) {
             </p>
           </header>
 
-          <div className="prose prose-invert max-w-none text-fg-2"
-               style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: '16px', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-            {post.body}
-          </div>
+          {/* Body is admin-authored HTML (blog editor / AI drafts reviewed in
+              the admin panel) — rendered as-is, matching the backend contract. */}
+          <div className="blog-body max-w-none text-fg-2"
+               style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: '16px', lineHeight: 1.8 }}
+               dangerouslySetInnerHTML={{ __html: post.body ?? '' }} />
         </article>
       </main>
     </>

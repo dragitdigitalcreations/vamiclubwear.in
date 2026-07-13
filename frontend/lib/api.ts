@@ -838,3 +838,53 @@ export const presenceApi = {
       keepalive: true,
     }).catch(() => null),
 }
+
+// ── Blog (admin Style Journal management) ─────────────────────────────────────
+
+export interface AdminBlogPost {
+  id:          string
+  slug:        string
+  title:       string
+  description: string
+  body:        string
+  coverImage:  string | null
+  author:      string
+  tags:        string[]
+  status:      'DRAFT' | 'PUBLISHED'
+  aiGenerated: boolean
+  publishedAt: string | null
+  createdAt:   string
+  updatedAt:   string
+}
+
+export type BlogPostPayload = Partial<Pick<
+  AdminBlogPost,
+  'slug' | 'title' | 'description' | 'body' | 'coverImage' | 'author' | 'tags' | 'status'
+>>
+
+export const blogApi = {
+  adminList: () => request<AdminBlogPost[]>('/blog/admin/list'),
+
+  create: (payload: BlogPostPayload) =>
+    request<AdminBlogPost>('/blog/admin', {
+      method: 'POST',
+      body:   JSON.stringify(payload),
+    }),
+
+  update: (id: string, payload: BlogPostPayload) =>
+    request<AdminBlogPost>(`/blog/admin/${id}`, {
+      method: 'PATCH',
+      body:   JSON.stringify(payload),
+    }),
+
+  remove: (id: string) =>
+    request<{ ok: boolean }>(`/blog/admin/${id}`, { method: 'DELETE' }),
+
+  // AI draft — saved server-side as DRAFT and returned for editing.
+  // Slow call (the model writes ~1200 words): give the UI a spinner.
+  generate: (topic?: string) =>
+    request<AdminBlogPost>('/blog/admin/generate', {
+      method: 'POST',
+      body:   JSON.stringify({ topic }),
+    }),
+}

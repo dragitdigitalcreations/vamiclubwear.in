@@ -17,6 +17,7 @@ import {
   Undo2,
   Image,
   Ticket,
+  FileText,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
@@ -40,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Notifications', href: '/admin/notifications', icon: Bell,       section: 'dashboard' },
   { label: 'Banners',       href: '/admin/banners',       icon: Image,      section: 'dashboard' },
   { label: 'Coupons',       href: '/admin/coupons',       icon: Ticket,     section: 'dashboard' },
+  { label: 'Blog',          href: '/admin/blog',          icon: FileText,   section: 'dashboard' },
   { label: 'POS Sync',    href: '/admin/pos-sync',    icon: RefreshCw,       section: 'pos-sync'    },
   { label: 'POS Scanner', href: '/admin/pos-scanner', icon: ScanBarcode,     section: 'pos-scanner' },
   { label: 'POS Returns', href: '/admin/pos-scanner/history', icon: Undo2,   section: 'pos-scanner' },

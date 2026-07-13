@@ -21,6 +21,7 @@
     "ensure:categories": "dotenv -e .env.local -- tsx scripts/ensure-categories.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "@prisma/client": "^6.16.2",
     "@types/multer": "^2.1.0",
     "@upstash/redis": "^1.37.0",

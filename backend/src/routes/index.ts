@@ -17,6 +17,7 @@ import reviewRoutes      from '../modules/review/review.routes'
 import customerRoutes    from '../modules/customer/customer.routes'
 import couponRoutes      from '../modules/coupon/coupon.routes'
 import presenceRoutes    from '../modules/presence/presence.routes'
+import blogRoutes        from '../modules/blog/blog.routes'
 
 const router = Router()
 
@@ -37,5 +38,6 @@ router.use('/reviews',      reviewRoutes)        // customer testimonial carouse
 router.use('/customer',     customerRoutes)      // Google OAuth storefront auth
 router.use('/coupons',      couponRoutes)        // gift-card / coupon codes
 router.use('/presence',     presenceRoutes)      // concurrent-user heartbeat
+router.use('/blog',         blogRoutes)          // Style Journal posts + AI drafts
 
 export default router
