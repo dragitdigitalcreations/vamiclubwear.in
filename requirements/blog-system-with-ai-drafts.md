@@ -1,70 +1,83 @@
-# REQ: Blog System — DB-backed Posts, Admin Editor, AI Draft Generation
+# REQ: Blog System — DB-backed Style Journal (manual, editorial redesign)
 
 **Status:** Implemented
-**Date:** 2026-07-12
-**Scope:** Backend (Prisma model + `/api/blog` module + weekly scheduler),
-frontend storefront blog pages, admin panel Blog section.
+**Date:** 2026-07-12 (initial) · 2026-07-13 (pivoted off paid AI + editorial redesign)
+**Scope:** Backend (`/api/blog` module), frontend storefront blog, admin Blog panel.
+
+## History / Decision
+
+The first cut (2026-07-12) added an AI draft generator via the Claude API. The
+operator can't take on a separate per-use API cost (they expected their Claude
+Pro *chat* subscription to cover it — it doesn't; the API is prepaid pay-per-
+use). **Pivot (2026-07-13): remove the paid AI path entirely** and instead make
+manual blog posting genuinely good — a template-driven admin flow (no API) and
+a customer-attracting editorial storefront design.
 
 ## Problem
 
-The storefront has an SEO-ready `/blog` scaffold but posts live in a
-hardcoded array (`frontend/lib/blog/posts.ts`) — publishing requires a code
-deploy. The operator wants blogs to drive organic traffic for a high-AOV
-(₹4,500 avg) store and asked for an automated setup that can generate and
-publish posts, without needing an Anthropic *subscription* (the Claude API
-is prepaid pay-per-use; the key is only needed at generation time).
+The storefront had an SEO-ready `/blog` scaffold, but posts lived in a hardcoded
+array (a code deploy to publish) and the page was visually bare. Goal: DB-backed
+posts, a non-technical-friendly authoring flow with **zero external cost**, and a
+premium editorial design that drives organic traffic + converts (avg AOV ₹4,500,
+prepaid-only, so shoppers research before buying).
 
 ## Acceptance Criteria
 
-### Data & API
-- [ ] `BlogPost` table (Prisma): slug, title, description, HTML body,
-      coverImage, author, tags[], DRAFT/PUBLISHED status, aiGenerated flag,
-      publishedAt. Additive migration; deploy applies it via
+### Data & API (no external services)
+- [x] `BlogPost` table: slug, title, description, HTML body, coverImage, author,
+      **category**, tags[], **featured**, **relatedProductSlugs[]**,
+      DRAFT/PUBLISHED, publishedAt. Additive migrations, applied via
       `prisma migrate deploy` (already in the `start` script).
-- [ ] Public: `GET /api/blog` (published, newest first),
-      `GET /api/blog/:slug` (single published post). No auth.
-- [ ] Admin (requireAuth): list all, create, update, delete,
-      `POST /api/blog/admin/generate` — AI draft from an optional topic.
-- [ ] Publish = PATCH with `status: PUBLISHED` (sets `publishedAt` first time).
+- [x] Public: `GET /api/blog` (published; featured-first; `readMinutes` computed
+      server-side; body omitted for payload size) and `GET /api/blog/:slug`
+      (single, with body + relatedProductSlugs). No auth.
+- [x] Admin (requireAuth): list all, create, update, delete. **No generate
+      route, no scheduler, no @anthropic-ai/sdk dependency.**
 
-### AI drafting
-- [ ] Uses the official `@anthropic-ai/sdk`; model `claude-opus-4-8` by
-      default, overridable via `BLOG_AI_MODEL` env.
-- [ ] Structured output (JSON schema) → title/slug/description/tags/body;
-      body is clean HTML with internal links to real live product/category
-      URLs fetched from the DB at generation time.
-- [ ] Missing `ANTHROPIC_API_KEY` → clear 503-style error in admin UI;
-      nothing else on the site is affected.
-- [ ] Weekly auto-draft scheduler (opt-in): `BLOG_AUTO_DRAFT=true` generates
-      a draft if none was AI-generated in the last `BLOG_AUTO_DRAFT_DAYS`
-      (default 7). `BLOG_AUTO_PUBLISH=true` additionally publishes it
-      without review (default off — review recommended for SEO safety).
+### Admin authoring flow (free replacement for "AI generate")
+- [x] **Starter templates** (Styling Guide, Occasion Lookbook, Fabric & Care,
+      Size & Fit, Blank) — seed a proven heading structure so the operator fills
+      blanks instead of facing an empty page; a template also sets the category.
+- [x] **Formatting toolbar** — H2/H3/¶/Bold/Italic/List/Link buttons wrap the
+      textarea selection in HTML, so the operator never types raw tags.
+- [x] **Live preview** — side panel renders the exact `.blog-body` output.
+- [x] Category select (fixed `BLOG_CATEGORIES`), Featured toggle, cover image,
+      tags, SEO description with a 160-char counter, and a **Shop this Story**
+      product picker (search live products, store slugs as chips).
+- [x] Publish/unpublish/delete from the list; category + AI + status badges.
 
-### Storefront
-- [ ] `/blog` and `/blog/[slug]` read from the API with ISR (1h revalidate);
-      graceful empty state if the backend is unreachable (build safety).
-- [ ] Body renders as HTML; JSON-LD + sitemap keep working (sitemap pulls
-      published posts from the API).
+### Storefront — editorial magazine with hierarchy
+- [x] `/blog`: NTFabulous "Style Journal" masthead + standfirst; a **featured
+      hero** (featured post, or latest) as an editorial split; **category filter**
+      pills; a 3-col editorial **card grid** (cover, category kicker, serif title,
+      excerpt, date · reading time). Hover language matches ProductCard.
+- [x] `/blog/[slug]`: centered kicker + serif headline + meta; cover band;
+      generous `.blog-article` typography (lead paragraph, serif h2, blockquote);
+      **Shop this Story** strip (related products resolved by slug — the
+      content→commerce bridge); **WhatsApp size-help CTA**; **Keep reading** strip
+      (same category first). Full Article + Breadcrumb JSON-LD + sitemap kept.
+- [x] Body renders as HTML; graceful empty states if the backend is unreachable.
 
-### Admin panel
-- [ ] New sidebar entry "Blog" → `/admin/blog`: post list with status/AI
-      badges, editor (title, slug, description, cover image URL, tags,
-      HTML body), publish/unpublish, delete, and a "Generate with AI"
-      action with an optional topic input.
+## Design system (matches the existing storefront)
+- Fonts: **NTFabulous** (display serif — headlines/masthead) + Poppins/Metropolis
+  (body). Palette: cream paper `#FAF8F5`, near-black text, single **caramel
+  `#8B6B47`** accent for kickers/links. Card idiom reused from ProductCard
+  (image scale 1.03 @ 500ms, uppercase micro-labels).
 
-## Env vars (backend)
-| Var | Required | Default | Purpose |
-|---|---|---|---|
-| `ANTHROPIC_API_KEY` | for AI drafts only | — | Claude API (prepaid, pay-per-use) |
-| `BLOG_AI_MODEL` | no | `claude-opus-4-8` | generation model |
-| `BLOG_AUTO_DRAFT` | no | off | weekly auto-draft scheduler |
-| `BLOG_AUTO_DRAFT_DAYS` | no | 7 | min days between auto drafts |
-| `BLOG_AUTO_PUBLISH` | no | off | publish auto-drafts without review |
+## Content strategy (how the blog attracts + converts)
+- **Hierarchy ladder:** masthead → featured hero (biggest weight) → category
+  filter → uniform grid; on a post: kicker → headline → lead → sections → Shop
+  this Story → CTA → related. Each step guides the eye toward the shop.
+- **SEO:** long-tail queries the brand can rank on (plus-size Anarkali, modest
+  fashion India, fabric care) via headings + JSON-LD; posts internal-link to
+  live product URLs.
+- **Conversion:** every post ends in a product strip + WhatsApp size help,
+  turning a reader into a shopper while intent is high.
 
-## Task Breakdown
-1. Prisma model + migration.
-2. `backend/src/modules/blog/` — service (CRUD + Claude generation),
-   routes, scheduler; register in route index + boot.
-3. Frontend `lib/blog/posts.ts` → async API fetchers; update blog pages
-   and sitemap to await them; render HTML body.
-4. `blogApi` in `frontend/lib/api.ts`; admin Blog page; sidebar entry.
+## Verified
+End-to-end with Playwright against the real module + real DB (2026-07-13,
+23 checks): admin login → template → toolbar → category → featured → product
+pick → publish (×2) → public payload shape → storefront hero + category filter
+→ post page (headline, kicker, styled body, Shop-this-Story with price,
+WhatsApp CTA, Keep reading) → cleanup. Frontend production build clean (42/42
+static pages).

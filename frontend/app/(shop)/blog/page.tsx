@@ -1,10 +1,10 @@
-// Blog index — minimal SEO-ready scaffold. UI intentionally bare per project
-// brief: prepare structure now, design the visual layer later. Inherits the
-// (shop) route group layout (Navbar / Footer / CartDrawer).
+// Style Journal index — editorial magazine layout. Server component fetches
+// published posts + emits SEO JSON-LD; the interactive masthead/hero/filter/
+// grid lives in BlogIndexClient. Inherits the (shop) layout (Navbar/Footer).
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { getAllPosts } from '@/lib/blog/posts'
+import { BlogIndexClient } from './BlogIndexClient'
 
 // 10 min so a freshly published post shows up on the listing quickly
 // (page-level revalidate caps the fetch-level one in lib/blog/posts.ts)
@@ -68,39 +68,7 @@ export default async function BlogIndexPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
       />
 
-      <main className="mx-auto max-w-[1100px] px-5 py-16" style={{ marginTop: '96px' }}>
-        <h1 className="text-fg-1 uppercase leading-none mb-3"
-            style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 400, fontSize: 'clamp(36px, 5vw, 60px)', letterSpacing: '-0.01em' }}>
-          Style Journal
-        </h1>
-        <p className="text-fg-2 max-w-[640px] mb-12" style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontSize: '15px', lineHeight: 1.7 }}>
-          Style guides, plus-size styling inspiration and fashion stories from
-          the Vami Clubwear atelier in Manjeri, Kerala.
-        </p>
-
-        {posts.length === 0 ? (
-          <p className="text-fg-3 text-sm">New stories coming soon.</p>
-        ) : (
-          <ul className="space-y-8">
-            {posts.map((post) => (
-              <li key={post.slug}>
-                <article>
-                  <h2 className="text-fg-1 mb-1"
-                      style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 500, fontSize: '22px' }}>
-                    <Link href={`/blog/${post.slug}`} className="hover:underline">
-                      {post.title}
-                    </Link>
-                  </h2>
-                  <p className="text-fg-3 text-xs mb-2">
-                    {new Date(post.publishedAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
-                  </p>
-                  <p className="text-fg-2 text-sm" style={{ lineHeight: 1.7 }}>{post.description}</p>
-                </article>
-              </li>
-            ))}
-          </ul>
-        )}
-      </main>
+      <BlogIndexClient posts={posts} />
     </>
   )
 }

@@ -20,14 +20,6 @@ router.post('/admin', requireAuth, async (req: Request, res: Response, next: Nex
   } catch (err) { next(err) }
 })
 
-// POST /api/blog/admin/generate — AI draft (saved as DRAFT, returned for editing)
-router.post('/admin/generate', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const topic = typeof req.body?.topic === 'string' ? req.body.topic : undefined
-    res.status(201).json(await blogService.generate({ topic }))
-  } catch (err) { next(err) }
-})
-
 // PATCH /api/blog/admin/:id — update / publish / unpublish
 router.patch('/admin/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {

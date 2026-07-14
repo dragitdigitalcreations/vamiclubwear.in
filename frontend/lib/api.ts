@@ -842,24 +842,28 @@ export const presenceApi = {
 // ── Blog (admin Style Journal management) ─────────────────────────────────────
 
 export interface AdminBlogPost {
-  id:          string
-  slug:        string
-  title:       string
-  description: string
-  body:        string
-  coverImage:  string | null
-  author:      string
-  tags:        string[]
-  status:      'DRAFT' | 'PUBLISHED'
-  aiGenerated: boolean
-  publishedAt: string | null
-  createdAt:   string
-  updatedAt:   string
+  id:                  string
+  slug:                string
+  title:               string
+  description:         string
+  body:                string
+  coverImage:          string | null
+  author:              string
+  category:            string | null
+  tags:                string[]
+  featured:            boolean
+  relatedProductSlugs: string[]
+  status:              'DRAFT' | 'PUBLISHED'
+  aiGenerated:         boolean
+  publishedAt:         string | null
+  createdAt:           string
+  updatedAt:           string
 }
 
 export type BlogPostPayload = Partial<Pick<
   AdminBlogPost,
-  'slug' | 'title' | 'description' | 'body' | 'coverImage' | 'author' | 'tags' | 'status'
+  'slug' | 'title' | 'description' | 'body' | 'coverImage' | 'author'
+  | 'category' | 'tags' | 'featured' | 'relatedProductSlugs' | 'status'
 >>
 
 export const blogApi = {
@@ -879,12 +883,15 @@ export const blogApi = {
 
   remove: (id: string) =>
     request<{ ok: boolean }>(`/blog/admin/${id}`, { method: 'DELETE' }),
-
-  // AI draft — saved server-side as DRAFT and returned for editing.
-  // Slow call (the model writes ~1200 words): give the UI a spinner.
-  generate: (topic?: string) =>
-    request<AdminBlogPost>('/blog/admin/generate', {
-      method: 'POST',
-      body:   JSON.stringify({ topic }),
-    }),
 }
+
+// Editorial sections — a fixed, curated list keeps the storefront's category
+// filter clean and the operator from inventing one-off labels.
+export const BLOG_CATEGORIES = [
+  'Styling Guides',
+  'Lookbooks',
+  'Fabric & Care',
+  'Size & Fit',
+  'Occasion Edit',
+  'Brand Stories',
+] as const

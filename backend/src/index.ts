@@ -44,7 +44,6 @@ import { ensureCategories } from './lib/ensureCategories'
 import { startShippingPoller } from './modules/shipping/shipping.poller'
 import { startOrderEmailRetrySweep } from './lib/orderEmailRetry'
 import { probeResendHealth } from './lib/email'
-import { startBlogDraftScheduler } from './modules/blog/blog.scheduler'
 
 const app = express()
 const PORT = process.env.PORT ?? 3001
@@ -152,9 +151,6 @@ app.listen(PORT, async () => {
   // send didn't make it (Resend down, key wasn't loaded, etc.). Runs once 30s
   // after boot and every 15 min thereafter.
   startOrderEmailRetrySweep()
-
-  // Weekly AI blog draft (opt-in via BLOG_AUTO_DRAFT=true — see blog.scheduler.ts)
-  startBlogDraftScheduler()
 
   console.log('[server] Endpoints:')
   console.log(`  GET  http://localhost:${PORT}/health`)
