@@ -217,17 +217,26 @@ function ProductPicker({
         {(results.length > 0 || searching) && (
           <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border border-border bg-surface shadow-xl">
             {searching && <p className="px-3 py-2 text-xs text-muted">Searching…</p>}
-            {results.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => add(p)}
-                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-on-background hover:bg-surface-elevated"
-              >
-                <span className="truncate">{p.name}</span>
-                <span className="shrink-0 text-xs text-muted">{p.category}</span>
-              </button>
-            ))}
+            {results.map((p) => {
+              // The list API returns category as { id, name, slug } (the
+              // ProductListItem type says string, but the relation is included
+              // — see product.service listInclude). Render the name defensively.
+              const catLabel =
+                typeof p.category === 'string'
+                  ? p.category
+                  : (p.category as { name?: string } | null | undefined)?.name ?? ''
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => add(p)}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-on-background hover:bg-surface-elevated"
+                >
+                  <span className="truncate">{p.name}</span>
+                  {catLabel && <span className="shrink-0 text-xs text-muted">{catLabel}</span>}
+                </button>
+              )
+            })}
           </div>
         )}
       </div>
