@@ -7,9 +7,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  Loader2, Plus, Trash2, ExternalLink, Eye, Search, X, Star, FileText, Save,
+  Loader2, Plus, Trash2, ExternalLink, Eye, Search, X, Star, FileText, Save, Upload,
 } from 'lucide-react'
-import { blogApi, productsApi, AdminBlogPost, BLOG_CATEGORIES, ApiError } from '@/lib/api'
+import { blogApi, productsApi, uploadsApi, AdminBlogPost, BLOG_CATEGORIES, ApiError } from '@/lib/api'
 import type { ProductListItem } from '@/types/admin'
 import { toast } from '@/stores/toastStore'
 import { cn } from '@/lib/utils'
@@ -256,6 +256,85 @@ function ProductPicker({
   )
 }
 
+// ─── Cover image uploader ─────────────────────────────────────────────────────
+// Upload straight from the operator's device to Cloudinary (same endpoint the
+// product photos use) — no pasting URLs. Stores the returned URL in coverImage.
+
+function CoverImageUploader({
+  value, onChange,
+}: {
+  value: string
+  onChange: (url: string) => void
+}) {
+  const [uploading, setUploading] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  const handleFiles = async (files: FileList | null) => {
+    const file = files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image file (JPG, PNG or WebP).'); return }
+    if (file.size > 10 * 1024 * 1024) { toast.error('That image is over 10 MB — please use a smaller photo.'); return }
+    setUploading(true)
+    try {
+      const [uploaded] = await uploadsApi.upload([file])
+      if (uploaded?.url) { onChange(uploaded.url); toast.success('Cover image uploaded') }
+      else toast.error('Upload failed — please try again.')
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+      if (inputRef.current) inputRef.current.value = ''   // allow re-picking the same file
+    }
+  }
+
+  return (
+    <>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+      {value ? (
+        <div className="relative overflow-hidden rounded-md border border-border">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt="Cover preview" className="aspect-[16/9] w-full object-cover" />
+          <div className="absolute right-2 top-2 flex gap-1.5">
+            <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}
+              className="rounded bg-black/60 px-2 py-1 text-[11px] font-medium text-white backdrop-blur transition-colors hover:bg-black/75">
+              {uploading ? 'Uploading…' : 'Replace'}
+            </button>
+            <button type="button" onClick={() => onChange('')} aria-label="Remove cover image"
+              className="rounded bg-black/60 p-1 text-white backdrop-blur transition-colors hover:bg-black/75">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => !uploading && inputRef.current?.click()}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click() } }}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files) }}
+          className={cn(
+            'flex w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md border border-dashed py-9 text-center transition-colors',
+            dragOver ? 'border-accent bg-accent/5' : 'border-border hover:border-ring',
+          )}
+        >
+          {uploading ? (
+            <><Loader2 className="h-5 w-5 animate-spin text-muted" /><span className="text-xs text-muted">Uploading…</span></>
+          ) : (
+            <>
+              <Upload className="h-5 w-5 text-muted" />
+              <span className="text-sm font-medium text-on-background">Upload cover image</span>
+              <span className="text-xs text-muted">Click to choose, or drag a photo here · JPG, PNG or WebP</span>
+            </>
+          )}
+        </div>
+      )}
+    </>
+  )
+}
+
 // ─── Editor state ──────────────────────────────────────────────────────────────
 
 interface EditorState {
@@ -453,16 +532,16 @@ export default function AdminBlogPage() {
               <Textarea rows={2} value={editor.description} onChange={(e) => setEditor({ ...editor, description: e.target.value })} placeholder="One or two compelling lines with the main search phrase." />
             </div>
 
-            {/* Cover + tags */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Cover image URL <span className="text-xs font-normal text-muted">(optional)</span></Label>
-                <Input value={editor.coverImage} onChange={(e) => setEditor({ ...editor, coverImage: e.target.value })} placeholder="https://res.cloudinary.com/…" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Tags <span className="text-xs font-normal text-muted">(comma separated)</span></Label>
-                <Input value={editor.tags} onChange={(e) => setEditor({ ...editor, tags: e.target.value })} placeholder="plus size, anarkali, wedding guest" />
-              </div>
+            {/* Cover image — upload from device */}
+            <div className="space-y-1.5">
+              <Label>Cover image <span className="text-xs font-normal text-muted">(shown on the journal + used as the social share preview)</span></Label>
+              <CoverImageUploader value={editor.coverImage} onChange={(url) => setEditor({ ...editor, coverImage: url })} />
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-1.5">
+              <Label>Tags <span className="text-xs font-normal text-muted">(comma separated)</span></Label>
+              <Input value={editor.tags} onChange={(e) => setEditor({ ...editor, tags: e.target.value })} placeholder="plus size, anarkali, wedding guest" />
             </div>
 
             {/* Body with toolbar */}
