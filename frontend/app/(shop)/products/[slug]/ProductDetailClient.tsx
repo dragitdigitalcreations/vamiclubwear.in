@@ -168,21 +168,9 @@ function VariantSelector({ product, selected, onChange }: VariantSelectorProps) 
   const sizes  = getVariantsBySize(product.variants)
   const colors = getVariantsByColor(product.variants)
 
-  const [selectedSize,  setSelectedSize]  = useState<string | null>(selected?.size  ?? sizes[0]  ?? null)
-  const [selectedColor, setSelectedColor] = useState<string | null>(selected?.color ?? colors[0]?.color ?? null)
-
-  const resolveVariant = useCallback((size: string | null, color: string | null) => {
-    const match = product.variants.find((v) => {
-      const sizeOk  = !size  || v.size  === size
-      const colorOk = !color || v.color === color
-      return v.isActive && sizeOk && colorOk
-    })
-    if (match) onChange(match)
-  }, [product.variants, onChange])
-
-  useEffect(() => { resolveVariant(selectedSize, selectedColor) }, [selectedSize, selectedColor, resolveVariant])
-
   // ── Availability = variant isActive AND in-stock (inventory > reserved) ──
+  // Passing null for a dimension means "any" — so isCombinationInStock(null, c)
+  // is "does this colour have stock in ANY size".
   const isCombinationInStock = (size: string | null, color: string | null) =>
     product.variants.some((v) => {
       if (!v.isActive) return false
@@ -190,6 +178,56 @@ function VariantSelector({ product, selected, onChange }: VariantSelectorProps) 
       if (color && v.color !== color) return false
       return getAvailableStock(v) > 0
     })
+
+  // Default to a purchasable combination when one exists, so the panel doesn't
+  // open on a sold-out variant.
+  const firstStockVariant = () =>
+    selected
+    ?? product.variants.find((v) => v.isActive && getAvailableStock(v) > 0)
+    ?? product.variants.find((v) => v.isActive)
+    ?? null
+
+  const [selectedSize,  setSelectedSize]  = useState<string | null>(() => firstStockVariant()?.size  ?? sizes[0]  ?? null)
+  const [selectedColor, setSelectedColor] = useState<string | null>(() => firstStockVariant()?.color ?? colors[0]?.color ?? null)
+
+  const resolveVariant = useCallback((size: string | null, color: string | null) => {
+    const matches = (v: ProductVariant) =>
+      v.isActive && (!size || v.size === size) && (!color || v.color === color)
+    // Prefer an in-stock exact match; fall back to any active match so the
+    // panel still reflects a sold-out combo the shopper explicitly picked.
+    const match =
+      product.variants.find((v) => matches(v) && getAvailableStock(v) > 0)
+      ?? product.variants.find(matches)
+    if (match) onChange(match)
+  }, [product.variants, onChange])
+
+  useEffect(() => { resolveVariant(selectedSize, selectedColor) }, [selectedSize, selectedColor, resolveVariant])
+
+  // Pick an in-stock size for a colour (keep the current size if it works),
+  // and vice-versa — so selecting one dimension never lands on a sold-out combo
+  // when an in-stock one exists.
+  const bestSizeForColor = (color: string | null): string | null =>
+    (selectedSize && isCombinationInStock(selectedSize, color))
+      ? selectedSize
+      : sizes.find((s) => isCombinationInStock(s, color)) ?? selectedSize
+  const bestColorForSize = (size: string | null): string | null =>
+    (selectedColor && isCombinationInStock(size, selectedColor))
+      ? selectedColor
+      : colors.find((c) => isCombinationInStock(size, c.color))?.color ?? selectedColor
+
+  const handleSelectColor = (color: string) => {
+    setSelectedColor(color)
+    // If the current size is sold out in the new colour, hop to one that isn't.
+    if (!(selectedSize && isCombinationInStock(selectedSize, color))) {
+      setSelectedSize(bestSizeForColor(color))
+    }
+  }
+  const handleSelectSize = (size: string) => {
+    setSelectedSize(size)
+    if (!(selectedColor && isCombinationInStock(size, selectedColor))) {
+      setSelectedColor(bestColorForSize(size))
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -200,14 +238,16 @@ function VariantSelector({ product, selected, onChange }: VariantSelectorProps) 
           </p>
           <div className="flex flex-wrap gap-2.5">
             {colors.map((c) => {
-              const available = isCombinationInStock(selectedSize, c.color)
+              // A colour is selectable if it has stock in ANY size — NOT gated on
+              // the currently-selected size (that made in-stock colours look dead).
+              const available = isCombinationInStock(null, c.color)
               const isSelected = selectedColor === c.color
               return (
                 <button
                   key={c.color}
-                  onClick={() => available && setSelectedColor(c.color)}
+                  onClick={() => available && handleSelectColor(c.color)}
                   disabled={!available}
-                  title={`${c.color}${available ? '' : ' — unavailable'}`}
+                  title={`${c.color}${available ? '' : ' — sold out'}`}
                   className={`relative h-7 w-7 rounded-full border-2 transition-all duration-200 ${
                     available ? 'hover:scale-110' : 'cursor-not-allowed opacity-55'
                   } ${isSelected ? 'border-on-background scale-110' : 'border-transparent'}`}
@@ -216,7 +256,7 @@ function VariantSelector({ product, selected, onChange }: VariantSelectorProps) 
                     className="absolute inset-1 rounded-full"
                     style={{ backgroundColor: c.colorHex ?? '#888' }}
                   />
-                  {/* Diagonal strike-through when unavailable */}
+                  {/* Diagonal strike-through only when the whole colour is sold out */}
                   {!available && (
                     <span
                       aria-hidden
@@ -242,13 +282,14 @@ function VariantSelector({ product, selected, onChange }: VariantSelectorProps) 
           </div>
           <div className="flex flex-wrap gap-2">
             {sizes.map((size) => {
+              // A size is available if it's in stock for the selected colour.
               const available = isCombinationInStock(size, selectedColor)
               return (
                 <button
                   key={size}
-                  onClick={() => available && setSelectedSize(size)}
+                  onClick={() => available && handleSelectSize(size)}
                   disabled={!available}
-                  title={available ? size : `${size} — unavailable`}
+                  title={available ? size : `${size} — sold out${selectedColor ? ` in ${selectedColor}` : ''}`}
                   className={`min-w-12 border px-3 py-2 text-xs font-medium uppercase tracking-wider transition-all duration-200 ${
                     selectedSize === size
                       ? 'border-on-background bg-on-background text-background'
@@ -532,7 +573,10 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const addToCartRef                   = useRef<HTMLButtonElement>(null)
 
   const [variant, setVariant] = useState<ProductVariant | null>(
-    () => product.variants.find((v) => v.isActive) ?? null
+    () =>
+      product.variants.find((v) => v.isActive && getAvailableStock(v) > 0)
+      ?? product.variants.find((v) => v.isActive)
+      ?? null
   )
   const [qty,          setQty]          = useState(1)
   const [added,        setAdded]        = useState(false)
