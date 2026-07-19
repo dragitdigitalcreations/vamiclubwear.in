@@ -33,11 +33,16 @@ export interface ProductVariant {
   style: string | null
   price: number
   isActive: boolean
+  // Admin/authenticated responses carry the per-location breakdown; public
+  // storefront responses are stripped to the two summary fields below
+  // (see stripInternalFields in the backend product controller).
   inventory?: Array<{
     quantity: number
     reserved: number
     location: { id: string; name: string }
   }>
+  availableStock?: number
+  inStock?: boolean
 }
 
 export interface ProductCategory {
@@ -110,10 +115,18 @@ export function mediaDetail(m: Pick<ProductMedia, 'url' | 'delivery'>): string {
 }
 
 export function getAvailableStock(variant: ProductVariant): number {
-  if (!variant.inventory?.length) return 0
-  return variant.inventory.reduce((total, inv) => {
-    return total + Math.max(0, inv.quantity - inv.reserved)
-  }, 0)
+  if (variant.inventory?.length) {
+    return variant.inventory.reduce((total, inv) => {
+      return total + Math.max(0, inv.quantity - inv.reserved)
+    }, 0)
+  }
+  if (typeof variant.availableStock === 'number') {
+    return Math.max(0, variant.availableStock)
+  }
+  // Transitional: responses cached before availableStock existed only carry
+  // the boolean. Treat "in stock, count unknown" as 1 so the item is
+  // purchasable but the qty stepper stays conservative.
+  return variant.inStock ? 1 : 0
 }
 
 export function getVariantsBySize(variants: ProductVariant[]): string[] {

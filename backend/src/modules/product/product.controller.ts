@@ -45,9 +45,15 @@ function stripInternalFields(product: any, isAdmin: boolean) {
       delete vCopy.barcode
       
       if (vCopy.inventory && Array.isArray(vCopy.inventory)) {
-        const qty = vCopy.inventory.reduce((sum: number, i: any) => sum + (i.quantity || 0), 0)
-        const res = vCopy.inventory.reduce((sum: number, i: any) => sum + (i.reserved || 0), 0)
-        vCopy.inStock = (qty - res) > 0
+        // Collapse per-location rows to a single number — the storefront needs
+        // the available count (qty stepper cap, "Only N left") but must not see
+        // location names or reserved breakdowns.
+        const available = vCopy.inventory.reduce(
+          (sum: number, i: any) => sum + Math.max(0, (i.quantity || 0) - (i.reserved || 0)),
+          0
+        )
+        vCopy.availableStock = available
+        vCopy.inStock = available > 0
         delete vCopy.inventory
       }
       return vCopy

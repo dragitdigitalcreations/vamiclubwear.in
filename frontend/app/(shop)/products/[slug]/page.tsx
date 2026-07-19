@@ -5,7 +5,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { serverProductsApi } from '@/lib/server-api'
-import { getPrimaryDetailImage, mediaDetail, type Product } from '@/types/product'
+import { getAvailableStock, getPrimaryDetailImage, mediaDetail, type Product } from '@/types/product'
 import { ProductDetailClient } from './ProductDetailClient'
 
 // ISR: revalidate every 30 min during pre-launch to keep Neon CU-hours under
@@ -69,11 +69,7 @@ function buildProductJsonLd(product: any) {
   const prices = activeVariants.map((v: any) => Number(v.price)).filter((n: number) => Number.isFinite(n))
   const minPrice = prices.length ? Math.min(...prices) : Number(product.basePrice ?? 0)
   const maxPrice = prices.length ? Math.max(...prices) : Number(product.basePrice ?? 0)
-  const inStock = activeVariants.some((v: any) =>
-    typeof v.availableStock === 'number'
-      ? v.availableStock > 0
-      : (v.stock ?? 0) - (v.reservedStock ?? 0) > 0
-  )
+  const inStock = activeVariants.some((v: any) => getAvailableStock(v) > 0)
 
   return {
     '@context': 'https://schema.org',
