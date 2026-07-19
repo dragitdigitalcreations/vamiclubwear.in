@@ -170,6 +170,55 @@ function FormatToolbar({
 
 // ─── Related-products picker ───────────────────────────────────────────────────
 
+// The list/barcode APIs return each product's variants (fabric, style, colour,
+// hex) even though ProductListItem under-declares them — surface those details
+// on dropdown rows so identically-named products are tellable apart.
+interface PickerVariant {
+  fabric?: string | null
+  style?: string | null
+  color?: string | null
+  colorHex?: string | null
+}
+type PickerProduct = ProductListItem & { variants?: PickerVariant[] }
+
+function variantMeta(variants: PickerVariant[] | undefined) {
+  const vs = variants ?? []
+  const uniq = (key: 'fabric' | 'style') =>
+    Array.from(new Set(vs.map((v) => v[key]).filter(Boolean))) as string[]
+  const colors: Array<{ color: string; colorHex: string | null }> = []
+  const seen = new Set<string>()
+  for (const v of vs) {
+    if (v.color && !seen.has(v.color)) {
+      seen.add(v.color)
+      colors.push({ color: v.color, colorHex: v.colorHex ?? null })
+    }
+  }
+  return { fabrics: uniq('fabric'), styles: uniq('style'), colors }
+}
+
+// Secondary line + swatches for a dropdown row: "Chinon · Anarkali" ●●● ₹4,999
+function RowMeta({ variants, basePrice }: { variants?: PickerVariant[]; basePrice?: number | string }) {
+  const { fabrics, styles, colors } = variantMeta(variants)
+  const label = [...fabrics, ...styles].join(' · ')
+  const price = basePrice != null && Number(basePrice) > 0 ? `₹${Number(basePrice).toLocaleString('en-IN')}` : ''
+  if (!label && colors.length === 0 && !price) return null
+  return (
+    <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
+      {label && <span className="truncate">{label}</span>}
+      {colors.slice(0, 4).map((c) => (
+        <span
+          key={c.color}
+          title={c.color}
+          className="h-2.5 w-2.5 shrink-0 rounded-full border border-border/60"
+          style={{ backgroundColor: c.colorHex ?? '#888888' }}
+        />
+      ))}
+      {colors.length > 4 && <span className="shrink-0 text-[10px]">+{colors.length - 4}</span>}
+      {price && <span className="ml-auto shrink-0 font-medium text-fg-3">{price}</span>}
+    </span>
+  )
+}
+
 function ProductPicker({
   selected, onChange,
 }: {
@@ -177,10 +226,10 @@ function ProductPicker({
   onChange: (slugs: string[]) => void
 }) {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<ProductListItem[]>([])
+  const [results, setResults] = useState<PickerProduct[]>([])
   // Barcode hit shown at the top of the dropdown — the same scanner the POS
   // uses types the code and sends Enter, so scanning a garment's tag adds it.
-  const [barcodeHit, setBarcodeHit] = useState<{ id: string; name: string; slug: string } | null>(null)
+  const [barcodeHit, setBarcodeHit] = useState<{ id: string; name: string; slug: string; variants?: PickerVariant[] } | null>(null)
   const [searching, setSearching] = useState(false)
   const [names, setNames] = useState<Record<string, string>>({})
   // Store's featured products — one-tap quick-adds when the box is empty.
@@ -205,10 +254,15 @@ function ProductPicker({
         q.length >= 3 ? productsApi.getProductByBarcode(q) : Promise.reject(new Error('skip')),
       ]).then(([nameRes, barcodeRes]) => {
         if (!live) return
-        setResults(nameRes.status === 'fulfilled' ? nameRes.value.data : [])
+        setResults(nameRes.status === 'fulfilled' ? (nameRes.value.data as PickerProduct[]) : [])
         setBarcodeHit(
           barcodeRes.status === 'fulfilled'
-            ? { id: barcodeRes.value.id, name: barcodeRes.value.name, slug: barcodeRes.value.slug }
+            ? {
+                id: barcodeRes.value.id,
+                name: barcodeRes.value.name,
+                slug: barcodeRes.value.slug,
+                variants: barcodeRes.value.variants as PickerVariant[],
+              }
             : null,
         )
       }).finally(() => { if (live) setSearching(false) })
@@ -268,13 +322,16 @@ function ProductPicker({
                 key={barcodeHit.id}
                 type="button"
                 onClick={() => add(barcodeHit)}
-                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-on-background hover:bg-surface-elevated"
+                className="block w-full px-3 py-2 text-left text-sm text-on-background hover:bg-surface-elevated"
               >
-                <span className="flex min-w-0 items-center gap-2">
-                  <ScanBarcode className="h-3.5 w-3.5 shrink-0 text-accent" />
-                  <span className="truncate">{barcodeHit.name}</span>
+                <span className="flex items-center justify-between gap-2">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <ScanBarcode className="h-3.5 w-3.5 shrink-0 text-accent" />
+                    <span className="truncate">{barcodeHit.name}</span>
+                  </span>
+                  <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-accent">Barcode match</span>
                 </span>
-                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-accent">Barcode match</span>
+                <RowMeta variants={barcodeHit.variants} />
               </button>
             )}
             {results.filter((p) => p.slug !== barcodeHit?.slug).map((p) => {
@@ -290,10 +347,13 @@ function ProductPicker({
                   key={p.id}
                   type="button"
                   onClick={() => add(p)}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-on-background hover:bg-surface-elevated"
+                  className="block w-full px-3 py-2 text-left text-sm text-on-background hover:bg-surface-elevated"
                 >
-                  <span className="truncate">{p.name}</span>
-                  {catLabel && <span className="shrink-0 text-xs text-muted">{catLabel}</span>}
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="truncate">{p.name}</span>
+                    {catLabel && <span className="shrink-0 text-xs text-muted">{catLabel}</span>}
+                  </span>
+                  <RowMeta variants={p.variants} basePrice={p.basePrice} />
                 </button>
               )
             })}
