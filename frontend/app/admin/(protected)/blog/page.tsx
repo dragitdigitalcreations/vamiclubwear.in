@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  Loader2, Plus, Trash2, ExternalLink, Eye, Search, X, Star, FileText, Save, Upload,
+  Loader2, Plus, Trash2, ExternalLink, Eye, Search, X, Star, FileText, Save, Upload, ScanBarcode,
 } from 'lucide-react'
 import { blogApi, productsApi, uploadsApi, AdminBlogPost, BLOG_CATEGORIES, ApiError } from '@/lib/api'
 import type { ProductListItem } from '@/types/admin'
@@ -178,31 +178,76 @@ function ProductPicker({
 }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<ProductListItem[]>([])
+  // Barcode hit shown at the top of the dropdown — the same scanner the POS
+  // uses types the code and sends Enter, so scanning a garment's tag adds it.
+  const [barcodeHit, setBarcodeHit] = useState<{ id: string; name: string; slug: string } | null>(null)
   const [searching, setSearching] = useState(false)
   const [names, setNames] = useState<Record<string, string>>({})
+  // Store's featured products — one-tap quick-adds when the box is empty.
+  const [featured, setFeatured] = useState<ProductListItem[]>([])
 
   useEffect(() => {
-    if (!query.trim()) { setResults([]); return }
+    productsApi.list({ isFeatured: 'true', limit: 8 })
+      .then((r) => setFeatured(r.data))
+      .catch(() => {/* non-fatal — quick-adds just don't show */})
+  }, [])
+
+  useEffect(() => {
+    if (!query.trim()) { setResults([]); setBarcodeHit(null); return }
     let live = true
     setSearching(true)
     const t = setTimeout(() => {
-      productsApi.list({ search: query.trim(), limit: 6 })
-        .then((r) => { if (live) setResults(r.data) })
-        .catch(() => { if (live) setResults([]) })
-        .finally(() => { if (live) setSearching(false) })
+      const q = query.trim()
+      Promise.allSettled([
+        productsApi.list({ search: q, limit: 6 }),
+        // Also try the code as a barcode (product-level or per-colour) —
+        // 404s are expected while typing a name, so failures are silent.
+        q.length >= 3 ? productsApi.getProductByBarcode(q) : Promise.reject(new Error('skip')),
+      ]).then(([nameRes, barcodeRes]) => {
+        if (!live) return
+        setResults(nameRes.status === 'fulfilled' ? nameRes.value.data : [])
+        setBarcodeHit(
+          barcodeRes.status === 'fulfilled'
+            ? { id: barcodeRes.value.id, name: barcodeRes.value.name, slug: barcodeRes.value.slug }
+            : null,
+        )
+      }).finally(() => { if (live) setSearching(false) })
     }, 300)
     return () => { live = false; clearTimeout(t) }
   }, [query])
 
-  const add = (p: ProductListItem) => {
+  const add = (p: { slug: string; name: string }) => {
     if (!selected.includes(p.slug)) {
       onChange([...selected, p.slug])
       setNames((n) => ({ ...n, [p.slug]: p.name }))
     }
     setQuery('')
     setResults([])
+    setBarcodeHit(null)
   }
   const remove = (slug: string) => onChange(selected.filter((s) => s !== slug))
+
+  // Scanner flow: barcode guns terminate with Enter. Resolve everything fresh
+  // here — the debounced dropdown state can be a query behind when Enter lands
+  // (scanners type faster than the 300ms debounce), so trusting it would add
+  // the previous query's first result.
+  const handleEnter = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return
+    e.preventDefault()
+    const q = query.trim()
+    if (!q) return
+    try {
+      const p = await productsApi.getProductByBarcode(q)
+      if (p?.slug) { add({ slug: p.slug, name: p.name }); toast.success(`Added ${p.name} (barcode)`); return }
+    } catch { /* not a barcode — fall through to a fresh name search */ }
+    try {
+      const r = await productsApi.list({ search: q, limit: 1 })
+      if (r.data.length > 0) { add(r.data[0]); return }
+    } catch { /* fall through to the error toast */ }
+    toast.error(`No product found for “${q}” — try a name or scan the barcode again.`)
+  }
+
+  const quickAdds = featured.filter((p) => !selected.includes(p.slug))
 
   return (
     <div className="space-y-2">
@@ -211,13 +256,28 @@ function ProductPicker({
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search products to feature…"
+          onKeyDown={handleEnter}
+          placeholder="Search by name — or scan / type a barcode…"
           className="pl-8"
         />
-        {(results.length > 0 || searching) && (
+        {(results.length > 0 || barcodeHit || searching) && (
           <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border border-border bg-surface shadow-xl">
             {searching && <p className="px-3 py-2 text-xs text-muted">Searching…</p>}
-            {results.map((p) => {
+            {barcodeHit && (
+              <button
+                key={barcodeHit.id}
+                type="button"
+                onClick={() => add(barcodeHit)}
+                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-on-background hover:bg-surface-elevated"
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <ScanBarcode className="h-3.5 w-3.5 shrink-0 text-accent" />
+                  <span className="truncate">{barcodeHit.name}</span>
+                </span>
+                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-accent">Barcode match</span>
+              </button>
+            )}
+            {results.filter((p) => p.slug !== barcodeHit?.slug).map((p) => {
               // The list API returns category as { id, name, slug } (the
               // ProductListItem type says string, but the relation is included
               // — see product.service listInclude). Render the name defensively.
@@ -240,6 +300,28 @@ function ProductPicker({
           </div>
         )}
       </div>
+
+      {/* Featured quick-adds — shown while the search box is empty */}
+      {!query.trim() && quickAdds.length > 0 && (
+        <div className="space-y-1">
+          <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted">
+            <Star className="h-3 w-3 fill-accent text-accent" /> Quick add · featured products
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {quickAdds.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => add(p)}
+                className="flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-fg-3 transition-colors hover:border-accent hover:text-accent"
+              >
+                <Plus className="h-3 w-3" /> {p.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {selected.map((slug) => (
