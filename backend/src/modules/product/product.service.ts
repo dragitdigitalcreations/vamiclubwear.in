@@ -74,6 +74,12 @@ const productListInclude = {
       },
     },
   },
+  // Per-colour barcodes so the admin catalogue can print the scan code on each
+  // row. Stripped from public responses by stripInternalFields (same as the
+  // single-mode `barcode` scalar) — these are internal POS codes.
+  colorBarcodes: {
+    select: { color: true, barcode: true },
+  },
   media: {
     where: { type: 'IMAGE' as const },
     take: 2,

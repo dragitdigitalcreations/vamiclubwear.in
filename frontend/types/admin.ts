@@ -182,4 +182,9 @@ export interface ProductListItem {
   isActive: boolean
   isFeatured: boolean
   createdAt: string
+  // POS scan code(s). Single-mode products carry one `barcode`; per-colour
+  // products carry one entry per colour in `colorBarcodes` (barcode is null).
+  barcode: string | null
+  perColorBarcode: boolean
+  colorBarcodes: Array<{ color: string; barcode: string }>
 }

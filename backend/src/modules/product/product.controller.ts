@@ -55,6 +55,7 @@ function stripInternalFields(product: any, isAdmin: boolean) {
   delete copy.deletedAt
   delete copy.barcode
   delete copy.perColorBarcode
+  delete copy.colorBarcodes
 
   if (copy.variants && Array.isArray(copy.variants)) {
     copy.variants = copy.variants.map((v: any) => {
