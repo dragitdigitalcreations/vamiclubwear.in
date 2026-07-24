@@ -8,6 +8,7 @@ import {
   UpdateProductInput,
 } from './product.schema'
 import jwt from 'jsonwebtoken'
+import { readCookie, ADMIN_COOKIE } from '../../middleware/auth'
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'vami-dev-secret-change-in-production'
 
@@ -16,7 +17,23 @@ const JWT_SECRET = process.env.JWT_SECRET ?? 'vami-dev-secret-change-in-producti
 // Request<{},{},{},ListProductsQuery> (query has numeric fields, not ParsedQs)
 // and is therefore not assignable to the default Request — that mismatch was
 // failing `tsc` and blocking every Cloud Run deploy since the F6 change.
+//
+// Must mirror requireAuth's precedence EXACTLY (cookie → Bearer → x-api-key).
+// The F4b migration made the httpOnly `vami_admin` cookie the primary admin
+// session, and getAdminToken() only sends a Bearer header when a token still
+// happens to live in localStorage. A cookie-only admin (the default post-F4b,
+// and the state after any 401 clears localStorage) was therefore treated as
+// the public storefront here — so GET /products/:id stripped `barcode` from
+// the edit form, and the next save silently wiped it to null. This helper must
+// read the cookie or barcodes keep vanishing.
 function isAdminRequest(req: Pick<Request, 'headers'>): boolean {
+  const cookieToken = readCookie(req as Request, ADMIN_COOKIE)
+  if (cookieToken) {
+    try {
+      jwt.verify(cookieToken, JWT_SECRET)
+      return true
+    } catch {}
+  }
   const authHeader = req.headers.authorization
   if (authHeader?.startsWith('Bearer ')) {
     try {

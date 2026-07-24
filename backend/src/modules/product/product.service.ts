@@ -455,10 +455,12 @@ export const productService = {
         data: {
           ...(data.name        !== undefined && { name: data.name }),
           ...(resolvedSlug     !== undefined && { slug: resolvedSlug }),
-          // Always set barcode when switching mode, otherwise honour explicit edits
-          ...((data.perColorBarcode !== undefined || data.barcode !== undefined) && {
-            barcode: nextProductBarcode === undefined ? null : nextProductBarcode,
-          }),
+          // Only touch the product-level barcode when we actually have a concrete
+          // new value: switching to per-colour mode clears it (null), and an
+          // explicit barcode edit in single mode sets it. When neither applies
+          // (nextProductBarcode === undefined) we leave the stored barcode alone
+          // so a partial update — one that never mentions `barcode` — can't wipe it.
+          ...(nextProductBarcode !== undefined && { barcode: nextProductBarcode }),
           ...(data.perColorBarcode !== undefined && { perColorBarcode: nextPerColor }),
           ...(data.description !== undefined && { description: data.description }),
           ...(data.basePrice   !== undefined && { basePrice: new Prisma.Decimal(data.basePrice) }),
