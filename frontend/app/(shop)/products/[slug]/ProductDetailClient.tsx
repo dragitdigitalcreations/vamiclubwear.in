@@ -396,16 +396,42 @@ function AdminBarcodePanel({
   const [copied, setCopied] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
 
-  // Avoid SSR/CSR mismatch — auth state is hydrated client-side from localStorage
-  useEffect(() => { setMounted(true) }, [])
-
-  if (!mounted || !isStaff) return null
-
-  const p              = product as Product & {
+  // The storefront product page is public + ISR-cached, so its payload has the
+  // POS codes stripped (customers must never see them). For a signed-in staff
+  // member we re-fetch the product with the admin credential — the backend
+  // returns barcodes only for authenticated admin requests — and render from
+  // that. This keeps the cached page code-free while restoring the panel.
+  type Codes = {
     barcode?:         string | null
     perColorBarcode?: boolean
     colorBarcodes?:   Array<{ color: string; barcode: string }>
   }
+  const [codes, setCodes] = useState<Codes | null>(null)
+
+  // Avoid SSR/CSR mismatch — auth state is hydrated client-side from localStorage
+  useEffect(() => { setMounted(true) }, [])
+
+  useEffect(() => {
+    if (!mounted || !isStaff) return
+    let cancelled = false
+    productsApi.getBySlug(product.slug)
+      .then((full: any) => {
+        if (cancelled) return
+        setCodes({
+          barcode:         full?.barcode ?? null,
+          perColorBarcode: !!full?.perColorBarcode,
+          colorBarcodes:   Array.isArray(full?.colorBarcodes) ? full.colorBarcodes : [],
+        })
+      })
+      .catch(() => { /* not authorised / offline — panel stays hidden */ })
+    return () => { cancelled = true }
+  }, [mounted, isStaff, product.slug])
+
+  if (!mounted || !isStaff) return null
+
+  // Prefer the authenticated fetch; fall back to the prop in case a future
+  // build serves codes inline to admins.
+  const p              = (codes ?? product) as Product & Codes
   const perColor       = !!p.perColorBarcode
   const colorBarcodes  = p.colorBarcodes ?? []
   const activeColor    = variant?.color ?? null
