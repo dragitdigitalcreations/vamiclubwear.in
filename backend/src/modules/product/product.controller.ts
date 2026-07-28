@@ -53,15 +53,17 @@ function stripInternalFields(product: any, isAdmin: boolean) {
   
   const copy = { ...product }
   delete copy.deletedAt
-  delete copy.barcode
-  delete copy.perColorBarcode
-  delete copy.colorBarcodes
+  // NOTE: barcode / perColorBarcode / colorBarcodes are intentionally NOT
+  // stripped — the shop owner wants the POS scan code shown publicly on each
+  // product page so staff can look it up without logging in. Exposing the code
+  // is safe: every scan/deduct endpoint (inventory reduce, by-barcode) requires
+  // staff auth, so a customer knowing the number can do nothing with it.
 
   if (copy.variants && Array.isArray(copy.variants)) {
     copy.variants = copy.variants.map((v: any) => {
       const vCopy = { ...v }
       delete vCopy.barcode
-      
+
       if (vCopy.inventory && Array.isArray(vCopy.inventory)) {
         // Collapse per-location rows to a single number — the storefront needs
         // the available count (qty stepper cap, "Only N left") but must not see

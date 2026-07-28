@@ -63,6 +63,11 @@ export interface Product {
   isFeatured: boolean
   isActive: boolean
   createdAt?: string
+  // POS scan code(s), shown on the product page. Single-mode products carry one
+  // `barcode`; per-colour products carry one entry per colour in `colorBarcodes`.
+  barcode?: string | null
+  perColorBarcode?: boolean
+  colorBarcodes?: Array<{ color: string; barcode: string }>
 }
 
 // Computed helpers
