@@ -438,7 +438,21 @@ function RelatedProducts({ categorySlug, excludeId }: { categorySlug: string; ex
 }
 
 // ─── Main Client Component ─────────────────────────────────────────────────────
-export function ProductDetailClient({ product }: { product: Product }) {
+interface ProductDetailClientProps {
+  product: Product
+  /**
+   * Human-readable name derived from the variant attributes
+   * ("Off White Mal Cotton A-Line Anarkali"). The POS `name` is just the
+   * garment type, which made every Anarkali page carry an identical <h1>.
+   */
+  displayName?: string
+  /** Server-derived body copy, used when the product has no authored description. */
+  bodyCopy?: string
+}
+
+export function ProductDetailClient({ product, displayName, bodyCopy }: ProductDetailClientProps) {
+  const heading = displayName?.trim() || product.name
+  const copy = product.description?.trim() || bodyCopy?.trim() || ''
   const { addItem }                    = useCartStore()
   const { toggleItem, isWishlisted }   = useWishlistStore()
   const customerAuthed                 = useCustomerAuthStore((s) => !!s.user)
@@ -588,7 +602,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
               </p>
               <div className="flex items-start justify-between gap-4">
                 <h1 className="font-display text-3xl font-bold leading-tight text-on-background md:text-4xl">
-                  {product.name}
+                  {heading}
                 </h1>
                 <div className="mt-1 flex shrink-0 items-center gap-2">
                   <button
@@ -701,14 +715,14 @@ export function ProductDetailClient({ product }: { product: Product }) {
               )}
             </motion.div>
 
-            {product.description && (
+            {copy && (
               <motion.p
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.18, duration: 0.5 }}
                 className="mt-6 text-sm leading-relaxed text-muted border-t border-border pt-6"
               >
-                {product.description}
+                {copy}
               </motion.p>
             )}
 

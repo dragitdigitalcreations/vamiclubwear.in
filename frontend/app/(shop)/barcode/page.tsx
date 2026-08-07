@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Barcode, X, ArrowRight, AlertTriangle } from 'lucide-react'
@@ -24,7 +24,7 @@ interface BarcodeProduct {
   variants: BarcodeVariant[]
 }
 
-export default function BarcodeLookupPage() {
+function BarcodeLookup() {
   const searchParams = useSearchParams()
   const router       = useRouter()
   const inputRef     = useRef<HTMLInputElement>(null)
@@ -171,5 +171,17 @@ export default function BarcodeLookupPage() {
         )}
       </div>
     </div>
+  )
+}
+
+// useSearchParams() bails out of static prerendering unless it sits under a
+// Suspense boundary. This used to be satisfied by the app-level loading.tsx,
+// which was removed because it streamed the shell on every route and locked
+// `notFound()` responses to a 200 status.
+export default function BarcodeLookupPage() {
+  return (
+    <Suspense fallback={null}>
+      <BarcodeLookup />
+    </Suspense>
   )
 }

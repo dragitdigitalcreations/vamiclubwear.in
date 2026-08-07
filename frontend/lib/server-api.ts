@@ -5,6 +5,19 @@ import { isRetaqoCatalogEnabled, retaqoList } from './retaqo-catalog'
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
+// Thrown only when the backend positively says the resource does not exist
+// (HTTP 404). Callers use this to decide between `notFound()` (a real 404 that
+// Google can drop from the index) and letting the error bubble into a 500 —
+// a transient backend blip must never be served as a 404, because Google
+// removes 404'd URLs from the index and re-discovering them is slow.
+export class ApiNotFoundError extends Error {
+  readonly status = 404
+  constructor(message: string) {
+    super(message)
+    this.name = 'ApiNotFoundError'
+  }
+}
+
 async function serverFetch<T>(
   path: string,
   revalidate: number | false = 3600,
@@ -17,7 +30,9 @@ async function serverFetch<T>(
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }))
-    throw new Error(body.error ?? `API error ${res.status}`)
+    const message = body.error ?? `API error ${res.status}`
+    if (res.status === 404) throw new ApiNotFoundError(message)
+    throw new Error(message)
   }
   return res.json()
 }
@@ -63,4 +78,47 @@ export const serverProductsApi = {
 
   listCategories: () =>
     serverFetch<any[]>('/products/categories', 3600),
+}
+
+// The backend rejects `limit` above 100 (zod: "Number must be less than or
+// equal to 100"), so a single `list({ limit: 500 })` 400s. That failure used to
+// be swallowed by the sitemap's catch block and ship a sitemap with zero
+// product URLs — invisible, and fatal for indexing. Page through instead.
+const MAX_PAGE_SIZE = 100
+const MAX_PAGES = 25
+
+export interface CatalogProduct {
+  slug: string
+  updatedAt?: string
+}
+
+/** Every active product, following pagination to the end of the catalog. */
+export async function listAllActiveProducts(
+  revalidate: number | false = 3600,
+): Promise<CatalogProduct[]> {
+  const collected: CatalogProduct[] = []
+  const seen = new Set<string>()
+
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const result = await serverProductsApi.list(
+      { page, limit: MAX_PAGE_SIZE, isActive: 'true' },
+      revalidate,
+    )
+    const batch = (result?.data ?? result ?? []) as CatalogProduct[]
+    if (!Array.isArray(batch) || batch.length === 0) break
+
+    for (const item of batch) {
+      // Slugs are not unique in the catalog today (23 products share the slug
+      // "anarkali"), and only one of them can ever own the URL — de-duplicate
+      // so the same URL is not advertised repeatedly.
+      if (!item?.slug || seen.has(item.slug)) continue
+      seen.add(item.slug)
+      collected.push(item)
+    }
+
+    const totalPages = Number(result?.totalPages ?? 1)
+    if (!Number.isFinite(totalPages) || page >= totalPages) break
+  }
+
+  return collected
 }

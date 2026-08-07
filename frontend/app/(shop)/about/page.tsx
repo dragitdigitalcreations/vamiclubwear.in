@@ -1,7 +1,12 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 
-export const metadata = { title: 'About Us — Vami Clubwear' }
+export const metadata = {
+  title: 'About Us — Our Story',
+  description:
+    'Vami Clubwear is a Manjeri, Kerala label making Indo-Western fusion and modest fashion — plus-size Anarkalis, salwars, shararas, gowns and dupattas tailored inclusively up to XXXL.',
+  alternates: { canonical: '/about' },
+}
 
 export default function AboutPage() {
   return (

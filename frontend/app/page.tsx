@@ -2,6 +2,14 @@
 // ISR: cache at edge, revalidate every 10 minutes
 export const revalidate = 600
 
+import type { Metadata } from 'next'
+
+// Self-referencing canonical. Title/description are inherited from the root
+// layout defaults, which are already written for the homepage.
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
+
 import { Navbar }          from '@/components/shop/Navbar'
 import { Footer }          from '@/components/shop/Footer'
 import { CartDrawer }      from '@/components/shop/CartDrawer'

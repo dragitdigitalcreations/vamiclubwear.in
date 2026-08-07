@@ -1,6 +1,11 @@
 import Link from 'next/link'
 
-export const metadata = { title: 'Shipping & Returns — Vami Clubwear' }
+export const metadata = {
+  title: 'Shipping & Returns',
+  description:
+    'Free shipping across India on every Vami Clubwear order, dispatch timelines, tracking, and how returns and exchanges work. Online prepaid checkout only.',
+  alternates: { canonical: '/shipping' },
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

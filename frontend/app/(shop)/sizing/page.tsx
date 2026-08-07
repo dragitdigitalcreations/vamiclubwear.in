@@ -1,4 +1,9 @@
-export const metadata = { title: 'Size Guide — Vami Clubwear' }
+export const metadata = {
+  title: 'Size Guide — XS to XXXL',
+  description:
+    'Vami Clubwear size chart with bust, waist and hip measurements from XS to XXXL plus free size, and how to measure yourself for Anarkalis, salwars, shararas and gowns.',
+  alternates: { canonical: '/sizing' },
+}
 
 const TOPS = [
   { size: 'XS',        bust: '32"',    waist: '26"',    hip: '36"'   },

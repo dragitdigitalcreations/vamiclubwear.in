@@ -60,6 +60,12 @@ interface PageProps {
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const params = (await searchParams) ?? {}
   const cat = params.category
+
+  // Reject unknown category slugs here, before the HTML shell is flushed —
+  // calling notFound() only in the page body streamed a 200 with a
+  // "Page not found" body, which Search Console files as a Soft 404.
+  if (cat && !KNOWN_CATEGORY_SLUGS.has(cat)) notFound()
+
   const label = (cat && CATEGORY_LABELS[cat]) || ''
   const title = label ? `${label} Collection` : 'All Collections'
   const description = label

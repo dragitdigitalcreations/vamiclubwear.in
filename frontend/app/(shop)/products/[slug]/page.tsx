@@ -4,8 +4,15 @@
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { serverProductsApi } from '@/lib/server-api'
+import { ApiNotFoundError, listAllActiveProducts, serverProductsApi } from '@/lib/server-api'
 import { getAvailableStock, getPrimaryDetailImage, mediaDetail, type Product } from '@/types/product'
+import {
+  buildProductCopy,
+  buildProductDescription,
+  buildProductDisplayName,
+  buildProductTitle,
+  getProductFacets,
+} from '@/lib/product-seo'
 import { ProductDetailClient } from './ProductDetailClient'
 
 // ISR: revalidate every 30 min during pre-launch to keep Neon CU-hours under
@@ -19,44 +26,76 @@ interface PageProps {
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vamiclubwear.in'
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params
+// Prerender the live catalog so Googlebot is served cache hits instead of a
+// cold render per URL, and so `notFound()` on an unknown slug resolves to a
+// real 404 rather than a 200 that Search Console files as a Soft 404.
+// `dynamicParams` stays at its default (true), so products added after a
+// deploy still render on demand and are picked up by the next revalidation.
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
   try {
-    const product = await serverProductsApi.getBySlug(slug)
-    // Stage 50.2 — prefer Retaqo's pre-built `delivery.detail` (~1200px,
-    // q_auto + f_auto) for OpenGraph + Twitter card images; falls back to
-    // the raw url for legacy Vami-sourced products. OG images get scraped
-    // and re-cached aggressively, so serving an already-optimized URL
-    // cuts bandwidth without changing the link preview.
-    const imageUrl = getPrimaryDetailImage(product as Pick<Product, 'media'>) ?? undefined
-    const description =
-      product.description ??
-      `Shop ${product.name} at Vami Clubwear — premium Indo-Western fashion handcrafted in Manjeri, Kerala.`
-
-    return {
-      title: product.name,
-      description,
-      alternates: { canonical: `${SITE_URL}/products/${slug}` },
-      openGraph: {
-        type: 'website',
-        title: product.name,
-        description,
-        url: `${SITE_URL}/products/${slug}`,
-        ...(imageUrl && { images: [{ url: imageUrl, width: 900, height: 1200, alt: product.name }] }),
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: product.name,
-        description,
-        ...(imageUrl && { images: [imageUrl] }),
-      },
-    }
+    const products = await listAllActiveProducts(3600)
+    return products.map((p) => ({ slug: p.slug }))
   } catch {
-    return { title: 'Product Not Found' }
+    // Backend unreachable at build time — fall back to fully on-demand
+    // rendering rather than failing the build.
+    return []
   }
 }
 
-function buildProductJsonLd(product: any) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+
+  let product: Product
+  try {
+    product = await serverProductsApi.getBySlug(slug)
+  } catch (err) {
+    // A positive 404 from the backend means this product genuinely does not
+    // exist. Calling notFound() here (rather than in the page body) is what
+    // makes Next emit an actual 404 status: metadata is resolved before the
+    // HTML shell is flushed, so the status line is still ours to set. Doing it
+    // only in the page component produced a 200 + "Page not found" body, which
+    // is exactly the Soft 404 Search Console was reporting.
+    if (err instanceof ApiNotFoundError) notFound()
+    // Anything else is a transient backend failure — rethrow so the request
+    // 500s and Google retries, instead of permanently dropping a live URL.
+    throw err
+  }
+
+  // Stage 50.2 — prefer Retaqo's pre-built `delivery.detail` (~1200px,
+  // q_auto + f_auto) for OpenGraph + Twitter card images; falls back to
+  // the raw url for legacy Vami-sourced products. OG images get scraped
+  // and re-cached aggressively, so serving an already-optimized URL
+  // cuts bandwidth without changing the link preview.
+  const imageUrl = getPrimaryDetailImage(product as Pick<Product, 'media'>) ?? undefined
+
+  // The POS supplies a bare garment type as `name` ("ANARKALI") and an empty
+  // `description`, which used to yield a dozen identical titles and no meta
+  // description at all. Derive both from the variant attributes instead.
+  const title = buildProductTitle(product)
+  const description = buildProductDescription(product)
+  const displayName = buildProductDisplayName(product)
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `${SITE_URL}/products/${slug}` },
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      url: `${SITE_URL}/products/${slug}`,
+      ...(imageUrl && { images: [{ url: imageUrl, width: 900, height: 1200, alt: displayName }] }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      ...(imageUrl && { images: [imageUrl] }),
+    },
+  }
+}
+
+function buildProductJsonLd(product: any, displayName: string, description: string) {
   // Stage 50.2 — JSON-LD image array also prefers Retaqo's detail-size
   // delivery URL when available (Google's product-rich-result harvester
   // re-fetches these, so optimized URLs save bandwidth on the shared
@@ -71,15 +110,25 @@ function buildProductJsonLd(product: any) {
   const maxPrice = prices.length ? Math.max(...prices) : Number(product.basePrice ?? 0)
   const inStock = activeVariants.some((v: any) => getAvailableStock(v) > 0)
 
+  const facets = getProductFacets(product as Product)
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: product.name,
-    description: product.description ?? '',
+    // Derived name + description, matching the <title>/<h1> on the page —
+    // a Product node whose name is "ANARKALI" on a dozen URLs is what made
+    // Google treat these as duplicates in the first place.
+    name: displayName,
+    description,
     image: imageUrls,
     sku: activeVariants[0]?.sku,
+    ...(product.barcode && { productID: String(product.barcode) }),
     brand: { '@type': 'Brand', name: 'Vami Clubwear' },
     category: product.category?.name,
+    ...(facets.colors.length && { color: facets.colors.join(', ') }),
+    ...(facets.fabrics.length && { material: facets.fabrics.join(', ') }),
+    ...(facets.sizes.length && { size: facets.sizes }),
+    audience: { '@type': 'PeopleAudience', suggestedGender: 'female' },
     offers: {
       '@type': 'AggregateOffer',
       priceCurrency: 'INR',
@@ -89,6 +138,7 @@ function buildProductJsonLd(product: any) {
       availability: inStock
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
+      itemCondition: 'https://schema.org/NewCondition',
       url: `${SITE_URL}/products/${product.slug}`,
     },
   }
@@ -100,13 +150,20 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   try {
     product = await serverProductsApi.getBySlug(slug)
-  } catch (err: any) {
-    notFound()
+  } catch (err: unknown) {
+    // Only a genuine "no such product" becomes a 404. A timeout or a 500 from
+    // the backend must not be served as one, or Google drops a live product
+    // URL out of the index over a transient blip.
+    if (err instanceof ApiNotFoundError) notFound()
+    throw err
   }
 
   if (!product) notFound()
 
-  const jsonLd = buildProductJsonLd(product)
+  const displayName = buildProductDisplayName(product)
+  const seoDescription = buildProductDescription(product)
+  const bodyCopy = buildProductCopy(product)
+  const jsonLd = buildProductJsonLd(product, displayName, seoDescription)
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
@@ -125,7 +182,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       {
         '@type': 'ListItem',
         position: product.category?.slug ? 4 : 3,
-        name: product.name,
+        name: displayName,
         item: `${SITE_URL}/products/${product.slug}`,
       },
     ],
@@ -141,7 +198,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <ProductDetailClient product={product} />
+      <ProductDetailClient
+        product={product}
+        displayName={displayName}
+        bodyCopy={bodyCopy}
+      />
     </>
   )
 }

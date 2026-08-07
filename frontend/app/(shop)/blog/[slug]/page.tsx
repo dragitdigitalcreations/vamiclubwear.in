@@ -49,7 +49,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const post = await getPostBySlug(slug)
-  if (!post) return { title: 'Post not found' }
+  // notFound() here rather than a "Post not found" title: metadata resolves
+  // before the HTML shell is flushed, so this is what makes Next return a real
+  // 404 status instead of a 200 carrying the not-found body (a Soft 404).
+  if (!post) notFound()
 
   return {
     title: post.title,

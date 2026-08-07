@@ -28,9 +28,11 @@ export const metadata: Metadata = {
   authors: [{ name: 'Vami Clubwear' }],
   creator: 'Vami Clubwear',
   publisher: 'Vami Clubwear',
-  alternates: {
-    canonical: SITE_URL,
-  },
+  // NOTE: deliberately no `alternates.canonical` here. Next merges metadata
+  // field-by-field, so a canonical set on the root layout is inherited by every
+  // page that does not declare its own — which pointed /about, /contact,
+  // /shipping, /returns and /sizing at the homepage and made them
+  // permanently ineligible for indexing. Each page declares its own canonical.
   formatDetection: { email: false, address: false, telephone: false },
   openGraph: {
     type: 'website',
