@@ -27,6 +27,7 @@ const MENU_LINKS = [
   { href: '/products',                   label: 'Collections' },
   { href: '/products?category=big-size', label: 'Big Size'    },
   { href: '/wishlist',                   label: 'Wishlist'    },
+  { href: '/blog',                       label: 'Blog'        },
 ]
 
 // Real payment & UPI marks — single horizontal row.
